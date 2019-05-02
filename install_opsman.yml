@@ -39,46 +39,6 @@ resources:
       skip_ssl_verification: true
       regexp: "PCF/ops-manager/pcf-vsphere-(.*).ova" #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
 
-  - name: pas-stemcell
-    type: s3
-    source:
-      access_key_id: ((access_key_id))
-      secret_access_key: ((secret_access_key))
-      endpoint: ((endpoint))
-      bucket: ((binaries_bucket))
-      skip_ssl_verification: true
-      regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere.*\.tgz
-
-  - name: pas-product
-    type: s3
-    source:
-      access_key_id: ((access_key_id))
-      secret_access_key: ((secret_access_key))
-      endpoint: ((endpoint))
-      bucket: ((binaries_bucket))
-      skip_ssl_verification: true)
-      regexp: "PCF/PAS/cf-(.*).pivotal"
-
-
-  - name: healthwatch-stemcell
-    type: s3
-    source:
-      access_key_id: ((access_key_id))
-      secret_access_key: ((secret_access_key))
-      endpoint: ((endpoint))
-      bucket: ((binaries_bucket))
-      skip_ssl_verification: true
-      regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere.*\.tgz
-
-  - name: healthwatch-product
-    type: s3
-    source:
-      access_key_id: ((access_key_id))
-      secret_access_key: ((secret_access_key))
-      endpoint: ((endpoint))
-      bucket: ((binaries_bucket))
-      skip_ssl_verification: true
-      regexp: "PCF/Tiles/p-healthwatch-(.*).pivotal"
 
   # configurations
   - name: configuration
