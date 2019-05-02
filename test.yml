@@ -6,8 +6,9 @@ resources:
     secret_access_key: ((secret_access_key))
     endpoint: ((endpoint))
     bucket: ((bucket))
-    regexp: platform-automation-tasks-(.*).zip
     skip_ssl_verification: true
+    regexp: platform-automation-tasks-(.*).zip
+
 
 - name: platform-automation-image-s3
   type: s3

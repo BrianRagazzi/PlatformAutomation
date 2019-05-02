@@ -2,90 +2,100 @@ resources:
   - name: platform-automation-tasks
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      secret_access_key: ((s3.secret_access_key))
-      region_name: ((s3.region_name))
-      bucket: ((s3.buckets.pivnet_products))
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((bucket))
+      skip_ssl_verification: true
       regexp: .*tasks-(.*).zip
 
   - name: platform-automation-image
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      secret_access_key: ((s3.secret_access_key))
-      region_name: ((s3.region_name))
-      bucket: ((s3.buckets.pivnet_products))
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((bucket))
+      skip_ssl_verification: true
       regexp: .*image-(.*).tgz
 
   - name: installation
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      secret_access_key: ((s3.secret_access_key))
-      region_name: ((s3.region_name))
-      bucket: ((s3.buckets.installation))
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((bucket))
+      skip_ssl_verification: true
       regexp: installation-(.*).zip
 
   - name: opsman-image
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      bucket: ((s3.buckets.pivnet_products))
-      region_name: ((s3.region_name))
-      secret_access_key: ((s3.secret_access_key))
-      regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((binaries_bucket))
+      skip_ssl_verification: true
+      regexp: "PCF/ops-manager/pcf-vsphere-(.*).ova" #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
 
   - name: pas-stemcell
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      secret_access_key: ((s3.secret_access_key))
-      region_name: ((s3.region_name))
-      bucket: ((s3.buckets.pivnet_products))
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((binaries_bucket))
+      skip_ssl_verification: true
       regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere.*\.tgz
 
   - name: pas-product
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      secret_access_key: ((s3.secret_access_key))
-      region_name: ((s3.region_name))
-      bucket: ((s3.buckets.pivnet_products))
-      regexp: cf-(.*).pivotal
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((binaries_bucket))
+      skip_ssl_verification: true)
+      regexp: "PCF/PAS/cf-(.*).pivotal"
 
 
   - name: healthwatch-stemcell
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      secret_access_key: ((s3.secret_access_key))
-      region_name: ((s3.region_name))
-      bucket: ((s3.buckets.pivnet_products))
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((binaries_bucket))
+      skip_ssl_verification: true
       regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere.*\.tgz
 
   - name: healthwatch-product
     type: s3
     source:
-      access_key_id: ((s3.access_key_id))
-      secret_access_key: ((s3.secret_access_key))
-      region_name: ((s3.region_name))
-      bucket: ((s3.buckets.pivnet_products))
-      regexp: p-healthwatch-(.*).pivotal
+      access_key_id: ((access_key_id))
+      secret_access_key: ((secret_access_key))
+      endpoint: ((endpoint))
+      bucket: ((binaries_bucket))
+      skip_ssl_verification: true
+      regexp: "PCF/Tiles/p-healthwatch-(.*).pivotal"
 
   # configurations
   - name: configuration
     type: git
     source:
-      private_key: ((configuration.private_key))
-      uri: ((configuration.uri))
-      branch: master
+      uri: ((github_repo))
+      branch: ((github_branch))
+      username: ((github_username))
+      password: ((github_token))
 
   - name: variable
     type: git
     source:
-      private_key: ((variable.private_key))
-      uri: ((variable.uri))
-      branch: master
+      uri: ((github_repo))
+      branch: ((github_branch))
+      username: ((github_username))
+      password: ((github_token))
 
   # triggers used to have jobs do something in a timely manner
   - name: one-time-trigger
