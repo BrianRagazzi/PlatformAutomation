@@ -44,20 +44,19 @@ resources:
   - name: configuration
     type: git
     source:
-      uri: ((github_repo))
-      branch: ((github_branch))
+      uri: ((config_github_repo))
+      branch: ((config_github_branch))
       username: ((github_username))
       password: ((github_token))
-      paths: ((foundation))
+
 
   - name: variable
     type: git
     source:
-      uri: ((github_repo))
-      branch: ((github_branch))
+      uri: ((vars_github_repo))
+      branch: ((vars_github_branch))
       username: ((github_username))
       password: ((github_token))
-      paths: var
 
   # triggers used to have jobs do something in a timely manner
   - name: one-time-trigger

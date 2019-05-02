@@ -41,7 +41,8 @@ var _ = Describe("With each task", func() {
 			Expect(err).ToNot(HaveOccurred())
 			defer tmpfile.Close()
 
-			tmpfile.Write([]byte(t.Run.Args[1]))
+			_, err = tmpfile.Write([]byte(t.Run.Args[1]))
+			Expect(err).ToNot(HaveOccurred())
 			command := exec.Command("shellcheck", "-s", "bash", tmpfile.Name())
 			session, err := gexec.Start(command, GinkgoWriter, GinkgoWriter)
 			Expect(err).ToNot(HaveOccurred())

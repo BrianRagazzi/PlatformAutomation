@@ -32,5 +32,5 @@ run:
     set -eux
     om --env env/"${ENV_FILE}" upload-stemcell \
        --floating="$FLOATING_STEMCELL" \
-       --stemcell stemcell/*.tgz
+       --stemcell "$PWD"/stemcell/*.tgz
 # code_snippet upload-stemcell end

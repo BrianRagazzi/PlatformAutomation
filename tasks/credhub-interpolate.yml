@@ -29,8 +29,7 @@ params:
   PREFIX:
 
   # path the contains the files to read from
-  # this is a space separated list of directories
-  # the paths are all evaluated relative to files/
+  # the path is evaluated relative to files/
   INTERPOLATION_PATH: '.'
 
 run:
