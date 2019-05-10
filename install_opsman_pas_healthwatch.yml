@@ -415,7 +415,7 @@ jobs:
               - configure-healthwatch
               - configure-pas
               - configure-nsx
-            trigger: true
+            trigger: false
           - get: platform-automation-tasks
             params:
               unpack: true
