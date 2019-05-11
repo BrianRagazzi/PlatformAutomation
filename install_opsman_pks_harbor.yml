@@ -38,7 +38,7 @@ resources:
       skip_ssl_verification: true
       regexp: "PCF/ops-manager/pcf-vsphere-(.*).ova" #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
 
-  - name: pas-stemcell
+  - name: pks-stemcell
     type: s3
     source:
       access_key_id: ((access_key_id))
@@ -48,7 +48,7 @@ resources:
       skip_ssl_verification: true
       regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent\.tgz
 
-  - name: pas-product
+  - name: pks-product
     type: s3
     source:
       access_key_id: ((access_key_id))
@@ -56,9 +56,9 @@ resources:
       endpoint: ((endpoint))
       bucket: ((binaries_bucket))
       skip_ssl_verification: true
-      regexp: PCF/PAS/srt-(.*).pivotal
+      regexp: PCF/PAS/cf-(.*).pivotal
 
-  - name: healthwatch-stemcell
+  - name: harbor-stemcell
     type: s3
     source:
       access_key_id: ((access_key_id))
@@ -68,7 +68,7 @@ resources:
       skip_ssl_verification: true
       regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent\.tgz
 
-  - name: healthwatch-product
+  - name: harbor-product
     type: s3
     source:
       access_key_id: ((access_key_id))
@@ -77,16 +77,6 @@ resources:
       bucket: ((binaries_bucket))
       skip_ssl_verification: true
       regexp: PCF/Tiles/p-healthwatch-(.*).pivotal
-
-  - name: nsx-product
-    type: s3
-    source:
-      access_key_id: ((access_key_id))
-      secret_access_key: ((secret_access_key))
-      endpoint: ((endpoint))
-      bucket: ((binaries_bucket))
-      skip_ssl_verification: true
-      regexp: PCF/Tiles/VMware-NSX-T-(.*).pivotal
 
   # configurations
   - name: configuration
@@ -134,18 +124,6 @@ jobs:
           - get: opsman-image
           - get: configuration
           - get: variable
-      - task: credhub-interpolate-config
-        image: platform-automation-image
-        file: platform-automation-tasks/tasks/credhub-interpolate.yml
-        input_mapping:
-          files: configuration
-        params:
-          # all required
-          CREDHUB_CA_CERT: ((credhub_ca_cert))
-          CREDHUB_CLIENT: ((credhub_client))
-          CREDHUB_SECRET: ((credhub_secret))
-          CREDHUB_SERVER: ((credhub_server))
-          PREFIX: /foundation/pas
       - task: create-vm
         image: platform-automation-image
         file: platform-automation-tasks/tasks/create-vm.yml
@@ -207,7 +185,7 @@ jobs:
         params:
           ENV_FILE: ((foundation))/env/env.yml
 
-  - name: upload-and-stage-pas
+  - name: upload-and-stage-pks
     serial: true
     plan:
       - aggregate:
@@ -240,7 +218,7 @@ jobs:
         params:
           ENV_FILE: ((foundation))/env/env.yml
 
-  - name: configure-pas
+  - name: configure-pks
     serial: true
     plan:
       - aggregate:
@@ -304,67 +282,7 @@ jobs:
         params:
           ENV_FILE: ((foundation))/env/env.yml
 
-  - name: upload-and-stage-nsx
-    serial: true
-    plan:
-      - aggregate:
-          - get: platform-automation-image
-            params:
-              unpack: true
-            passed:
-              - install-opsman
-            trigger: true
-          - get: platform-automation-tasks
-            params:
-              unpack: true
-          - get: nsx-product
-          - get: configuration
-          - get: variable
-      - task: upload-product
-        image: platform-automation-image
-        file: platform-automation-tasks/tasks/upload-product.yml
-        input_mapping:
-          product: nsx-product
-          env: configuration
-        params:
-          ENV_FILE: ((foundation))/env/env.yml
-      - task: stage-product
-        image: platform-automation-image
-        file: platform-automation-tasks/tasks/stage-product.yml
-        input_mapping:
-          product: nsx-product
-          env: configuration
-        params:
-          ENV_FILE: ((foundation))/env/env.yml
-
-  - name: configure-nsx
-    serial: true
-    plan:
-      - aggregate:
-          - get: platform-automation-image
-            params:
-              unpack: true
-            passed:
-              - upload-and-stage-nsx
-            trigger: true
-          - get: platform-automation-tasks
-            params:
-              unpack: true
-          - get: configuration
-          - get: variable
-      - task: configure-nsx
-        image: platform-automation-image
-        file: platform-automation-tasks/tasks/configure-product.yml
-        input_mapping:
-          config: configuration
-          env: configuration
-          vars: variable
-        params:
-          CONFIG_FILE: ((foundation))/config/nsx.yml
-          ENV_FILE: ((foundation))/env/env.yml
-          VARS_FILES: vars/((foundation))/vars/nsx-vars.yml
-
-  - name: upload-and-stage-healthwatch
+  - name: upload-and-stage-harbor
     serial: true
     plan:
       - aggregate:
@@ -389,7 +307,7 @@ jobs:
         params:
           ENV_FILE: ((foundation))/env/env.yml
 
-  - name: configure-healthwatch
+  - name: configure-harbor
     serial: true
     plan:
       - aggregate:
