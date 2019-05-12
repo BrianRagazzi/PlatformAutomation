@@ -1,4 +1,4 @@
-/p-healthwatch.resource_types:
+resource_types:
 - name: pivnet
   type: docker-image
   source:
@@ -80,7 +80,7 @@ resources:
     branch: ((config_github_branch))
     username: ((github_username))
     password: ((github_token))
-    paths: "environments/((foundation))/config"
+    paths: ["environments/((foundation))/config"]
 
 - name: state
   type: git
@@ -113,10 +113,10 @@ jobs:
     image: platform-automation-image
     file: platform-automation-tasks/tasks/credhub-interpolate.yml
     params: &credhub_interpolate_params
-      CREDHUB_CLIENT: ((credhub-client))
-      CREDHUB_SECRET: ((credhub-secret))
-      CREDHUB_SERVER: ((credhub-server))
-      CREDHUB_CA_CERT: ((credhub-ca))
+      CREDHUB_CLIENT: ((credhub_client))
+      CREDHUB_SECRET: ((credhub_secret))
+      CREDHUB_SERVER: ((credhub_server))
+      CREDHUB_CA_CERT: ((credhub_ca_cert))
       PREFIX: '/foundation/((foundation))'
       INTERPOLATION_PATH: "environments/((foundation))/config/secrets"
     input_mapping:
@@ -379,6 +379,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: nsx-product
     - get: configuration
       trigger: true
       passed: [ pas ]
@@ -444,6 +445,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: healthwatch-product
     - get: configuration
       trigger: true
       passed: [ pas ]
@@ -511,7 +513,7 @@ jobs:
   plan:
   - aggregate:
     - get: configuration
-      trigger: true
+      trigger: false
       passed: [ pas ]
     - get: platform-automation-image
       resource: platform-automation
