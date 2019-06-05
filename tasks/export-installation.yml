@@ -15,9 +15,12 @@ outputs:
 
 params:
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the env config YAML
   # - The path is relative to root of the `env` input
+
   INSTALLATION_FILE: installation-$timestamp.zip
+  # - Required
   # - Filepath of the installation ZIP file
   # - The path is relative to root of the `installation` output
   # - if the filename includes "$timestamp",

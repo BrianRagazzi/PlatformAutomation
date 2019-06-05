@@ -9,28 +9,44 @@ platform: linux
 
 inputs:
 - name: files
-# contains YAML files with extension `.yml`
-# each one of these files will have their values interpolated from credhub
-# For some example, run: `credhub interpolate --help` (minimum version >= 2.1.0 required)
+# contains YAML files with extension `.yml`.
+# Each one of these files will have their values interpolated from credhub.
+# For examples, run: `credhub interpolate --help`
+# (minimum version >= 2.1.0 required)
 
 outputs:
 - name: interpolated-files
-#contains all the *.yml files from `files/` input but after interpolation
+# Contains only yaml files found and interpolated by this task.
+# Maintains the filestructure of the `files` input.
 
 # all params are required to be filled out
 params:
-  # credentials to talk to credhub server
-  CREDHUB_CA_CERT:
+
   CREDHUB_CLIENT:
   CREDHUB_SECRET:
   CREDHUB_SERVER:
+  # - Required
+  # - Credentials to talk to credhub server
 
-  # prefix flag used by credhub interpolate
+  CREDHUB_CA_CERT:
+  # - Optional
+  # - This is only necessary if your Concourse worker
+  #   is not already configured to trust the CA used for Credhub
+
   PREFIX:
+  # - Required
+  # - Prefix flag used by credhub interpolate
 
-  # path the contains the files to read from
-  # the path is evaluated relative to files/
-  INTERPOLATION_PATH: '.'
+  INTERPOLATION_PATHS: '.'
+  # - Required
+  # - Path the contains the files to read from
+  # - This is a space separated list of directories
+  #   the paths are all evaluated relative to files/
+
+  SKIP_MISSING: true
+  # Optional
+  # Change to false to have strict interpolation
+  # and fail if params are missing from vars
 
 run:
   path: bash
@@ -53,13 +69,22 @@ run:
       exit 1
     fi
 
-    files=$(cd files && find "$INTERPOLATION_PATH" -type f -name '*.yml' -follow)
+    # $INTERPOLATION_PATHS needs to be globbed to read multiple files
+    # shellcheck disable=SC2086
+    files=$(cd files && find $INTERPOLATION_PATHS -type f -name '*.yml' -follow)
+
+    if [ "$SKIP_MISSING" ]; then
+      export SKIP_MISSING="--skip-missing"
+    else
+      export SKIP_MISSING=""
+    fi
 
     for file in $files; do
       echo "interpolating files/$file"
       mkdir -p interpolated-files/"$(dirname "$file")"
       credhub interpolate --prefix "$PREFIX" \
-      --file files/"$file" > interpolated-files/"$file"
+      --file files/"$file" "$SKIP_MISSING" \
+      > interpolated-files/"$file"
     done
 
 # code_snippet credhub-interpolate end

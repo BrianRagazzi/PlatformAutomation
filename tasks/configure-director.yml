@@ -25,15 +25,19 @@ params:
   # - Filepath to the Ops Manager vars yaml file
   # - The path is relative to root of the task build,
   #   so `vars` and `secrets` can be used.
+
   OPS_FILES:
   # - Optional
   # - Filepath to the Ops Manager operations yaml files
   # - The path is relative to root of the task build
+
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the env config YAML
   # - The path is relative to root of the `env` input
+
   DIRECTOR_CONFIG_FILE: director.yml
-  # - Optional
+  # - Required
   # - Filepath to the director configuration yaml file
   # - The path is relative to the root of the `config` input
 

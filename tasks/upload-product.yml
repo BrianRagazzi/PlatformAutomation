@@ -22,8 +22,9 @@ params:
   # - Example config:
   # ---
   # product-version: 1.2.3-build.4
-  # sha256: 6daededd8fb4c341d0cd437a669d732d2fde62cb89716498e6b16f34607a1498
+  # shasum: 6daededd8fb4c341d0cd437a669d732d2fde62cb89716498e6b16f34607a1498
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the env config YAML
   # - Relative to root of the `env` input
 
@@ -35,12 +36,12 @@ run:
     cat /var/version && echo ""
     set -eux
 
-    if [ -z "$CONFIG_FILE" ]; then
-        om --env env/"${ENV_FILE}" upload-product \
-           --product product/*.pivotal
-    else
-      om --env env/"${ENV_FILE}" upload-product \
-         --product product/*.pivotal --config "config/$CONFIG_FILE"
+    export OPTIONAL_CONFIG_FLAG=""
+    if [ -n "$CONFIG_FILE" ]; then
+      export OPTIONAL_CONFIG_FLAG="--config config/$CONFIG_FILE"
     fi
+    om --env env/"${ENV_FILE}" upload-product \
+       --product product/*.pivotal \
+       "$OPTIONAL_CONFIG_FLAG"
 
   # code_snippet upload-product end

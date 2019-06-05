@@ -3,13 +3,20 @@
 # See our documentation for a detailed discussion of our semver API.
 # See www.semver.org for an explanation of semantic versioning.
 
-# code_snippet configure-saml-authentication start yaml
+# code_snippet assign-multi-stemcell start yaml
+# This feature is only available in OpsMan 2.6+.
 ---
 platform: linux
 
 inputs:
 - name: env # contains the env file with target OpsMan Information
-- name: config # contains the auth configuration
+- name: config # contains the configuration file for assign-multi-stemcell command
+  # - Example config:
+  # ---
+  # product: cf
+  # stemcell:
+  # - ubuntu-trusty:1234.6
+  # - ubuntu-xenial:latest
 
 params:
   ENV_FILE: env.yml
@@ -17,10 +24,10 @@ params:
   # - Filepath of the env config YAML
   # - The path is relative to root of the `env` input
 
-  AUTH_CONFIG_FILE: auth.yml
+  CONFIG_FILE: config.yml
   # - Required
-  # - Filepath of the authorization config YAML
-  # - The path is relative to root of the `config` input
+  # - Filepath of the env config YAML
+  # - The path is relative to root of the `assign-multi-stemcell-config` input
 
 run:
   path: bash
@@ -29,6 +36,6 @@ run:
   - |
     cat /var/version && echo ""
     set -eux
-    om --env env/"${ENV_FILE}" configure-saml-authentication \
-    --config config/"${AUTH_CONFIG_FILE}"
-# code_snippet configure-saml-authentication end
+    om --env env/"${ENV_FILE}" assign-multi-stemcell \
+       --config config/"$CONFIG_FILE"
+# code_snippet assign-multi-stemcell end

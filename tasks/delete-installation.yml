@@ -12,6 +12,7 @@ inputs:
 
 params:
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the env config YAML
   # - The path is relative to root of the `env` input
 
@@ -22,5 +23,5 @@ run:
   - |
     cat /var/version && echo ""
     set -eux
-    om --env env/"${ENV_FILE}" delete-installation
+    om --env env/"${ENV_FILE}" delete-installation --force
 # code_snippet delete-installation end

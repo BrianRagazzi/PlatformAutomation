@@ -25,6 +25,7 @@ params:
   # sha256: 6daededd8fb4c341d0cd437a669d732d2fde62cb89716498e6b16f34607a1498
 
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the env config YAML
   # - The path is relative to root of the `env` input
 

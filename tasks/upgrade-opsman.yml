@@ -15,36 +15,41 @@ inputs:
 - name: env # contains the environment information for OpsMan
 - name: vars # variable files to be made available
   optional: true
-- name: secrets
-  # secret files to be made available
-  # separate from vars, so they can be store securely
+- name: secrets # secret files to be made available
+  # separate from vars, so they can be stored securely
   optional: true
 
 outputs:
 - name: generated-state #contains the updated state file
 
-
 params:
   VARS_FILES:
   # - Optional
-  # - Filepath to the Ops Manager vars yaml file
-  # - The path is relative to root of the task build,
-  #   so `vars` and `secrets` can be used.
+  # - space-seperated array of filepaths to YAML vars files
+  #   to be loaded with the OPSMAN_CONFIG_FILE
+  # - relative to root of the task build,
+  #   so both `vars` and `secrets` can be used.
+
   ENV_FILE: env.yml
-  # - Filepath of the env config YAML
-  # - The path is relative to root of the `env` input
+  # - Required
+  # - filepath of the env config YAML
+  # - relative to root of the `env` input
+
   OPSMAN_CONFIG_FILE: opsman.yml
-  # - Optional
-  # - Filepath of the opsman config YAML
-  # - The path is relative to root of the `config` input
+  # - Required
+  # - filepath of the opsman config YAML
+  # - relative to root of the `config` input
+
   STATE_FILE: state.yml
-  # - Optional
-  # - Filepath of the state yaml file
-  # - The path is relative to root of the `state` input
+  # - Required
+  # - filepath of the state YAML file
+  # - relative to root of the `state` input
+
   INSTALLATION_FILE: installation*.zip
-  # - Filepath of the installation ZIP file
-  # - The filepath provided can be wildcard expanded.
-  # - The path is relative to root of the `installation` input
+  # - Required
+  # - filepath of the installation ZIP file
+  # - can be wildcard expanded
+  # - relative to root of the `installation` input
 
 run:
   path: bash

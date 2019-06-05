@@ -26,12 +26,14 @@ params:
   # - Filepath to the Ops Manager vars yaml file
   # - The path is relative to root of the task build,
   #   so `vars` and `secrets` can be used.
+
   STATE_FILE: state.yml
-  # - Optional
+  # - Required
   # - Filepath of the state yaml file
   # - The path is relative to root of the `state` input
+
   OPSMAN_CONFIG_FILE: opsman.yml
-  # - Optional
+  # - Required
   # - Filepath of the opsman config YAML
   # - The path is relative to root of the `config` input
 

@@ -12,7 +12,6 @@ resources:
     api_token: ((pivnet_token))
     product_slug: platform-automation
 
-
 - name: opsman-image
   type: s3
   source:
@@ -21,10 +20,10 @@ resources:
     endpoint: ((endpoint))
     bucket: ((binaries_bucket))
     skip_ssl_verification: true
-    regexp: "PCF/ops-manager/ops-manager-vsphere-(.*).ova" #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
+    regexp: "PCF/ops-manager/pcf-vsphere-(.*).ova" #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
 
 
-- name: pas-stemcell
+- name: pks-stemcell
   type: s3
   source:
     access_key_id: ((access_key_id))
@@ -34,7 +33,7 @@ resources:
     skip_ssl_verification: true
     regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent\.tgz
 
-- name: pas-product
+- name: pks-product
   type: s3
   source:
     access_key_id: ((access_key_id))
@@ -42,19 +41,10 @@ resources:
     endpoint: ((endpoint))
     bucket: ((binaries_bucket))
     skip_ssl_verification: true
-    regexp: PCF/PAS/srt-(.*).pivotal #PCF/PAS/cf-(.*).pivotal
+    regexp: PCF/PKS/pivotal-container-service-(.*).pivotal
 
-- name: healthwatch-stemcell
-  type: s3
-  source:
-    access_key_id: ((access_key_id))
-    secret_access_key: ((secret_access_key))
-    endpoint: ((endpoint))
-    bucket: ((binaries_bucket))
-    skip_ssl_verification: true
-    regexp: PCF/stemcells/bosh-stemcell-(170.*)-vsphere-esxi-ubuntu-xenial-go_agent\.tgz
 
-- name: healthwatch-product
+- name: harbor-stemcell
   type: s3
   source:
     access_key_id: ((access_key_id))
@@ -62,9 +52,9 @@ resources:
     endpoint: ((endpoint))
     bucket: ((binaries_bucket))
     skip_ssl_verification: true
-    regexp: PCF/Tiles/p-healthwatch-(.*).pivotal
+    regexp: PCF/stemcells/bosh-stemcell-(.*)-vsphere-esxi-ubuntu-xenial-go_agent\.tgz
 
-- name: nsx-product
+- name: harbor-product
   type: s3
   source:
     access_key_id: ((access_key_id))
@@ -72,7 +62,7 @@ resources:
     endpoint: ((endpoint))
     bucket: ((binaries_bucket))
     skip_ssl_verification: true
-    regexp: PCF/Tiles/VMware-NSX-T-(.*).pivotal
+    regexp: PCF/Tiles/harbor-container-registry-(.*).pivotal
 
 - name: configuration
   type: git
@@ -99,7 +89,7 @@ jobs:
   - aggregate:
     - get: opsman-image
     - get: configuration
-      trigger: false
+      trigger: true
     - get: state
     - get: platform-automation-image
       resource: platform-automation
@@ -174,7 +164,6 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
       AUTH_CONFIG_FILE: environments/((foundation))/config/secrets/auth.yml
-
   - task: configure-director
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-director.yml
@@ -196,109 +185,18 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-# - name: export-installation
-#   serial: true
-#   serial_groups: [ install ]
-#   plan:
-#   - aggregate:
-#     - get: configuration
-#       trigger: true
-#       passed: [ install-opsman ]
-#     - get: platform-automation-image
-#       resource: platform-automation
-#       params:
-#         unpack: true
-#         globs: ["*image*"]
-#     - get: platform-automation-tasks
-#       resource: platform-automation
-#       params:
-#         unpack: true
-#         globs: ["*tasks*"]
-#   - task: credhub-interpolate
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/credhub-interpolate.yml
-#     params: *credhub_interpolate_params
-#     input_mapping:
-#       files: configuration
-#   - task: export-installation
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/export-installation.yml
-#     input_mapping:
-#       env: interpolated-files
-#     params:
-#       ENV_FILE: environments/((foundation))/config/secrets/env.yml
-#   - put: installation
-#     params:
-#       file: installation/installation-*.zip
-
-# - name: upgrade-opsman
-#   serial: true
-#   serial_groups: [ install ]
-#   plan:
-#   - aggregate:
-#     - get: configuration
-#       trigger: true
-#       passed: [ export-installation ]
-#     - get: state
-#     - get: platform-automation-image
-#       resource: platform-automation
-#       params:
-#         unpack: true
-#         globs: ["*image*"]
-#     - get: platform-automation-tasks
-#       resource: platform-automation
-#       params:
-#         unpack: true
-#         globs: ["*tasks*"]
-#     - get: installation
-#       passed: [ export-installation ]
-#   - task: credhub-interpolate
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/credhub-interpolate.yml
-#     params: *credhub_interpolate_params
-#     input_mapping:
-#       files: configuration
-#   - task: download-upgrade-opsman
-#     image: platform-automation-image
-#     file: configuration/proposed-tasks/download-upgrade-opsman.yml
-#     input_mapping:
-#       download-config: configuration
-#       state: state
-#       config: configuration
-#       vars: configuration
-#       secrets: interpolated-files
-#       installation: installation
-#       env: interpolated-files
-#     params:
-#       DOWNLOAD_CONFIG_FILE: environments/((foundation))/config/versions/opsman.yml
-#       STATE_FILE: state/((foundation))/state.yml
-#       OPSMAN_CONFIG_FILE: environments/((foundation))/config/templates/opsman.yml
-#       VARS_FILES: |
-#         vars/environments/((foundation))/config/vars/opsman.yml
-#         secrets/environments/((foundation))/config/secrets/opsman.yml
-#         secrets/environments/((foundation))/config/secrets/pivnet.yml
-#       ENV_FILE: environments/((foundation))/config/secrets/env.yml
-#     ensure: *make-state-commit
-#
-#   - task: apply-director-changes
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/apply-director-changes.yml
-#     input_mapping:
-#       env: interpolated-files
-#     params:
-#       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
 - name: pas
-  serial: false  # try  false 052219
+  serial: true
   plan:
   - aggregate:
     - get: configuration
       trigger: true
-    - get: pas-product
-    - get: pas-stemcell
-    - get: healthwatch-stemcell
-    - get: platform-automation-image
       passed: [ install-opsman ]
+    - get: pks-product
+    - get: pks-stemcell
+    - get: harbor-stemcell
+    - get: platform-automation-image
       resource: platform-automation
       params:
         unpack: true
@@ -316,11 +214,11 @@ jobs:
     input_mapping:
       files: configuration
 
-  - task: upload-product-pas
+  - task: upload-product-pks
     image: platform-automation-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
-      product: pas-product
+      product: pks-product
       config: configuration
       env: interpolated-files
       vars: configuration
@@ -328,34 +226,34 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  - task: stage-product-pas
+  - task: stage-product-pks
     image: platform-automation-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
-      product: pas-product
+      product: pks-product
       env: interpolated-files
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  - task: upload-pas-stemcell
+  - task: upload-pks-stemcell
     image: platform-automation-image
     file: platform-automation-tasks/tasks/upload-stemcell.yml
     input_mapping:
       env: interpolated-files
-      stemcell: pas-stemcell
+      stemcell: pks-stemcell
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  - task: upload-healthwatch-stemcell
+  - task: upload-harbor-stemcell
     image: platform-automation-image
     file: platform-automation-tasks/tasks/upload-stemcell.yml
     input_mapping:
       env: interpolated-files
-      stemcell: healthwatch-stemcell
+      stemcell: harbor-stemcell
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  - task: configure-pas
+  - task: configure-pks
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -371,25 +269,15 @@ jobs:
         secrets/environments/((foundation))/config/secrets/cf.yml
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  # - task: apply-product-changes
-  #   image: platform-automation-image
-  #   file: configuration/proposed-tasks/apply-product-changes.yml
-  #   input_mapping:
-  #     config: configuration
-  #     env: interpolated-files
-  #   params:
-  #     CONFIG_FILE: environments/((foundation))/config/templates/cf.yml
-  #     ENV_FILE: environments/((foundation))/config/secrets/env.yml
-
-- name: nsx
+- name: harbor
   serial: true
   plan:
   - aggregate:
-    - get: nsx-product
+    - get: harbor-product
     - get: configuration
       trigger: true
-    - get: platform-automation-image
       passed: [ pas ]
+    - get: platform-automation-image
       resource: platform-automation
       params:
         unpack: true
@@ -407,11 +295,11 @@ jobs:
     input_mapping:
       files: configuration
 
-  - task: upload-product-nsx
+  - task: upload-product-harbor
     image: platform-automation-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
-      product: nsx-product
+      product: harbor-product
       config: configuration
       download-config: configuration
       env: interpolated-files
@@ -419,11 +307,11 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  - task: stage-product-nsx
+  - task: stage-product-harbor
     image: platform-automation-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
-      product: nsx-product
+      product: harbor-product
       config: configuration
       download-config: configuration
       env: interpolated-files
@@ -431,7 +319,7 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  - task: configure-nsx
+  - task: configure-harbor
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -440,77 +328,11 @@ jobs:
       vars: configuration
       secrets: interpolated-files
     params:
-      CONFIG_FILE: environments/((foundation))/config/templates/nsx.yml
+      CONFIG_FILE: environments/((foundation))/config/templates/p-harbor.yml
       VARS_FILES: |
-        vars/environments/((foundation))/config/defaults/nsx.yml
-        vars/environments/((foundation))/config/vars/nsx.yml
-        secrets/environments/((foundation))/config/secrets/nsx.yml
-      ENV_FILE: environments/((foundation))/config/secrets/env.yml
-
-- name: healthwatch
-  serial: true
-  plan:
-  - aggregate:
-    - get: healthwatch-product
-    - get: configuration
-      trigger: true
-    - get: platform-automation-image
-      passed: [ pas ]
-      resource: platform-automation
-      params:
-        unpack: true
-        globs: ["*image*"]
-    - get: platform-automation-tasks
-      resource: platform-automation
-      params:
-        unpack: true
-        globs: ["*tasks*"]
-
-  - task: credhub-interpolate
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/credhub-interpolate.yml
-    params: *credhub_interpolate_params
-    input_mapping:
-      files: configuration
-
-  - task: upload-product-healthwatch
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-product.yml
-    input_mapping:
-      product: healthwatch-product
-      config: configuration
-      download-config: configuration
-      env: interpolated-files
-      secrets: interpolated-files
-    params:
-      ENV_FILE: environments/((foundation))/config/secrets/env.yml
-
-  - task: stage-product-healthwatch
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/stage-product.yml
-    input_mapping:
-      product: healthwatch-product
-      config: configuration
-      download-config: configuration
-      env: interpolated-files
-      secrets: interpolated-files
-    params:
-      ENV_FILE: environments/((foundation))/config/secrets/env.yml
-
-  - task: configure-healthwatch
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: configuration
-      env: interpolated-files
-      vars: configuration
-      secrets: interpolated-files
-    params:
-      CONFIG_FILE: environments/((foundation))/config/templates/p-healthwatch.yml
-      VARS_FILES: |
-        vars/environments/((foundation))/config/defaults/p-healthwatch.yml
-        vars/environments/((foundation))/config/vars/p-healthwatch.yml
-        secrets/environments/((foundation))/config/secrets/p-healthwatch.yml
+        vars/environments/((foundation))/config/defaults/p-harbor.yml
+        vars/environments/((foundation))/config/vars/p-harbor.yml
+        secrets/environments/((foundation))/config/secrets/p-harbor.yml
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
 - name: apply-changes
@@ -519,7 +341,7 @@ jobs:
   - aggregate:
     - get: configuration
       trigger: false
-      passed: [ healthwatch, nsx ]
+      passed: [ pas ]
     - get: platform-automation-image
       resource: platform-automation
       params:

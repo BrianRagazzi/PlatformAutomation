@@ -13,11 +13,14 @@ inputs:
 
 params:
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the environment config YAML
   # - The path is relative to root of the `env` input
   # - The env file _must_ contain the `decryption-passphrase`
   #   while it's optional for other tasks, this one requires it.
+
   INSTALLATION_FILE: installation*.zip
+  # - Required
   # - Filepath of the installation ZIP file
   # - The filepath provided can be wildcard expanded.
   # - The path is relative to root of the `installation` input

@@ -18,9 +18,12 @@ inputs:
 
 params:
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the env config YAML
   # - The path is relative to root of the `env` input
+
   CONFIG_FILE: config.yml
+  # - Required
   # - Filepath of the env config YAML
   # - The path is relative to root of the `assign-stemcell-config` input
 

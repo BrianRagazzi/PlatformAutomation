@@ -124,6 +124,18 @@ jobs:
           - get: opsman-image
           - get: configuration
           - get: variable
+      - task: credhub-interpolate-config
+        image: platform-automation-image
+        file: platform-automation-tasks/tasks/credhub-interpolate.yml
+        input_mapping:
+          files: configuration
+        params:
+          # all required
+          CREDHUB_CA_CERT: ((credhub_ca_cert))
+          CREDHUB_CLIENT: ((credhub_client))
+          CREDHUB_SECRET: ((credhub_secret))
+          CREDHUB_SERVER: ((credhub_server))
+          PREFIX: /foundation/pas
       - task: create-vm
         image: platform-automation-image
         file: platform-automation-tasks/tasks/create-vm.yml

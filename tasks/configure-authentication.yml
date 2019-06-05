@@ -13,10 +13,12 @@ inputs:
 
 params:
   ENV_FILE: env.yml
+  # - Required
   # - Filepath of the env config YAML
   # - The path is relative to root of the `env` input
+
   AUTH_CONFIG_FILE: auth.yml
-  # - Optional
+  # - Required
   # - Filepath of the authorization config YAML
   # - The path is relative to root of the `config` input
 

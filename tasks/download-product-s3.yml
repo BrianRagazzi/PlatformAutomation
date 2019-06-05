@@ -26,6 +26,7 @@ caches:
 
 params:
   CONFIG_FILE: download-config.yml
+  # - Required
   # - Filepath to the product configuration yaml file
   # - The path is relative to the root of the `config` input
 
