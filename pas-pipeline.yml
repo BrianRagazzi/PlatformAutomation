@@ -121,7 +121,7 @@ jobs:
       CREDHUB_SERVER: ((credhub_server))
       CREDHUB_CA_CERT: ((credhub_ca_cert))
       PREFIX: '/foundation/((foundation))'
-      INTERPOLATION_PATH: "environments/((foundation))/config/secrets"
+      INTERPOLATION_PATHS: "environments/((foundation))/config/secrets"
     input_mapping:
       files: configuration
 
