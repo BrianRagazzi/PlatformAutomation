@@ -1,0 +1,92 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tags: latest-final
+
+resources:
+# - name: pcfnorm-image
+#   type: docker-image
+#   source:
+#     repository: pcfnorm/rootfs
+
+- name: platform-automation
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: platform-automation
+
+- name: configuration
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["environments/((foundation))/config"]
+
+- name: custom-tasks
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: state
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+
+jobs:
+- name: pas-admin-user
+  serial: true
+  serial_groups: [ post-deploy ]
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: custom-tasks
+      trigger: false
+    - get: state
+    # - get: pcfnorm-image
+    - get: platform-automation-image
+      resource: platform-automation
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      resource: platform-automation
+      params:
+        unpack: true
+        globs: ["*tasks*"]
+
+  - task: credhub-interpolate
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/credhub-interpolate.yml
+    params: &credhub_interpolate_params
+      CREDHUB_CLIENT: ((credhub_client))
+      CREDHUB_SECRET: ((credhub_secret))
+      CREDHUB_SERVER: ((credhub_server))
+      CREDHUB_CA_CERT: ((credhub_ca_cert))
+      PREFIX: '/foundation/((foundation))'
+      INTERPOLATION_PATHS: "environments/((foundation))/config/secrets"
+      SKIP_MISSING: true
+    input_mapping:
+      files: configuration
+
+  - task: config-pas-admin-user
+    image: platform-automation-image
+    file: custom-tasks/tasks/create_pas_org_admin.yml
+    input_mapping:
+      secrets: interpolated-files
+      env: interpolated-files
+    params:
+      ENV_FILE: environments/((foundation))/config/secrets/env.yml
+      PAS_ADMIN_USERNAME: ((pas_admin_username))
+      PAS_ADMIN_PASSWORD: ((pas_admin_password))
+      PAS_ADMIN_ORG: ((pas_admin_org))
