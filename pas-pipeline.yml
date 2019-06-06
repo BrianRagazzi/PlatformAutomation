@@ -618,6 +618,7 @@ jobs:
   plan:
   - aggregate:
     - get: configuration
+    - get: state
     - get: platform-automation-image
       passed: [apply-changes]
       trigger: false
