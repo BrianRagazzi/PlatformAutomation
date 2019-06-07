@@ -39,8 +39,8 @@ properties.plan1_selector.active.max_worker_instances: 3
 properties.plan1_selector.active.worker_instances: 1
 properties.plan1_selector.active.worker_az_placement: [AZ1,AZ2,AZ3]
 properties.plan1_selector.active.admission_plugins: [deny_escalating_exec]
-properties.plan1_selector.active.master_vm_type: medium
-properties.plan1_selector.active.worker_vm_type: medium
+properties.plan1_selector.active.master_vm_type: medium.disk
+properties.plan1_selector.active.worker_vm_type: medium.disk
 properties.plan1_selector.active.errand_vm_type: micro
 
 properties.plan2_selector.active.name: medium
@@ -54,8 +54,8 @@ properties.plan2_selector.active.max_worker_instances: 3
 properties.plan2_selector.active.worker_instances: 1
 properties.plan2_selector.active.worker_az_placement: [AZ1,AZ2,AZ3]
 properties.plan2_selector.active.admission_plugins: [deny_escalating_exec]
-properties.plan2_selector.active.master_vm_type: medium
-properties.plan2_selector.active.worker_vm_type: medium
+properties.plan2_selector.active.master_vm_type: medium.disk
+properties.plan2_selector.active.worker_vm_type: medium.disk
 properties.plan2_selector.active.errand_vm_type: micro
 
 properties.plan3_selector.active.name: large
@@ -69,6 +69,6 @@ properties.plan3_selector.active.max_worker_instances: 3
 properties.plan3_selector.active.worker_instances: 3
 properties.plan3_selector.active.worker_az_placement: [AZ1,AZ2,AZ3]
 properties.plan3_selector.active.admission_plugins: [deny_escalating_exec]
-properties.plan3_selector.active.master_vm_type: medium
-properties.plan3_selector.active.worker_vm_type: medium
+properties.plan3_selector.active.master_vm_type: medium.disk
+properties.plan3_selector.active.worker_vm_type: medium.disk
 properties.plan3_selector.active.errand_vm_type: micro

@@ -57,60 +57,20 @@ network-assignment:
   singleton_availability_zone:
     name: MGMT
   network:
-    name: infrastructure
+    name: PKS-MGMT
 networks-configuration:
-  icmp_checks_enabled: false
+  icmp_checks_enabled: true
   networks:
-  - name: infrastructure
-    service_network: false
+  - name: PKS-MGMT
     subnets:
-    - iaas_identifier: ((infrastructure_network))
-      cidr: ((infrastructure_network_cidr))
-      reserved_ip_ranges: ((infrastructure_network_reserved))
+    - iaas_identifier: ((pks_mgmt_network))
+      cidr: ((pks_mgmt_network_cidr))
+      reserved_ip_ranges: ((pks_mgmt_network_reserved))
       dns: ((dns))
-      gateway: ((infrastructure_gateway))
+      gateway: ((pks_mgmt_gateway))
       availability_zone_names:
       - MGMT
-  - name: deployment
-    service_network: false
-    subnets:
-    - iaas_identifier: ((deployment_network))
-      cidr: ((deployment_network_cidr))
-      reserved_ip_ranges: ((deployment_network_reserved))
-      dns: ((dns))
-      gateway: ((deployment_gateway))
-      availability_zone_names:
       - AZ1
       - AZ2
       - AZ3
-  - name: services
-    service_network: false
-    subnets:
-    - iaas_identifier: ((services_network))
-      cidr: ((services_network_cidr))
-      reserved_ip_ranges: ((services_network_reserved))
-      dns: ((dns))
-      gateway: ((services_gateway))
-      availability_zone_names:
-      - AZ1
-      - AZ2
-      - AZ3
-vmextensions-configuration:  #Add Manually
-- name: pcf_web_vm_extension
-  cloud_properties:
-    nsxt:
-      lb:
-        server_pools:
-        - name: pas-web-pool
-- name: pcf_ssh_vm_extension
-  cloud_properties:
-    nsxt:
-      lb:
-        server_pools:
-        - name: pas-ssh-pool
-- name: pcf_tcp_vm_extension
-  cloud_properties:
-    nsxt:
-      lb:
-        server_pools:
-        - name: pas-tcp-pool
+vmextensions-configuration: []
