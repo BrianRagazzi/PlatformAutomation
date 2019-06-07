@@ -1,12 +1,7 @@
 properties_cloud_provider: vSphere
-properties_cloud_provider_vcenter_dc: Datacenter
-properties_cloud_provider_vcenter_ds: Datastore1
-properties_cloud_provider_vcenter_ip: vcenter
-properties_cloud_provider_vcenter_vms: VMs
 properties_log_sink_resources_deploy: true
 properties_metric_sink_resources_deploy: true
 properties_network_selector: flannel
-properties.network_selector.nsx.cloud-config-dns: 192.168.100.50,192.168.100.150
 properties.network_selector.nsx.lb_size_large_supported: true
 properties.network_selector.nsx.lb_size_medium_supported: true
 properties.network_selector.nsx.nat_mode: true
