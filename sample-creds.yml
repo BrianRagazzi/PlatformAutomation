@@ -1,0 +1,17 @@
+---
+credhub_client: concourse-to-credhub  #account that can access credhub
+credhub_secret: PASSWORD #password for that account
+credhub_server: https://192.168.100.200:8844 #existing credhub server
+foundation: pas #founcation name
+endpoint: https://mys3server:9000 #S3 endpoint
+binaries_bucket: binaries #name of bucket on S3 that contains the pivotal binaries
+region: us-east1 #S3 region
+github_username: githubuser # [R] Your github username
+github_author_email: username@email.com
+github_branch: dev
+config_github_repo: https://github.com/githubuser/platauto-conf-var #private githuib repo with the configuration
+config_github_branch: master
+debug: false #turn on to log commands into concourse; use caution
+pas_admin_username: sysadmin # user account to add post-deploy
+pas_admin_password: sysadmin # password for that account
+pas_admin_org: myorg # which org to create and add admin user to

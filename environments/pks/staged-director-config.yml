@@ -1,0 +1,128 @@
+az-configuration:
+- name: AZ1
+  clusters:
+  - cluster: attic
+    resource_pool: PKS
+  iaas_configuration_guid: 10340e318fee88afcb09
+- name: AZ2
+  clusters:
+  - cluster: attic
+    resource_pool: PKS
+  iaas_configuration_guid: 10340e318fee88afcb09
+- name: AZ3
+  clusters:
+  - cluster: attic
+    resource_pool: PKS
+  iaas_configuration_guid: 10340e318fee88afcb09
+- name: PKS-MGMT
+  clusters:
+  - cluster: attic
+    resource_pool: PKS-MGMT
+  iaas_configuration_guid: 10340e318fee88afcb09
+iaas-configurations:
+- additional_cloud_properties: {}
+  bosh_disk_path: ((iaas-configurations_0_bosh_disk_path))
+  bosh_template_folder: ((iaas-configurations_0_bosh_template_folder))
+  bosh_vm_folder: ((iaas-configurations_0_bosh_vm_folder))
+  datacenter: ((iaas-configurations_0_datacenter))
+  disk_type: ((iaas-configurations_0_disk_type))
+  ephemeral_datastores_string: ((iaas-configurations_0_ephemeral_datastores_string))
+  name: ((iaas-configurations_0_name))
+  nsx_address: ((iaas-configurations_0_nsx_address))
+  nsx_ca_certificate: ((iaas-configurations_0_nsx_ca_certificate))
+  nsx_mode: ((iaas-configurations_0_nsx_mode))
+  nsx_networking_enabled: ((iaas-configurations_0_nsx_networking_enabled))
+  nsx_username: ((iaas-configurations_0_nsx_username))
+  persistent_datastores_string: ((iaas-configurations_0_persistent_datastores_string))
+  ssl_verification_enabled: ((iaas-configurations_0_ssl_verification_enabled))
+  vcenter_host: ((iaas-configurations_0_vcenter_host))
+  vcenter_username: ((iaas-configurations_0_vcenter_username))
+network-assignment:
+  network:
+    name: PKS-MGMT
+  other_availability_zones: []
+  singleton_availability_zone:
+    name: PKS-MGMT
+networks-configuration:
+  icmp_checks_enabled: false
+  networks:
+  - name: PKS-MGMT
+    subnets:
+    - iaas_identifier: PKS-MGMT
+      cidr: 172.16.11.0/24
+      dns: 192.168.100.50,192.168.100.150
+      gateway: 172.16.11.1
+      reserved_ip_ranges: 172.16.11.1-172.16.11.11
+      availability_zone_names:
+      - PKS-MGMT
+      - AZ1
+      - AZ2
+      - AZ3
+properties-configuration:
+  director_configuration:
+    blobstore_type: local
+    bosh_recreate_on_next_deploy: false
+    bosh_recreate_persistent_disks_on_next_deploy: false
+    database_type: internal
+    director_worker_count: 5
+    encryption: []
+    hm_emailer_options:
+      enabled: false
+    hm_pager_duty_options:
+      enabled: false
+    identification_tags: {}
+    job_configuration_on_tmpfs: false
+    keep_unreachable_vms: false
+    local_blobstore_options:
+      tls_enabled: true
+    max_threads: 8
+    ntp_servers_string: 192.168.100.50
+    post_deploy_enabled: true
+    resurrector_enabled: true
+    retry_bosh_deploys: false
+    skip_director_drain: false
+  dns_configuration: []
+  security_configuration:
+    generate_vm_passwords: ((properties-configuration_security_configuration_generate_vm_passwords))
+    opsmanager_root_ca_trusted_certs: false
+    trusted_certificates: |-
+      -----BEGIN CERTIFICATE-----
+      MIIDUDCCAjigAwIBAgIUeN4e3xRVHKcU5Fg3T3e6FuxjgAIwDQYJKoZIhvcNAQEL
+      BQAwHzELMAkGA1UEBhMCVVMxEDAOBgNVBAoMB1Bpdm90YWwwHhcNMTkwNTE0MDIz
+      MjQxWhcNMjMwNTE1MDIzMjQxWjAfMQswCQYDVQQGEwJVUzEQMA4GA1UECgwHUGl2
+      b3RhbDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJ00K77xzRj18PXH
+      8fpPJrm9AH8OFWtRObH4itekhCitVoKnFFPcG0AGZPuwfVACKqD7Hl/7ej6pt/6O
+      ZoVGkI8lWbhC1WeZWQcMTvAGO8bKuWHcM/tSI+g/94xF0n2CWGV2c5PaZlN5JmdQ
+      mkWcDPXa+krPapv+ImMtw4VNXCfCcuGB3HkSTbqq07SUSu3Mg0+1skPR2qKTD2sg
+      ADQG3aaio0crquBFtnQrI6HYVxh9C1nRK67RH/H2xZmh/lxPs3zoz6W+L0J63uuT
+      Wr5OoNOcLM3r7Geg0mprEQDBpSbhetPDNeKK5YAA0qkocu84WdD/qa3j73rZ5U2J
+      xisNkfMCAwEAAaOBgzCBgDAdBgNVHQ4EFgQUSN4k+I6IZQMYIIYrid4wQKdKbdYw
+      HwYDVR0jBBgwFoAUSN4k+I6IZQMYIIYrid4wQKdKbdYwHQYDVR0lBBYwFAYIKwYB
+      BQUHAwIGCCsGAQUFBwMBMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEG
+      MA0GCSqGSIb3DQEBCwUAA4IBAQBin5YQqY4m+I5rnMlWDfqniBIC64f/A+4U9bwG
+      SXi0UHBWmMBW8G5jUiCnPc4ovYqpnWozZkTghK0JRm58nbv8vCzpdVuG1sFcHPp7
+      m4ktuxckWOTwHu+cNnKLIzsedamzbDLG5ydMCSZm1U0UQWx/KoRkgp+hrVmtudYS
+      /c5wLfGtp3Dfbz2kqgWPRMOLyTB6+ryltj7BWGvftiPh15z9yuOjPscWQ3thbxgc
+      docNC3wRfwmC17gme8VvMeAl3HXJWhqDgTDXBvIjCZzQzPtUWn/kiHRg6dYRZbgn
+      g236nU+eEHSiJwG4e+BVkbtAvyRdsFqMH5LOP6qdKVql935m
+      -----END CERTIFICATE-----
+  syslog_configuration:
+    address: syslog.ragazzilab.com
+    enabled: true
+    forward_debug_logs: false
+    port: "514"
+    tls_enabled: false
+    transport_protocol: udp
+resource-configuration:
+  compilation:
+    instances: automatic
+    instance_type:
+      id: automatic
+  director:
+    instances: automatic
+    persistent_disk:
+      size_mb: automatic
+    instance_type:
+      id: automatic
+vmextensions-configuration: []
+

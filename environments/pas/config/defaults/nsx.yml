@@ -1,0 +1,7 @@
+properties.enable_snat: true
+properties.exit_on_disconnection: enable
+properties.log_dropped_traffic: false
+properties.ncp_debug_log: false
+properties.nsx_auth: simple
+properties.nsx_node_agent_debug_log: false
+properties.subnet_prefix: 24

@@ -1,0 +1,13 @@
+az1_name: AZ1
+az2_name: AZ2
+az3_name: AZ3
+healthwatch-forwarder/foundation_name: pas
+healthwatch-forwarder/health_check_az: AZ1
+network_name: deployment
+opsman/enable/url: https://om.pas.ragazzilab.com
+service_network_name: services
+singleton_availability_zone: AZ1
+push-apps_post_deploy_state: off
+smoke-tests_post_deploy_state: off
+mysql_instances: 1
+redis_instances: 1

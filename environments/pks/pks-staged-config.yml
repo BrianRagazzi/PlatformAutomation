@@ -1,0 +1,212 @@
+product-name: pivotal-container-service
+product-properties:
+  .pivotal-container-service.pks_tls:
+    value:
+      cert_pem: ((pivotal-container-service_pks_tls.cert_pem))
+      private_key_pem: ((pivotal-container-service_pks_tls.private_key_pem))
+  .properties.cloud_provider:
+    selected_option: vsphere
+    value: vSphere
+  .properties.cloud_provider.vsphere.vcenter_dc:
+    value: LAB
+  .properties.cloud_provider.vsphere.vcenter_ds:
+    value: EQL-THIN01
+  .properties.cloud_provider.vsphere.vcenter_ip:
+    value: corevcsa1.ragazzilab.com
+  .properties.cloud_provider.vsphere.vcenter_master_creds:
+    value:
+      identity: ((properties_cloud_provider_vsphere_vcenter_master_creds.identity))
+      password: ((properties_cloud_provider_vsphere_vcenter_master_creds.password))
+  .properties.cloud_provider.vsphere.vcenter_vms:
+    value: BOSH/PKS/VMs
+  .properties.log_sink_resources_deploy:
+    value: true
+  .properties.metric_sink_resources_deploy:
+    value: true
+  .properties.network_selector:
+    selected_option: nsx
+    value: nsx
+  .properties.network_selector.nsx.cloud-config-dns:
+    value: 192.168.100.50,192.168.100.150
+  .properties.network_selector.nsx.floating-ip-pool-ids:
+    value: 91ae51a7-1550-41c1-bb37-6533fe153390
+  .properties.network_selector.nsx.ip-block-id:
+    value: fe35b421-a184-426d-b671-2adc2b731929
+  .properties.network_selector.nsx.lb_size_large_supported:
+    value: true
+  .properties.network_selector.nsx.lb_size_medium_supported:
+    value: true
+  .properties.network_selector.nsx.nat_mode:
+    value: true
+  .properties.network_selector.nsx.network_automation:
+    value: true
+  .properties.network_selector.nsx.nodes-ip-block-id:
+    value: 8a4fd33b-6da5-46c5-bd38-565685ba5d31
+  .properties.network_selector.nsx.nsx-t-ca-cert:
+    value: "-----BEGIN CERTIFICATE-----\r\nMIIFyTCCBLGgAwIBAgITKgAAAF34zgDiAIZ+QQAAAAAAXTANBgkqhkiG9w0BAQsF\r\nADBSMRMwEQYKCZImiZPyLGQBGRYDY29tMRowGAYKCZImiZPyLGQBGRYKcmFnYXp6\r\naWxhYjEfMB0GA1UEAxMWcmFnYXp6aWxhYi1DT1JFQURDMS1DQTAeFw0xOTA1MTQy\r\nMDU5MjdaFw0yMTA1MTMyMDU5MjdaMHsxCzAJBgNVBAYTAlVTMRQwEgYDVQQIEwtt\r\naXNzaXNzaXBwaTEQMA4GA1UEBxMHbWFkaXNvbjEQMA4GA1UEChMHUmFnYXp6aTEO\r\nMAwGA1UECxMFYXR0aWMxIjAgBgNVBAMTGWNvcmVuc3htZ3IucmFnYXp6aWxhYi5j\r\nb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDWPZPNU1IrSUXMqpKy\r\n7x4EC87fX3qbNfKSGYdym+D/8cX6f2UoXiRHW3gsw030Kgq7NzFwEAVvBXwdWXz9\r\nLNzmFLjtydXUjLOu4cOqJuqq76PwWbKn/iTgW6xucmdi+qwsj+yjtBqkHY2wWI11\r\ncsX4d7oxNzVnOYFTKIHHYBx6HivmJcCtEo1mnjDjr5vaPH3sRR0EG3rZWZb5xTEe\r\nuWFDdslfJldu4T4JZ2imDLZR8D9nt8VA1em5sk3/9MBplH2GJpxpfQYIwhrEnJKO\r\nrAUkVo/n26kKfODj1d8IHPQObYq6glsO10sx21e7mfNxWCbVuvE6X5keMjyK4LlA\r\nz2E/AgMBAAGjggJtMIICaTAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYIKwYB\r\nBQUHAwEwNgYDVR0RBC8wLYIKY29yZW5zeG1ncoIZY29yZW5zeG1nci5yYWdhenpp\r\nbGFiLmNvbYcEwKhkKjAdBgNVHQ4EFgQUNwbEAqM092ITmqeojwBf9c2CPP4wHwYD\r\nVR0jBBgwFoAUYiWuvUtgt6ruwFYsGG22doeTOkIwgdgGA1UdHwSB0DCBzTCByqCB\r\nx6CBxIaBwWxkYXA6Ly8vQ049cmFnYXp6aWxhYi1DT1JFQURDMS1DQSxDTj1DT1JF\r\nQURDMSxDTj1DRFAsQ049UHVibGljJTIwS2V5JTIwU2VydmljZXMsQ049U2Vydmlj\r\nZXMsQ049Q29uZmlndXJhdGlvbixEQz1yYWdhenppbGFiLERDPWNvbT9jZXJ0aWZp\r\nY2F0ZVJldm9jYXRpb25MaXN0P2Jhc2U/b2JqZWN0Q2xhc3M9Y1JMRGlzdHJpYnV0\r\naW9uUG9pbnQwgcsGCCsGAQUFBwEBBIG+MIG7MIG4BggrBgEFBQcwAoaBq2xkYXA6\r\nLy8vQ049cmFnYXp6aWxhYi1DT1JFQURDMS1DQSxDTj1BSUEsQ049UHVibGljJTIw\r\nS2V5JTIwU2VydmljZXMsQ049U2VydmljZXMsQ049Q29uZmlndXJhdGlvbixEQz1y\r\nYWdhenppbGFiLERDPWNvbT9jQUNlcnRpZmljYXRlP2Jhc2U/b2JqZWN0Q2xhc3M9\r\nY2VydGlmaWNhdGlvbkF1dGhvcml0eTAhBgkrBgEEAYI3FAIEFB4SAFcAZQBiAFMA\r\nZQByAHYAZQByMA0GCSqGSIb3DQEBCwUAA4IBAQAvV5YGMR//uOsFIHygO6gH/uMT\r\n45331Wjbch3S+Il8Ao22Qt1qAapRDUZJisqbMhgxWD+jOFxu+XclIBnRa6M+Yrgw\r\nEVyKWZv956+4np5oJQg1JdSlSigaPA3Fpg+M1JajrgzOJc/c1LvGeOpAylam1r9G\r\nYH9YqQX7JZwuxusmQH7J0B2Gbbx7P1olYKRy24BsuMxMRAbZSPdEYVWhQjZd+Pho\r\nLvS1xSPacOXI2PW4/5jIIqKEpkUDaFx++AbSh9NPQWZeQbCQQrNBKWdgp03k7YOC\r\nBpe2SrsaJ4ccnGYBT/pKZAVTMaJLAAhNvdHU0yyyl9Vt0ctOf2wmUPoy/Nvf\r\n-----END
+      CERTIFICATE-----\r\n-----BEGIN CERTIFICATE-----\r\nMIIDfzCCAmegAwIBAgIQLjYGHcW8Ia1JvAwqn7vuFDANBgkqhkiG9w0BAQUFADBS\r\nMRMwEQYKCZImiZPyLGQBGRYDY29tMRowGAYKCZImiZPyLGQBGRYKcmFnYXp6aWxh\r\nYjEfMB0GA1UEAxMWcmFnYXp6aWxhYi1DT1JFQURDMS1DQTAeFw0xNDEyMTgxOTMz\r\nMzlaFw0yNDEyMTgxOTQzMzlaMFIxEzARBgoJkiaJk/IsZAEZFgNjb20xGjAYBgoJ\r\nkiaJk/IsZAEZFgpyYWdhenppbGFiMR8wHQYDVQQDExZyYWdhenppbGFiLUNPUkVB\r\nREMxLUNBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA+NGGixl/a5DB\r\nnv1RKMJz32aXvgYbcg03oEwdAQlM3ENvoGaC6ESFnki6izBl5tQ9EnUBvirq2LPZ\r\nRL/1a8Ah2RgDD1pdL4h3Wv2EY/8zqlK26OxYOapdysqWLojPUkdNfyyBw9W1dCk7\r\nYDwoC55aQVkmL83KIOSQP/GEc0E25CXKkA8scktXRBqUSL8VNqb4wH4UEXvIgK+x\r\nNVSR0bNjNdcaXBiwLQov7Dk7+9zZ4pXudogNh4mmGPfrgYnskc7TscFl1ymNOQ8+\r\nl412RqrO7/83mGbpf7LT+rGXXZWhY0CtqRew3PgljhBnuA2K/C+T8p05XA/GSETb\r\nCpskdZazFQIDAQABo1EwTzALBgNVHQ8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAd\r\nBgNVHQ4EFgQUYiWuvUtgt6ruwFYsGG22doeTOkIwEAYJKwYBBAGCNxUBBAMCAQAw\r\nDQYJKoZIhvcNAQEFBQADggEBAJDjTjVQXJJ51W+lefpuunpzT0EPDM3I1+/A94yl\r\nFzKX4FlONkYCj/7wNtZ+B65a3CihOf0/q0hqmcHKiu6Ldt5tTYL3hvWs7l9m17Jg\r\n1M9IpuOUuEPo0v9qUn45J+42Of1L1/cSq5Q1mM59oN1UmNy9ik9DyS/yKDVdLGLo\r\ngL5nn4UebvZ2ofiAEQQgKCVox3HXseQ5ZQHU50S/7UYoOySIwdEwcdZhrQ8iNvNE\r\nY+ZO5iSv4zVA1BuzFSa1pq6RhOm4XRt2s09FZOIpWtMqbixUil5ddYmWpIGkpGGy\r\nSyIq7aD3tt6rkNFhFiPKgOC4lRmjNlLNKzJ8zJNAd6wEcMk=\r\n-----END
+      CERTIFICATE-----\r\n"
+  .properties.network_selector.nsx.nsx-t-host:
+    value: corensxmgr.ragazzilab.com
+  .properties.network_selector.nsx.nsx-t-insecure:
+    value: true
+  .properties.network_selector.nsx.nsx-t-superuser-certificate:
+    value:
+      cert_pem: ((properties_network_selector_nsx_nsx-t-superuser-certificate.cert_pem))
+      private_key_pem: ((properties_network_selector_nsx_nsx-t-superuser-certificate.private_key_pem))
+  .properties.network_selector.nsx.t0-router-id:
+    value: 8bc98e0c-17ec-43b7-9819-a8f9a8c4233f
+  .properties.network_selector.nsx.vcenter_cluster:
+    value: attic
+  .properties.pks-vrli:
+    selected_option: enabled
+    value: enabled
+  .properties.pks-vrli.enabled.host:
+    value: syslog.ragazzilab.com
+  .properties.pks-vrli.enabled.skip_cert_verify:
+    value: true
+  .properties.pks-vrli.enabled.use_ssl:
+    value: true
+  .properties.pks-vrops:
+    selected_option: disabled
+    value: disabled
+  .properties.pks_api_hostname:
+    value: api.pks.ragazzilab.com
+  .properties.plan1_selector:
+    selected_option: active
+    value: Plan Active
+  .properties.plan1_selector.active.allow_privileged_containers:
+    value: false
+  .properties.plan1_selector.active.description:
+    value: Default small plan for K8s cluster
+  .properties.plan1_selector.active.master_az_placement:
+    value:
+    - AZ1
+  .properties.plan1_selector.active.master_instances:
+    value: 1
+  .properties.plan1_selector.active.master_persistent_disk_type:
+    value: "10240"
+  .properties.plan1_selector.active.master_vm_type:
+    value: medium
+  .properties.plan1_selector.active.max_worker_instances:
+    value: 50
+  .properties.plan1_selector.active.name:
+    value: small
+  .properties.plan1_selector.active.worker_az_placement:
+    value:
+    - AZ1
+    - AZ2
+    - AZ3
+  .properties.plan1_selector.active.worker_instances:
+    value: 1
+  .properties.plan2_selector:
+    selected_option: active
+    value: Plan Active
+  .properties.plan2_selector.active.allow_privileged_containers:
+    value: false
+  .properties.plan2_selector.active.description:
+    value: Medium workloads
+  .properties.plan2_selector.active.master_az_placement:
+    value:
+    - AZ1
+    - AZ2
+    - AZ3
+  .properties.plan2_selector.active.master_instances:
+    value: 3
+  .properties.plan2_selector.active.master_persistent_disk_type:
+    value: "10240"
+  .properties.plan2_selector.active.max_worker_instances:
+    value: 50
+  .properties.plan2_selector.active.name:
+    value: medium
+  .properties.plan2_selector.active.worker_az_placement:
+    value:
+    - AZ1
+    - AZ2
+    - AZ3
+  .properties.plan2_selector.active.worker_instances:
+    value: 3
+  .properties.plan2_selector.active.worker_vm_type:
+    value: medium
+  .properties.plan3_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.plan4_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.plan5_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.plan6_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.plan7_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.plan8_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.plan9_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.plan10_selector:
+    selected_option: inactive
+    value: Plan Inactive
+  .properties.proxy_selector:
+    selected_option: disabled
+    value: Disabled
+  .properties.syslog_selector:
+    selected_option: disabled
+    value: disabled
+  .properties.telemetry_selector:
+    selected_option: disabled
+    value: disabled
+  .properties.uaa:
+    selected_option: internal
+    value: internal
+  .properties.uaa_oidc:
+    value: false
+  .properties.uaa_pks_cli_access_token_lifetime:
+    value: 86400
+  .properties.uaa_pks_cli_refresh_token_lifetime:
+    value: 172800
+  .properties.vm_extensions:
+    value:
+    - public_ip
+  .properties.wavefront:
+    selected_option: disabled
+    value: disabled
+  .properties.worker_max_in_flight:
+    value: 1
+network-properties:
+  network:
+    name: PKS-MGMT
+  other_availability_zones:
+  - name: AZ1
+  - name: AZ2
+  - name: AZ3
+  service_network:
+    name: PKS-MGMT
+  singleton_availability_zone:
+    name: PKS-MGMT
+resource-config:
+  pivotal-container-service:
+    instances: automatic
+    persistent_disk:
+      size_mb: automatic
+    instance_type:
+      id: automatic
+errand-config:
+  delete-all-clusters:
+    pre-delete-state: true
+  pks-nsx-t-precheck:
+    post-deploy-state: true
+  smoke-tests:
+    post-deploy-state: false
+  upgrade-all-service-instances:
+    post-deploy-state: true
+  wavefront-alert-creation:
+    post-deploy-state: false
+  wavefront-alert-deletion:
+    pre-delete-state: false
+
