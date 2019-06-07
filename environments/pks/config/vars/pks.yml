@@ -1,0 +1,74 @@
+
+properties_cloud_provider_vcenter_dc: LAB
+properties_cloud_provider_vcenter_ds: EQL-THIN01
+properties_cloud_provider_vcenter_ip: corevcsa1.ragazzilab.com
+properties_cloud_provider_vcenter_vms: BOSH/PKS/VMs
+properties_network_selector: nsx
+properties.network_selector.nsx.cloud-config-dns: 192.168.100.50,192.168.100.150
+properties.network_selector.nsx.floating-ip-pool-ids: 91ae51a7-1550-41c1-bb37-6533fe153390
+properties.network_selector.nsx.ip-block-id: fe35b421-a184-426d-b671-2adc2b731929
+properties.network_selector.nsx.nodes-ip-block-id: 8a4fd33b-6da5-46c5-bd38-565685ba5d31
+properties.network_selector.nsx.lb_size_large_supported: false
+properties.network_selector.nsx.lb_size_medium_supported: true
+properties.network_selector.nsx.nat_mode: true
+properties.network_selector.nsx.network_automation: true
+properties.network_selector.nsx.nsx-t-insecure: true
+properties.network_selector.nsx.t0-router-id: 8bc98e0c-17ec-43b7-9819-a8f9a8c4233f
+properties.network_selector.nsx.vcenter_cluster: attic
+properties.pks-vrli: enabled
+properties.pks-vrli.enabled.host: syslog.ragazzilab.com
+properties.pks-vrli.enabled.skip_cert_verify: true
+properties.pks-vrops: disabled
+properties.pks_api_hostname: api.pks.ragazzilab.com
+az1_name: AZ1
+az2_name: AZ2
+az3_name: AZ3
+properties.worker_max_in_flight: 1
+network_name: PKS-MGMT
+service_network: PKS_MGMT
+singleton_availability_zone: PKS-MGMT
+
+properties.plan1_selector.active.name: small
+properties.plan1_selector_value: "Plan Active"
+properties.plan1_selector.active.allow_privileged_containers: true
+properties.plan1_selector.active.description: "1 master 1 worker"
+properties.plan1_selector.active.master_az_placement: [AZ1]
+properties.plan1_selector.active.master_instances: 1
+properties.plan1_selector.active.master_persistent_disk_type: "10240"
+properties.plan1_selector.active.max_worker_instances: 3
+properties.plan1_selector.active.worker_instances: 1
+properties.plan1_selector.active.worker_az_placement: [AZ1,AZ2,AZ3]
+properties.plan1_selector.active.admission_plugins: [deny_escalating_exec]
+properties.plan1_selector.active.master_vm_type: medium
+properties.plan1_selector.active.worker_vm_type: medium
+properties.plan1_selector.active.errand_vm_type: micro
+
+properties.plan2_selector.active.name: medium
+properties.plan2_selector_value: "Plan Active"
+properties.plan2_selector.active.allow_privileged_containers: true
+properties.plan2_selector.active.description: "1 master 3 workers"
+properties.plan2_selector.active.master_az_placement: [AZ1]
+properties.plan2_selector.active.master_instances: 1
+properties.plan2_selector.active.master_persistent_disk_type: "10240"
+properties.plan2_selector.active.max_worker_instances: 3
+properties.plan2_selector.active.worker_instances: 1
+properties.plan2_selector.active.worker_az_placement: [AZ1,AZ2,AZ3]
+properties.plan2_selector.active.admission_plugins: [deny_escalating_exec]
+properties.plan2_selector.active.master_vm_type: medium
+properties.plan2_selector.active.worker_vm_type: medium
+properties.plan2_selector.active.errand_vm_type: micro
+
+properties.plan3_selector.active.name: large
+properties.plan3_selector_value: "Plan Active"
+properties.plan3_selector.active.allow_privileged_containers: true
+properties.plan3_selector.active.description: "3 masters 3 workers"
+properties.plan3_selector.active.master_az_placement: [AZ1,AZ2,AZ3]
+properties.plan3_selector.active.master_instances: 3
+properties.plan3_selector.active.master_persistent_disk_type: "10240"
+properties.plan3_selector.active.max_worker_instances: 3
+properties.plan3_selector.active.worker_instances: 3
+properties.plan3_selector.active.worker_az_placement: [AZ1,AZ2,AZ3]
+properties.plan3_selector.active.admission_plugins: [deny_escalating_exec]
+properties.plan3_selector.active.master_vm_type: medium
+properties.plan3_selector.active.worker_vm_type: medium
+properties.plan3_selector.active.errand_vm_type: micro
