@@ -89,7 +89,7 @@ jobs:
   - aggregate:
     - get: opsman-image
     - get: configuration
-      trigger: true
+      trigger: false
     - get: state
     - get: platform-automation-image
       resource: platform-automation
@@ -111,7 +111,7 @@ jobs:
       CREDHUB_SERVER: ((credhub_server))
       CREDHUB_CA_CERT: ((credhub_ca_cert))
       PREFIX: '/foundation/((foundation))'
-      INTERPOLATION_PATH: "environments/((foundation))/config/secrets"
+      INTERPOLATION_PATHS: "environments/((foundation))/config/secrets"
     input_mapping:
       files: configuration
 
@@ -157,7 +157,7 @@ jobs:
   - task: configure-authentication
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-authentication.yml
-    attempts: 20
+    attempts: 10
     input_mapping:
       env: interpolated-files
       config: interpolated-files
@@ -186,13 +186,12 @@ jobs:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
 
-- name: pas
+- name: pks
   serial: true
   plan:
   - aggregate:
     - get: configuration
-      trigger: true
-      passed: [ install-opsman ]
+      trigger: false
     - get: pks-product
     - get: pks-stemcell
     - get: harbor-stemcell
@@ -202,6 +201,7 @@ jobs:
         unpack: true
         globs: ["*image*"]
     - get: platform-automation-tasks
+      passed: [ install-opsman ]
       resource: platform-automation
       params:
         unpack: true
@@ -262,11 +262,11 @@ jobs:
       vars: configuration
       secrets: interpolated-files
     params:
-      CONFIG_FILE: environments/((foundation))/config/templates/cf.yml
+      CONFIG_FILE: environments/((foundation))/config/templates/pks.yml
       VARS_FILES: |
-        vars/environments/((foundation))/config/defaults/cf.yml
-        vars/environments/((foundation))/config/vars/cf.yml
-        secrets/environments/((foundation))/config/secrets/cf.yml
+        vars/environments/((foundation))/config/defaults/pks.yml
+        vars/environments/((foundation))/config/vars/pks.yml
+        secrets/environments/((foundation))/config/secrets/pks.yml
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
 - name: harbor
@@ -275,14 +275,14 @@ jobs:
   - aggregate:
     - get: harbor-product
     - get: configuration
-      trigger: true
-      passed: [ pas ]
+      trigger: false
     - get: platform-automation-image
       resource: platform-automation
       params:
         unpack: true
         globs: ["*image*"]
     - get: platform-automation-tasks
+      passed: [ pks ]
       resource: platform-automation
       params:
         unpack: true
@@ -341,7 +341,7 @@ jobs:
   - aggregate:
     - get: configuration
       trigger: false
-      passed: [ pas ]
+      passed: [ pks, harbor ]
     - get: platform-automation-image
       resource: platform-automation
       params:

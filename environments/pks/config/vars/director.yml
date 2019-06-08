@@ -17,6 +17,7 @@ pks_mgmt_gateway: 10.16.11.1
 pks_mgmt_network_cidr: 10.16.11.0/24
 pks_mgmt_network_reserved: 10.16.11.1-10.16.11.11
 
+max_threads: 5
 vsphere_datastore: EQL-THIN01
 vsphere_datacenter: LAB
 dns: 192.168.100.50,192.168.100.150

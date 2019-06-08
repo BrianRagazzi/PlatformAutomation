@@ -27,139 +27,139 @@ product-properties:
     selected_option: properties_network_selector
     value: properties_network_selector
   .properties.network_selector.nsx.cloud-config-dns:
-    value: ((properties.network_selector.nsx.cloud-config-dns))
+    value: ((properties_network_selector_nsx_cloud-config-dns))
   .properties.network_selector.nsx.floating-ip-pool-ids:
-    value: ((properties.network_selector.nsx.floating-ip-pool-ids))
+    value: ((properties_network_selector_nsx_floating-ip-pool-ids))
   .properties.network_selector.nsx.ip-block-id:
-    value: ((properties.network_selector.nsx.ip-block-id))
+    value: ((properties_network_selector_nsx_ip-block-id))
   .properties.network_selector.nsx.lb_size_large_supported:
-    value: ((properties.network_selector.nsx.lb_size_large_supported))
+    value: ((properties_network_selector_nsx_lb_size_large_supported))
   .properties.network_selector.nsx.lb_size_medium_supported:
-    value: ((properties.network_selector.nsx.lb_size_medium_supported))
+    value: ((properties_network_selector_nsx_lb_size_medium_supported))
   .properties.network_selector.nsx.nat_mode:
-    value: ((properties.network_selector.nsx.nat_mode))
+    value: ((properties_network_selector_nsx_nat_mode))
   .properties.network_selector.nsx.network_automation:
-    value: ((properties.network_selector.nsx.network_automation))
+    value: ((properties_network_selector_nsx_network_automation))
   .properties.network_selector.nsx.nodes-ip-block-id:
-    value: ((properties.network_selector.nsx.nodes-ip-block-id))
+    value: ((properties_network_selector_nsx_nodes-ip-block-id))
   .properties.network_selector.nsx.nsx-t-ca-cert:
-    value: ((properties.nsx_api_ca_cert))
+    value: ((properties_nsx_api_ca_cert))
   .properties.network_selector.nsx.nsx-t-host:
     value: corensxmgr.ragazzilab.com
   .properties.network_selector.nsx.nsx-t-insecure:
-    value: ((properties.network_selector.nsx.nsx-t-insecure))
+    value: ((properties_network_selector_nsx_nsx-t-insecure))
   .properties.network_selector.nsx.nsx-t-superuser-certificate:
     value:
       cert_pem: ((properties_network_selector_nsx_nsx-t-superuser-certificate.cert_pem))
       private_key_pem: ((properties_network_selector_nsx_nsx-t-superuser-certificate.private_key_pem))
   .properties.network_selector.nsx.t0-router-id:
-    value: ((properties.network_selector.nsx.t0-router-id))
+    value: ((properties_network_selector_nsx_t0-router-id))
   .properties.network_selector.nsx.vcenter_cluster:
-    value: ((properties.network_selector.nsx.vcenter_cluster))
+    value: ((properties_network_selector_nsx_vcenter_cluster))
   .properties.pks-vrli:
-    selected_option: ((properties.pks-vrli))
-    value: ((properties.pks-vrli))
+    selected_option: ((properties_pks-vrli))
+    value: ((properties_pks-vrli))
   .properties.pks-vrli.enabled.host:
-    value: ((properties.pks-vrli.enabled.host))
+    value: ((properties_pks-vrli.enabled.host))
   .properties.pks-vrli.enabled.skip_cert_verify:
-    value: ((properties.pks-vrli.enabled.skip_cert_verify))
+    value: ((properties_pks-vrli.enabled.skip_cert_verify))
   .properties.pks-vrli.enabled.use_ssl:
-    value: ((properties.pks-vrli.enabled.use_ssl))
+    value: ((properties_pks-vrli.enabled.use_ssl))
   .properties.pks-vrops:
-    selected_option: ((properties.pks-vrops))
-    value: ((properties.pks-vrops))
+    selected_option: ((properties_pks-vrops))
+    value: ((properties_pks-vrops))
   .properties.pks_api_hostname:
-    value: ((properties.pks_api_hostname))
+    value: ((properties_pks_api_hostname))
 
   .properties.plan1_selector:
-    value: ((properties.plan1_selector_value))
+    value: ((properties_plan1_selector_value))
   .properties.plan1_selector.active.allow_privileged_containers:
-    value: ((properties.plan1_selector.active.allow_privileged_containers))
+    value: ((properties_plan1_selector_active_allow_privileged_containers))
   .properties.plan1_selector.active.description:
-    value: ((properties.plan1_selector.active.description))
+    value: ((properties_plan1_selector_active_description))
   .properties.plan1_selector.active.master_az_placement:
     value:
-    - ((properties.plan1_selector.active.master_az_placement))
+    - ((properties_plan1_selector_active_master_az_placement))
   .properties.plan1_selector.active.master_instances:
-    value: ((properties.plan1_selector.active.master_instances))
+    value: ((properties_plan1_selector_active_master_instances))
   .properties.plan1_selector.active.master_persistent_disk_type:
-    value: ((properties.plan1_selector.active.master_persistent_disk_type))
+    value: ((properties_plan1_selector_active_master_persistent_disk_type))
   .properties.plan1_selector.active.max_worker_instances:
-    value: ((properties.plan1_selector.active.max_worker_instances))
+    value: ((properties_plan1_selector_active_max_worker_instances))
   .properties.plan1_selector.active.name:
-    value: ((properties.plan1_selector.active.name))
+    value: ((properties_plan1_selector_active_name))
   .properties.plan1_selector.active.worker_az_placement:
-    value: ((properties.plan1_selector.active.worker_az_placement))
+    value: ((properties_plan1_selector_active_worker_az_placement))
   .properties.plan1_selector.active.worker_instances:
-    value: ((properties.plan1_selector.active.worker_instances))
+    value: ((properties_plan1_selector_active_worker_instances))
   .properties.plan1_selector.active.allow_privileged_containers:
-    value: ((properties.plan1_selector.active.allow_privileged_containers))
+    value: ((properties_plan1_selector_active_allow_privileged_containers))
   .properties.plan1_selector.active.errand_vm_type:
-    value: ((properties.plan1_selector.active.errand_vm_type))
+    value: ((properties_plan1_selector_active_errand_vm_type))
   .properties.plan1_selector.active.master_vm_type:
-    value: ((properties.plan1_selector.active.master_vm_type))
+    value: ((properties_plan1_selector_active_master_vm_type))
   .properties.plan1_selector.active.worker_vm_type:
-    value: ((properties.plan1_selector.active.worker_vm_type))
+    value: ((properties_plan1_selector_active_worker_vm_type))
 
   .properties.plan2_selector:
-    value: ((properties.plan2_selector_value))
+    value: ((properties_plan2_selector_value))
   .properties.plan2_selector.active.allow_privileged_containers:
-    value: ((properties.plan2_selector.active.allow_privileged_containers))
+    value: ((properties_plan2_selector_active_allow_privileged_containers))
   .properties.plan2_selector.active.description:
-    value: ((properties.plan2_selector.active.description))
+    value: ((properties_plan2_selector_active_description))
   .properties.plan2_selector.active.master_az_placement:
     value:
-    - ((properties.plan2_selector.active.master_az_placement))
+    - ((properties_plan2_selector_active_master_az_placement))
   .properties.plan2_selector.active.master_instances:
-    value: ((properties.plan2_selector.active.master_instances))
+    value: ((properties_plan2_selector_active_master_instances))
   .properties.plan2_selector.active.master_persistent_disk_type:
-    value: ((properties.plan2_selector.active.master_persistent_disk_type))
+    value: ((properties_plan2_selector_active_master_persistent_disk_type))
   .properties.plan2_selector.active.max_worker_instances:
-    value: ((properties.plan2_selector.active.max_worker_instances))
+    value: ((properties_plan2_selector_active_max_worker_instances))
   .properties.plan2_selector.active.name:
-    value: ((properties.plan2_selector.active.name))
+    value: ((properties_plan2_selector_active_name))
   .properties.plan2_selector.active.worker_az_placement:
-    value: ((properties.plan2_selector.active.worker_az_placement))
+    value: ((properties_plan2_selector_active_worker_az_placement))
   .properties.plan2_selector.active.worker_instances:
-    value: ((properties.plan2_selector.active.worker_instances))
+    value: ((properties_plan2_selector_active_worker_instances))
   .properties.plan2_selector.active.allow_privileged_containers:
-    value: ((properties.plan2_selector.active.allow_privileged_containers))
+    value: ((properties_plan2_selector_active_allow_privileged_containers))
   .properties.plan2_selector.active.errand_vm_type:
-    value: ((properties.plan2_selector.active.errand_vm_type))
+    value: ((properties_plan2_selector_active_errand_vm_type))
   .properties.plan2_selector.active.master_vm_type:
-    value: ((properties.plan2_selector.active.master_vm_type))
+    value: ((properties_plan2_selector_active_master_vm_type))
   .properties.plan2_selector.active.worker_vm_type:
-    value: ((properties.plan2_selector.active.worker_vm_type))
+    value: ((properties_plan2_selector_active_worker_vm_type))
 
   .properties.plan3_selector:
-    value: ((properties.plan3_selector_value))
+    value: ((properties_plan3_selector_value))
   .properties.plan3_selector.active.allow_privileged_containers:
-    value: ((properties.plan3_selector.active.allow_privileged_containers))
+    value: ((properties_plan3_selector_active_allow_privileged_containers))
   .properties.plan3_selector.active.description:
-    value: ((properties.plan3_selector.active.description))
+    value: ((properties_plan3_selector_active_description))
   .properties.plan3_selector.active.master_az_placement:
     value:
-    - ((properties.plan3_selector.active.master_az_placement))
+    - ((properties_plan3_selector_active_master_az_placement))
   .properties.plan3_selector.active.master_instances:
-    value: ((properties.plan3_selector.active.master_instances))
+    value: ((properties_plan3_selector_active_master_instances))
   .properties.plan3_selector.active.master_persistent_disk_type:
-    value: ((properties.plan3_selector.active.master_persistent_disk_type))
+    value: ((properties_plan3_selector_active_master_persistent_disk_type))
   .properties.plan3_selector.active.max_worker_instances:
-    value: ((properties.plan3_selector.active.max_worker_instances))
+    value: ((properties_plan3_selector_active_max_worker_instances))
   .properties.plan3_selector.active.name:
-    value: ((properties.plan3_selector.active.name))
+    value: ((properties_plan3_selector_active_name))
   .properties.plan3_selector.active.worker_az_placement:
-    value: ((properties.plan3_selector.active.worker_az_placement))
+    value: ((properties_plan3_selector_active_worker_az_placement))
   .properties.plan3_selector.active.worker_instances:
-    value: ((properties.plan3_selector.active.worker_instances))
+    value: ((properties_plan3_selector_active_worker_instances))
   .properties.plan3_selector.active.allow_privileged_containers:
-    value: ((properties.plan3_selector.active.allow_privileged_containers))
+    value: ((properties_plan3_selector_active_allow_privileged_containers))
   .properties.plan3_selector.active.errand_vm_type:
-    value: ((properties.plan3_selector.active.errand_vm_type))
+    value: ((properties_plan3_selector_active_errand_vm_type))
   .properties.plan3_selector.active.master_vm_type:
-    value: ((properties.plan3_selector.active.master_vm_type))
+    value: ((properties_plan3_selector_active_master_vm_type))
   .properties.plan3_selector.active.worker_vm_type:
-    value: ((properties.plan3_selector.active.worker_vm_type))
+    value: ((properties_plan3_selector_active_worker_vm_type))
 
 
 
@@ -197,18 +197,18 @@ product-properties:
     selected_option: internal
     value: internal
   .properties.uaa_oidc:
-    value: ((properties.uaa_oidc))
+    value: ((properties_uaa_oidc))
   .properties.uaa_pks_cli_access_token_lifetime:
-    value: ((properties.uaa_pks_cli_access_token_lifetime))
+    value: ((properties_uaa_pks_cli_access_token_lifetime))
   .properties.uaa_pks_cli_refresh_token_lifetime:
-    value: ((properties.uaa_pks_cli_refresh_token_lifetime))
+    value: ((properties_uaa_pks_cli_refresh_token_lifetime))
   .properties.vm_extensions:
     value:
     - public_ip
   .properties.wavefront:
-    value: ((properties.wavefront))
+    value: ((properties_wavefront))
   .properties.worker_max_in_flight:
-    value: ((properties.worker_max_in_flight))
+    value: ((properties_worker_max_in_flight))
 network-properties:
   network:
     name: ((network_name))
@@ -224,19 +224,19 @@ resource-config:
   pivotal-container-service:
     instances: automatic
     persistent_disk:
-      size_mb: ((resource-config.persistent_disk))
+      size_mb: ((resource-config_persistent_disk))
     instance_type:
-      id: ((resource-config.instance_type))
+      id: ((resource-config_instance_type))
 errand-config:
   delete-all-clusters:
-    pre-delete-state: ((errand-config.delete-all-clusters))
+    pre-delete-state: ((errand-config_delete-all-clusters))
   pks-nsx-t-precheck:
-    post-deploy-state: ((errand-config.pks-nsx-t-precheck))
+    post-deploy-state: ((errand-config_pks-nsx-t-precheck))
   smoke-tests:
-    post-deploy-state: ((errand-config.smoke-tests))
+    post-deploy-state: ((errand-config_smoke-tests))
   upgrade-all-service-instances:
-    post-deploy-state: ((errand-config.update-all-service-instances))
+    post-deploy-state: ((errand-config_update-all-service-instances))
   wavefront-alert-creation:
-    post-deploy-state: ((errand-config.wavefront-alert-creation))
+    post-deploy-state: ((errand-config_wavefront-alert-creation))
   wavefront-alert-deletion:
-    pre-delete-state: ((errand-config.wavefront-alert-deletion))
+    pre-delete-state: ((errand-config_wavefront-alert-deletion))
