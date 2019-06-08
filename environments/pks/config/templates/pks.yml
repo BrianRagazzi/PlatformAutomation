@@ -60,11 +60,11 @@ product-properties:
     selected_option: ((properties_pks-vrli))
     value: ((properties_pks-vrli))
   .properties.pks-vrli.enabled.host:
-    value: ((properties_pks-vrli.enabled.host))
+    value: ((properties_pks-vrli_enabled_host))
   .properties.pks-vrli.enabled.skip_cert_verify:
-    value: ((properties_pks-vrli.enabled.skip_cert_verify))
+    value: ((properties_pks-vrli_enabled_skip_cert_verify))
   .properties.pks-vrli.enabled.use_ssl:
-    value: ((properties_pks-vrli.enabled.use_ssl))
+    value: ((properties_pks-vrli_enabled.use_ssl))
   .properties.pks-vrops:
     selected_option: ((properties_pks-vrops))
     value: ((properties_pks-vrops))
