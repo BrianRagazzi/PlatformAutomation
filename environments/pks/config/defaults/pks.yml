@@ -7,7 +7,7 @@ properties_network_selector_nsx_lb_size_medium_supported: true
 properties_network_selector_nsx_nat_mode: true
 properties_network_selector_nsx_network_automation: true
 properties_network_selector_nsx_nsx-t-insecure: false
-properties_pks-vrli: disabled
+properties_pks-vrli_enabled: disabled
 properties_pks-vrli_enabled_skip_cert_verify: false
 properties_pks-vrli_enabled_use_ssl: true
 properties_pks-vrops: disabled

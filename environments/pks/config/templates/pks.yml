@@ -57,8 +57,7 @@ product-properties:
   .properties.network_selector.nsx.vcenter_cluster:
     value: ((properties_network_selector_nsx_vcenter_cluster))
   .properties.pks-vrli:
-    selected_option: ((properties_pks-vrli))
-    value: ((properties_pks-vrli))
+    value: ((properties_pks-vrli_enabled))
   .properties.pks-vrli.enabled.host:
     value: ((properties_pks-vrli_enabled_host))
   .properties.pks-vrli.enabled.skip_cert_verify:

@@ -15,7 +15,7 @@ properties_network_selector_nsx_network_automation: true
 properties_network_selector_nsx_nsx-t-insecure: true
 properties_network_selector_nsx_t0-router-id: 8bc98e0c-17ec-43b7-9819-a8f9a8c4233f
 properties_network_selector_nsx_vcenter_cluster: attic
-properties_pks-vrli: enabled
+properties_pks-vrli_enabled: enabled
 properties_pks-vrli_enabled_host: syslog.ragazzilab.com
 properties_pks-vrli_enabled_skip_cert_verify: true
 properties_pks-vrops: disabled
