@@ -14,8 +14,8 @@ product-properties:
     value: ((properties_cloud_provider_vcenter_ip))
   .properties.cloud_provider.vsphere.vcenter_master_creds:
     value:
-      identity: ((properties_cloud_provider_vsphere_vcenter_master_creds.identity))
-      password: ((properties_cloud_provider_vsphere_vcenter_master_creds.password))
+      identity: ((properties_cloud_provider_vsphere_vcenter_master_creds_identity))
+      password: ((properties_cloud_provider_vsphere_vcenter_master_creds_password))
   .properties.cloud_provider.vsphere.vcenter_vms:
     value: ((properties_cloud_provider_vcenter_vms))
   .properties.log_sink_resources_deploy:

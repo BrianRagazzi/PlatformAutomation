@@ -27,6 +27,7 @@ properties_worker_max_in_flight: 1
 network_name: PKS-MGMT
 service_network: PKS-MGMT
 singleton_availability_zone: MGMT
+properties_cloud_provider_vsphere_vcenter_master_creds_identity: administrator@vsphere.local
 
 properties_plan1_selector_active_name: small
 properties_plan1_selector_value: "Plan Active"
