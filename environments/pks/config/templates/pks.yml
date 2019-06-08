@@ -5,7 +5,6 @@ product-properties:
       cert_pem: ((pivotal-container-service_pks_tls.cert_pem))
       private_key_pem: ((pivotal-container-service_pks_tls.private_key_pem))
   .properties.cloud_provider:
-    selected_option: ((properties_cloud_provider))
     value: ((properties_cloud_provider))
   .properties.cloud_provider.vsphere.vcenter_dc:
     value: ((properties_cloud_provider_vcenter_dc))
@@ -24,7 +23,6 @@ product-properties:
   .properties.metric_sink_resources_deploy:
     value: ((properties_log_sink_resources_deploy))
   .properties.network_selector:
-    selected_option: properties_network_selector
     value: properties_network_selector
   .properties.network_selector.nsx.cloud-config-dns:
     value: ((properties_network_selector_nsx_cloud-config-dns))
@@ -65,7 +63,6 @@ product-properties:
   .properties.pks-vrli.enabled.use_ssl:
     value: ((properties_pks-vrli_enabled_use_ssl))
   .properties.pks-vrops:
-    selected_option: ((properties_pks-vrops))
     value: ((properties_pks-vrops))
   .properties.pks_api_hostname:
     value: ((properties_pks_api_hostname))
@@ -163,10 +160,8 @@ product-properties:
 
 
   .properties.plan4_selector:
-    selected_option: inactive
     value: Plan Inactive
   .properties.plan5_selector:
-    selected_option: inactive
     value: Plan Inactive
   .properties.plan6_selector:
     selected_option: inactive
