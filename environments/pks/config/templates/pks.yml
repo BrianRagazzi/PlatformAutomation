@@ -23,7 +23,7 @@ product-properties:
   .properties.metric_sink_resources_deploy:
     value: ((properties_log_sink_resources_deploy))
   .properties.network_selector:
-    value: properties_network_selector
+    value: ((properties_network_selector))
   .properties.network_selector.nsx.cloud-config-dns:
     value: ((properties_network_selector_nsx_cloud-config-dns))
   .properties.network_selector.nsx.floating-ip-pool-ids:
