@@ -12,4 +12,4 @@ vsphere_vms_folder: /LAB/vm/BOSH/PKS/VMs/
 vcenter_hostname: corevcsa1.ragazzilab.com
 vcenter_userid: administrator@vsphere.local
 opsman_ssh_public_key:
-opsman_host: https://om.pks.ragazzilab.com
+opsman_host: om.pks.ragazzilab.com
