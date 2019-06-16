@@ -360,7 +360,7 @@ jobs:
   plan:
   - aggregate:
     - get: configuration
-      trigger: false
+      trigger: true
       passed: [ pks, harbor ]
     - get: platform-automation-image
       resource: platform-automation
@@ -396,7 +396,7 @@ jobs:
   - aggregate:
     - get: configuration
       passed: [apply-changes]
-      trigger: true
+      trigger: false
     - get: custom-tasks
     - get: platform-automation-image
       resource: platform-automation
