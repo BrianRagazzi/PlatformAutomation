@@ -211,10 +211,9 @@ jobs:
   plan:
   - aggregate:
     - get: configuration
-      trigger: false
+      trigger: true
     - get: pks-product
     - get: pks-stemcell
-    - get: harbor-stemcell
     - get: platform-automation-image
       resource: platform-automation
       params:
@@ -264,15 +263,6 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-  - task: upload-harbor-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-stemcell.yml
-    input_mapping:
-      env: interpolated-files
-      stemcell: harbor-stemcell
-    params:
-      ENV_FILE: environments/((foundation))/config/secrets/env.yml
-
   - task: configure-pks
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-product.yml
@@ -294,16 +284,17 @@ jobs:
   plan:
   - aggregate:
     - get: harbor-product
+    - get: harbor-stemcell
     - get: configuration
-      trigger: false
+      trigger: true
     - get: platform-automation-image
       resource: platform-automation
       params:
         unpack: true
         globs: ["*image*"]
     - get: platform-automation-tasks
-      passed: [ pks ]
       resource: platform-automation
+      passed: [ install-opsman ]
       params:
         unpack: true
         globs: ["*tasks*"]
@@ -339,6 +330,15 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
+  - task: upload-harbor-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-files
+      stemcell: harbor-stemcell
+    params:
+      ENV_FILE: environments/((foundation))/config/secrets/env.yml
+
   - task: configure-harbor
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-product.yml
@@ -352,7 +352,7 @@ jobs:
       VARS_FILES: |
         vars/environments/((foundation))/config/defaults/harbor.yml
         vars/environments/((foundation))/config/vars/harbor.yml
-        secrets/environments/((foundation))/config/secrets/harbor.yml
+        secrets/environments/((foundation))/config/vars/harbor.yml
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
 - name: apply-changes
@@ -398,7 +398,6 @@ jobs:
       passed: [apply-changes]
       trigger: true
     - get: custom-tasks
-    - get: state
     - get: platform-automation-image
       resource: platform-automation
       params:
@@ -427,7 +426,7 @@ jobs:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
       PKS_ADMIN_USERNAME: ((pks_admin_username))
       PKS_ADMIN_PASSWORD: ((pks_admin_password))
-      PAS_ADMIN_USEREMAIL: ((pkls_admin_useremail))
+      PAS_ADMIN_USEREMAIL: ((pks_admin_useremail))
 
 - name: destroy-installation
   serial: true
