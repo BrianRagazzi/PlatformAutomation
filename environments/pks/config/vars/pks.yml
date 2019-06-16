@@ -46,9 +46,9 @@ properties_plan1_selector_active_master_persistent_disk_type: "10240"
 properties_plan1_selector_active_max_worker_instances: 3
 properties_plan1_selector_active_worker_instances: 1
 properties_plan1_selector_active_worker_az_placement: |
- - AZ1
+ "- AZ1
  - AZ2
- - AZ3
+ - AZ3"
 properties_plan1_selector_active_admission_plugins: [deny_escalating_exec]
 properties_plan1_selector_active_master_vm_type: medium.disk
 properties_plan1_selector_active_worker_vm_type: medium.disk
