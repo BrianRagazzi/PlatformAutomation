@@ -1,5 +1,5 @@
 vsphere_templates_folder: BOSH/PKS/templates
-vsphere_disks_folder: dev-disks
+vsphere_disks_folder: pks-disks
 vsphere_mgmtaz_cluster: attic
 vsphere_mgmtaz_resource_pool: PKS-MGMT
 vsphere_mgmtaz_host_group: ""
