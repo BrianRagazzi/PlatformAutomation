@@ -10,7 +10,7 @@ properties_cloud_provider_vcenter_ds: EQL-THIN01
 properties_cloud_provider_vcenter_ip: corevcsa1.ragazzilab.com
 properties_cloud_provider_vcenter_vms: BOSH/PKS/VMs
 properties_network_selector: nsx
-roperties.network_selector_nsx-t-host: corensxmgr.ragazzilab.com
+properties_network_selector_nsx-t-host: corensxmgr.ragazzilab.com
 properties_network_selector_nsx_cloud-config-dns: 192.168.100.50,192.168.100.150
 properties_network_selector_nsx_floating-ip-pool-ids: 91ae51a7-1550-41c1-bb37-6533fe153390
 properties_network_selector_nsx_ip-block-id: fe35b421-a184-426d-b671-2adc2b731929

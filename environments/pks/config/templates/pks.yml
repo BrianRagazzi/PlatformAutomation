@@ -43,7 +43,7 @@ product-properties:
   .properties.network_selector.nsx.nsx-t-ca-cert:
     value: ((properties_nsx_api_ca_cert))
   .properties.network_selector.nsx.nsx-t-host:
-    value: ((properties.network_selector_nsx-t-host))
+    value: ((properties_network_selector_nsx-t-host))
   .properties.network_selector.nsx.nsx-t-insecure:
     value: ((properties_network_selector_nsx_nsx-t-insecure))
   .properties.network_selector.nsx.nsx-t-superuser-certificate:
