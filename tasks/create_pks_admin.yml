@@ -1,0 +1,78 @@
+# The inputs, outputs, params, filename, and filepath
+# of this task file are part of its semantically versioned API.
+# See our documentation for a detailed discussion of our semver API.
+# See www.semver.org for an explanation of semantic versioning.
+
+# code_snippet apply-director-changes start yaml
+---
+platform: linux
+
+
+inputs:
+- name: env # contains the env file with target OpsMan Information
+- name: vars # variable files to be made available
+  optional: true
+- name: secrets
+  # secret files to be made available
+  # separate from vars, so they can be store securely
+  optional: true
+
+params:
+  PAS_ADMIN_USERNAME:
+  PAS_ADMIN_PASSWORD:
+  PAS_ADMIN_ORG:
+
+  ENV_FILE: env.yml
+  # - Required
+  # - Filepath of the env config YAML
+  # - The path is relative to root of the `env` input
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    # cat /var/version && echo ""
+    set -eux
+
+    # add dependencies to platform automation image
+    curl https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | apt-key add -
+    echo "deb https://packages.cloudfoundry.org/debian stable main" | tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+    apt-get update
+    apt-get install jq uaac -y
+
+    PKS_GUID=$(om --env env/"${ENV_FILE}" curl --silent --path \
+      "/api/v0/deployed/products" | \
+      jq -r '.[] | .installation_name' | grep pivotal-container-service | tail -1)
+
+    ADMIN_CLIENT_SECRET=$(om --env env/"${ENV_FILE}" curl --silent --path \
+      "/api/v0/deployed/products/${PKS_GUID}/credentials/.properties.pks_uaa_management_admin_client" | \
+      jq -rc '.credential.value.secret')
+
+    echo "Connecting to PKS UAA server [$UAA_URL]..."
+    # login to PKS UAA
+    uaac target https://$UAA_URL:8443 --skip-ssl-validation
+    uaac token client get admin --secret $UAA_ADMIN_SECRET
+
+    # uaac contexts > contexts.out
+    set +eu
+    CHK=$(uaac users | grep $PKS_ADMIN_USERNAME)
+    if [ -z "$CHK" ]; then
+      echo "Creating new PKS CLI administrator user per PK tile documentation https://docs.pivotal.io/runtimes/pks/1-0/manage-users.html#uaa-scopes"
+      uaac user add "$PKS_ADMIN_USERNAME" --emails "$PKS_ADMIN_USEREMAIL" -p "$PKS_ADMIN_PASSWORD"
+      echo "PKS CLI administrator user [$PKS_ADMIN_USERNAME] successfully created."
+    else
+      echo "user [$PKS_ADMIN_USERNAME] already exists"
+    fi
+
+    uaac member add pks.clusters.admin $PKS_ADMIN_USERNAME
+    uaac member add pks.clusters.admin admin
+    uaac member add uaa.admin $PKS_ADMIN_USERNAME
+    set -eu
+
+    echo "Next, download the PKS CLI from Pivotal Network and login to the PKS API to create a new K8s cluster [https://docs.pivotal.io/runtimes/pks/1-0/create-cluster.html]"
+    echo "Example: "
+    echo "   pks login -a $UAA_URL -u $PKS_ADMIN_USERNAME -p <pks-admin-password-provided>"
+
+
+# code_snippet add_pass_admin end
