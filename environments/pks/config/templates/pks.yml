@@ -74,8 +74,7 @@ product-properties:
   .properties.plan1_selector.active.description:
     value: ((properties_plan1_selector_active_description))
   .properties.plan1_selector.active.master_az_placement:
-    value:
-    - ((properties_plan1_selector_active_master_az_placement))
+    value: ((properties_plan1_selector_active_master_az_placement))
   .properties.plan1_selector.active.master_instances:
     value: ((properties_plan1_selector_active_master_instances))
   .properties.plan1_selector.active.master_persistent_disk_type:
@@ -104,8 +103,7 @@ product-properties:
   .properties.plan2_selector.active.description:
     value: ((properties_plan2_selector_active_description))
   .properties.plan2_selector.active.master_az_placement:
-    value:
-    - ((properties_plan2_selector_active_master_az_placement))
+    value: ((properties_plan2_selector_active_master_az_placement))
   .properties.plan2_selector.active.master_instances:
     value: ((properties_plan2_selector_active_master_instances))
   .properties.plan2_selector.active.master_persistent_disk_type:
@@ -134,8 +132,7 @@ product-properties:
   .properties.plan3_selector.active.description:
     value: ((properties_plan3_selector_active_description))
   .properties.plan3_selector.active.master_az_placement:
-    value:
-    - ((properties_plan3_selector_active_master_az_placement))
+    value: ((properties_plan3_selector_active_master_az_placement))
   .properties.plan3_selector.active.master_instances:
     value: ((properties_plan3_selector_active_master_instances))
   .properties.plan3_selector.active.master_persistent_disk_type:
