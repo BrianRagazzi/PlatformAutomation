@@ -21,7 +21,7 @@ properties-configuration:
   director_configuration:
     ntp_servers_string: ((ntp))
     resurrector_enabled: true
-    post_deploy_enabled: false
+    post_deploy_enabled: ((post_deploy_enabled))
     max_threads: ((max_threads))
   security_configuration:
     generate_vm_passwords: true

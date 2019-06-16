@@ -30,3 +30,4 @@ diego_cell/insecure_docker_registry_list: ""
 syslog_address: syslog.ragazzilab.com
 syslog_port: 514
 syslog_protocol: udp
+post_deploy_enabled: true
