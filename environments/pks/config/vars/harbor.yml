@@ -1,6 +1,9 @@
 properties.auth_mode: db_auth
 properties.hostname: harbor.pks.ragazzilab.com
 network_name: PKS-MGMT
-service_network: PKS_MGMT
 singleton_availability_zone: MGMT
-other_availability_zones: [MGMT]
+other_availability_zones: MGMT
+harbor_admin_password: ((harbor_admin_password))
+harbor_server_cert_key_cert_pem: ((harbor_server_cert_key_cert_pem))
+harbor_server_cert_key_private_key_pem: ((harbor_server_cert_key_private_key_pem))
+harbor_server_cert_ca_pem: ((harbor_server_cert_ca_pem))

@@ -29,7 +29,7 @@ network-properties:
   network:
     name: ((network_name))
   other_availability_zones:
-    name: ((other_availability_zones))
+  - name: ((other_availability_zones))
   singleton_availability_zone:
     name: ((singleton_availability_zone))
 resource-config:
