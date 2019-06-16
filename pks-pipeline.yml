@@ -22,7 +22,6 @@ resources:
     skip_ssl_verification: true
     regexp: "PCF/ops-manager/pcf-vsphere-(.*).ova" #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
 
-
 - name: pks-stemcell
   type: s3
   source:
@@ -42,7 +41,6 @@ resources:
     bucket: ((binaries_bucket))
     skip_ssl_verification: true
     regexp: PCF/PKS/pivotal-container-service-(.*).pivotal
-
 
 - name: harbor-stemcell
   type: s3
@@ -80,6 +78,29 @@ resources:
     branch: ((config_github_branch))
     username: ((github_username))
     password: ((github_token))
+
+- name: custom-tasks
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+groups:
+- name: deploy
+  jobs:
+  - install-opsman
+  - pks
+  - harbor
+  - apply-changes
+- name: post-deploy
+  jobs:
+  - add-pks-admin
+- name: teardown
+  jobs:
+  - destroy-installation
+
 
 jobs:
 - name: install-opsman
@@ -185,7 +206,6 @@ jobs:
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
-
 - name: pks
   serial: true
   plan:
@@ -265,7 +285,7 @@ jobs:
       CONFIG_FILE: environments/((foundation))/config/templates/pks.yml
       VARS_FILES: |
         vars/environments/((foundation))/config/defaults/pks.yml
-        vars/environments/((foundation))/config/vars/pks.yml
+        secrets/environments/((foundation))/config/vars/pks.yml
         secrets/environments/((foundation))/config/secrets/pks.yml
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
@@ -328,11 +348,11 @@ jobs:
       vars: configuration
       secrets: interpolated-files
     params:
-      CONFIG_FILE: environments/((foundation))/config/templates/p-harbor.yml
+      CONFIG_FILE: environments/((foundation))/config/templates/harbor.yml
       VARS_FILES: |
-        vars/environments/((foundation))/config/defaults/p-harbor.yml
-        vars/environments/((foundation))/config/vars/p-harbor.yml
-        secrets/environments/((foundation))/config/secrets/p-harbor.yml
+        vars/environments/((foundation))/config/defaults/harbor.yml
+        vars/environments/((foundation))/config/vars/harbor.yml
+        secrets/environments/((foundation))/config/secrets/harbor.yml
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
 
 - name: apply-changes
@@ -368,3 +388,96 @@ jobs:
       env: interpolated-files
     params:
       ENV_FILE: environments/((foundation))/config/secrets/env.yml
+
+- name: add-pks-admin
+  serial: true
+  serial_groups: [ post-deploy ]
+  plan:
+  - aggregate:
+    - get: configuration
+      passed: [apply-changes]
+      trigger: true
+    - get: custom-tasks
+    - get: state
+    - get: platform-automation-image
+      resource: platform-automation
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      resource: platform-automation
+      params:
+        unpack: true
+        globs: ["*tasks*"]
+
+  - task: credhub-interpolate
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/credhub-interpolate.yml
+    params: *credhub_interpolate_params
+    input_mapping:
+      files: configuration
+
+  - task: config-pks-admin-user
+    image: platform-automation-image
+    file: custom-tasks/tasks/create_pks_admin.yml
+    input_mapping:
+      secrets: interpolated-files
+      env: interpolated-files
+    params:
+      ENV_FILE: environments/((foundation))/config/secrets/env.yml
+      PKS_ADMIN_USERNAME: ((pks_admin_username))
+      PKS_ADMIN_PASSWORD: ((pks_admin_password))
+      PAS_ADMIN_USEREMAIL: ((pkls_admin_useremail))
+
+- name: destroy-installation
+  serial: true
+  serial_groups: [ teardown ]
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: state
+    - get: platform-automation-image
+      passed: [apply-changes]
+      trigger: false
+      resource: platform-automation
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      resource: platform-automation
+      params:
+        unpack: true
+        globs: ["*tasks*"]
+
+  - task: credhub-interpolate
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/credhub-interpolate.yml
+    params: *credhub_interpolate_params
+    input_mapping:
+      files: configuration
+
+  - task: delete-installation
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/delete-installation.yml
+    input_mapping:
+      env: interpolated-files
+    params:
+      ENV_FILE: environments/((foundation))/config/secrets/env.yml
+
+  - task: delete-opsman-vm
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/delete-vm.yml
+    input_mapping:
+      state: state
+      config: configuration
+      vars: configuration
+      secrets: interpolated-files
+      env: interpolated-files
+    params:
+      STATE_FILE: state/((foundation))/state.yml
+      OPSMAN_CONFIG_FILE: environments/((foundation))/config/templates/opsman.yml
+      VARS_FILES: |
+        vars/environments/((foundation))/config/defaults/opsman.yml
+        vars/environments/((foundation))/config/vars/opsman.yml
+        secrets/environments/((foundation))/config/secrets/opsman.yml
+        secrets/environments/((foundation))/config/secrets/pivnet.yml
