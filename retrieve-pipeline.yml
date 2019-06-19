@@ -157,6 +157,7 @@ jobs:
       CREDHUB_CLIENT: ((credhub_client))
       CREDHUB_SECRET: ((credhub_secret))
       CREDHUB_SERVER: ((credhub_server))
+      CREDHUB_CA_CERT: ((credhub_ca_cert))
       PREFIX: '/pipeline/vsphere'
       INTERPOLATION_PATHS: "download-product-configs"
       SKIP_MISSING: true
