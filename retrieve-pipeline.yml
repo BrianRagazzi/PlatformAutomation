@@ -28,6 +28,30 @@ resources:
     secret_access_key: ((s3.secret_access_key))
     regexp: healthwatch-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
+- name: harbor-product
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets.pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-.*.pivotal
+     # harbor-container-registry-1.7.5-build.11.pivotal
+
+- name: harbor-stemcell
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets.pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+
 - name: opsman-product
   type: s3
   source:
@@ -300,6 +324,40 @@ jobs:
       - put: pks-stemcell
         params:
           file: pks-stemcell/*.tgz
+
+- name: fetch-harbor
+  plan:
+  - aggregate:
+      - get: daily
+        trigger: true
+      - get: platform-automation-image
+        params:
+          unpack: true
+      - get: platform-automation-tasks
+        params:
+          unpack: true
+      - get: config
+  - task: credhub-interpolate
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/credhub-interpolate.yml
+    params: *credhub_interpolate_params
+    input_mapping:
+      files: config
+    output_mapping:
+      interpolated-files: config
+  - task: download-harbor-product-and-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/harbor.yml
+    output_mapping: {downloaded-stemcell: pks-stemcell}
+  - aggregate:
+      - put: harbor-product
+        params:
+          file: downloaded-product/*.pivotal
+      - put: harbor-stemcell
+        params:
+          file: harbor-stemcell/*.tgz
 
 - name: fetch-platform-automation
   # We use the pivnet resource to bootstrap the pipeline,

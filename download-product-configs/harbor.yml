@@ -2,7 +2,7 @@
 pivnet-api-token: ((pivnet-token))
 pivnet-file-glob: "*.pivotal"
 pivnet-product-slug: harbor-container-registry
-product-version: 1\.[0-9\]+\.[0-9]+$
+product-version: 1.7.5 #1\.[0-9\]+\.[0-9]+$
 stemcell-iaas: vsphere
 
 s3-access-key-id: ((s3_access_key_id))
