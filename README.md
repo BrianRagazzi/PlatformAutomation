@@ -5,6 +5,7 @@
 
 ## RETRIEVE
 Save binaries for run-time pipelines to local S3
+Issue with Harbor stemcell
 
 ### To Do ###
 * Save Kubectl & PKS cli tools to S3
