@@ -1,22 +1,21 @@
 # PlatformAutomation
 
 
-Starting from:
-http://docs.pivotal.io/platform-automation/v2.1/
+# Pipelines
 
+## RETRIEVE
+Save binaries for run-time pipelines to local S3
 
-Prereqs:
+### To Do ###
+* Save Kubectl & PKS cli tools to S3
 
-* Deployed concourse
-* Platform automation
-* env file:  (env.yml) Credentials for om cli login to Ops Manager
-* auth file: Subnet of env file
-* opsmanager config: (opsman.yml)  
-  * Run https://opsman/api/v0/staged/director/properties
-  * Save output as json
-  * convert json to yaml
-* director config: (director.yml)
-  * use om cli tool to get config from manually-deployed opsmgr
-  * om --target https://opsman -u admin -p Password -k staged-director-config
-* product config files:
-* optional credhub
+## PAS
+Install PAS, NSX-T NCP & Healthwatch onto 3 AZs
+
+### To Do ###
+* Use S3 resource paths that match retrieve pipeline
+
+## PKS
+Install PKS & Harbor on 3 AZs
+### To Do ###
+* Use S3 resource paths that match retrieve pipeline
