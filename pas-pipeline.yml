@@ -353,7 +353,7 @@ jobs:
       env: interpolated-files
       vars: interpolated-files
     params:
-      CONFIG_FILE: environments/((foundation))/config/nsx.yml
+      CONFIG_FILE: ((foundation))/config/nsx.yml
       VARS_FILES: |
         vars/((foundation))/vars/nsx-defaults.yml
         vars/((foundation))/vars/nsx-vars.yml
