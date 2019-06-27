@@ -22,6 +22,7 @@ Install PKS & Harbor on 3 AZs using binaries from local S3
 
 ### To Do ###
 * Validate NSX-T configuration meets requirements
+* Prep cluster for helm & tiller
 
 
 ## RETRIEVE
@@ -33,3 +34,10 @@ Save binaries for run-time pipelines to local S3
 
 ### Icebox ###
 * Save Kubectl & PKS cli tools to S3 - Investigated.  Using om prevents use of mutliple globs,would have to create a download-product-config and resource for each OS for both PKs cli and kubectl
+
+
+## backup
+
+### TO Do ###
+* New Tasks
+* Determine where it can be run, what is needed in order for concourse to reach targets
