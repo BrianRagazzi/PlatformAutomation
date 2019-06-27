@@ -14,6 +14,12 @@ Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
 
 ## PKS
 Install PKS & Harbor on 3 AZs using binaries from local S3
+### Features ###
+* Credhub for secrets
+* LDAP Integration
+* Syslog configured
+* Auto-add LDAP group to role
+
 ### To Do ###
 * Validate NSX-T configuration meets requirements
 
