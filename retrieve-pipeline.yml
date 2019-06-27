@@ -207,6 +207,8 @@ credhub-interpolate: &credhub-interpolate
 
 jobs:
 - name: fetch-healthwatch
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
     - get: daily
@@ -235,6 +237,8 @@ jobs:
         file: healthwatch-stemcell/*.tgz
 
 - name: fetch-opsman
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
     - get: daily
@@ -259,6 +263,8 @@ jobs:
         file: downloaded-product/*
 
 - name: fetch-pas
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
     - get: daily
@@ -287,6 +293,8 @@ jobs:
         file: pas-stemcell/*.tgz
 
 - name: fetch-pks
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
       - get: daily
@@ -315,6 +323,8 @@ jobs:
           file: pks-stemcell/*.tgz
 
 - name: fetch-harbor
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
       - get: daily
@@ -343,6 +353,8 @@ jobs:
           file: harbor-stemcell/*.tgz
 
 - name: fetch-nsx
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
       - get: daily
@@ -367,6 +379,8 @@ jobs:
           file: downloaded-product/*.pivotal
 
 - name: fetch-bbr
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
       - get: daily
@@ -391,6 +405,8 @@ jobs:
           file: downloaded-product/*
 
 - name: fetch-platform-automation
+  build_log_retention:
+    builds: 4
   # We use the pivnet resource to bootstrap the pipeline,
   # and because this product is part of the pipeline, not the foundation
   plan:
