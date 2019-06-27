@@ -18,10 +18,10 @@ resources:
   source:
     access_key_id: ((access_key_id))
     secret_access_key: ((secret_access_key))
-    endpoint: ((endpoint))
-    bucket: ((binaries_bucket))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
     skip_ssl_verification: true
-    regexp: "PCF/ops-manager/ops-manager-vsphere-(.*).ova" #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
+    regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
 
 - name: configuration
   type: git
@@ -30,7 +30,7 @@ resources:
     branch: ((config_github_branch))
     username: ((github_username))
     password: ((github_token))
-    paths: ["environments/((foundation))/config"]
+    paths: ["((foundation))"]
 
 - name: state
   type: git
@@ -53,10 +53,10 @@ resources:
   source:
     access_key_id: ((access_key_id))
     secret_access_key: ((secret_access_key))
-    endpoint: ((endpoint))
-    bucket: ((backup_bucket))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_backup_bucket))
     skip_ssl_verification: true
-    regexp: installation-(.*).zip
+    regexp: ((foundation))/installation-(.*).zip
 
 - name: one-time-trigger
   type: time
@@ -115,7 +115,7 @@ jobs:
        input_mapping:
          env: interpolated-creds
        params:
-         ENV_FILE: env/((foundation))/env/env.yml
+         ENV_FILE: ((foundation))/env/env.yml
          INSTALLATION_FILE: installation-$timestamp.zip
      - put: installation
        params:
@@ -162,10 +162,10 @@ jobs:
          config: interpolated-creds
          env: interpolated-creds
        params:
-         VARS_FILES: config/((foundation))/vars/opsman-default.yml config/((foundation))/vars/opsman-vars .yml
-         ENV_FILE: env/((foundation))/env/env.yml
-         OPSMAN_CONFIG_FILE: config/((foundation))/config/opsman.yml
-         STATE_FILE: state/((foundation))/state/state.yml
+         VARS_FILES: ((foundation))/vars/opsman-default.yml ((foundation))/vars/opsman-vars .yml
+         ENV_FILE: ((foundation))/env/env.yml
+         OPSMAN_CONFIG_FILE: (foundation))/config/opsman.yml
+         STATE_FILE: ((foundation))/state/state.yml
        ensure: &make-state-commit
          do:
            - task: make-commit
@@ -178,7 +178,7 @@ jobs:
                repository-commit: state-commit
              params:
                FILE_SOURCE_PATH: state.yml
-               FILE_DESTINATION_PATH: state/((foundation))/state/state.yml
+               FILE_DESTINATION_PATH: ((foundation))/state/state.yml
                GIT_AUTHOR_EMAIL: ((github_author_email))
                GIT_AUTHOR_NAME: "Platform Automation"
                COMMIT_MESSAGE: 'Update state file'
@@ -194,9 +194,9 @@ jobs:
          env: interpolated-files
          vars: interpolated-files
        params:
-         ENV_FILE: env/env/((foundation))/env/env.yml
-         DIRECTOR_CONFIG_FILE: config/(foundation))/config/director.yml
-         VARS_FILES: vars/((foundation))/vars/director-defaults.yml vars/((foundation))/vars/director-vars.yml
+         ENV_FILE: ((foundation))/env/env.yml
+         DIRECTOR_CONFIG_FILE: (foundation))/config/director.yml
+         VARS_FILES: ((foundation))/vars/director-defaults.yml ((foundation))/vars/director-vars.yml
 
      - task: apply-director-changes
        image: platform-automation-image
@@ -204,4 +204,4 @@ jobs:
        input_mapping:
          env: interpolated-files
        params:
-         ENV_FILE: env/env/((foundation))/env/env.yml
+         ENV_FILE: ((foundation))/env/env.yml

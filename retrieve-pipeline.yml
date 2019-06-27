@@ -119,6 +119,19 @@ resources:
     secret_access_key: ((s3.secret_access_key))
     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
+- name: bbr-linux-product
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: \[p-bosh-backup-and-restore,(.*)\]bbr-.*-linux-amd64
+
+
+
 # - name: pas-windows-product
 #   type: s3
 #   source:
@@ -353,6 +366,29 @@ jobs:
         params:
           file: downloaded-product/*.pivotal
 
+- name: fetch-bbr
+  plan:
+  - aggregate:
+      - get: daily
+        trigger: true
+      - get: platform-automation-image
+        params:
+          unpack: true
+      - get: platform-automation-tasks
+        params:
+          unpack: true
+      - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-bbr-product
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/bbr.yml
+  - aggregate:
+      - put: bbr-linux-product
+        params:
+          file: downloaded-product/*
 
 - name: fetch-platform-automation
   # We use the pivnet resource to bootstrap the pipeline,
