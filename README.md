@@ -11,6 +11,7 @@ Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
 * Enable LDAP integration
 * Create new users and add to scopes post-deploy
 * Validate NSX-T configuration meets requirements
+* Add/include PCF Metrics
 
 ## PKS
 Install PKS & Harbor on 3 AZs using binaries from local S3
