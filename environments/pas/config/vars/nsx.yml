@@ -1,8 +1,0 @@
-properties.container_ip_blocks_name: PAS-Orgs-Block
-properties.container_ip_blocks_cidr: null
-properties.foundation_name: PAS
-properties.nsx_api_managers: corensxmgr.ragazzilab.com
-properties.nsx_auth_simple_nsx_api_user: admin
-properties.overlay_tz: tz-overlay
-properties.tier0_router: t0-core
-nsx_hostname: corensxmgr.ragazzilab.com

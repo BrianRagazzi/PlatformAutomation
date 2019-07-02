@@ -1,7 +1,0 @@
-smoke_tests
-push-usage-service
-push-apps-manager
-deploy-notifications
-deploy-notifications-ui
-deploy-autoscaler
-test-autoscaling
