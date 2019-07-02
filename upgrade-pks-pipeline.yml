@@ -43,6 +43,26 @@ resources:
     skip_ssl_verification: true
     regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
 
+- name: harbor-stemcell
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
+    skip_ssl_verification: true
+    regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: harbor-product
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
+    skip_ssl_verification: true
+    regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-(.*).pivotal
+
 
 - name: configuration
   type: git
@@ -236,13 +256,67 @@ jobs:
      params:
        ENV_FILE: ((foundation))/env/env.yml
 
+
+ - name: upgrade-harbor
+   serial: true
+   plan:
+   - aggregate:
+     - get: harbor-product
+     - get: harbor-stemcell
+     - get: configuration
+       trigger: true
+     - get: platform-automation-image
+       resource: platform-automation
+       params:
+         unpack: true
+         globs: ["*image*"]
+     - get: platform-automation-tasks
+       resource: platform-automation
+       passed: [ upgrade-opsman ]
+       params:
+         unpack: true
+         globs: ["*tasks*"]
+
+   - task: interpolate-creds
+     <<: *interpolate-creds
+
+   - task: upload-product-harbor
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/upload-product.yml
+     input_mapping:
+       product: harbor-product
+       config: configuration
+       download-config: configuration
+       env: interpolated-creds
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+   - task: stage-product-harbor
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/stage-product.yml
+     input_mapping:
+       product: harbor-product
+       env: interpolated-creds
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+   - task: upload-harbor-stemcell
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/upload-stemcell.yml
+     input_mapping:
+       env: interpolated-creds
+       stemcell: harbor-stemcell
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+
  - name: apply-changes
    serial: true
    plan:
    - aggregate:
      - get: configuration
        trigger: true
-       passed: [ upgrade-pks ]
+       passed: [ upgrade-pks, upgrade-harbor ]
      - get: platform-automation-image
        resource: platform-automation
        params:
