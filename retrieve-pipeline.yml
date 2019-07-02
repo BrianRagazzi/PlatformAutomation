@@ -10,7 +10,7 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -21,7 +21,7 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -32,7 +32,7 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -44,7 +44,7 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -56,29 +56,41 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
     secret_access_key: ((s3.secret_access_key))
     regexp: \[ops-manager,(.*)\].*.ova
 
-- name: pas-product
+- name: nsx-product
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
     secret_access_key: ((s3.secret_access_key))
-    regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
+    regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
+
+- name: pas-product
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: \[elastic-runtime,(.*)\].*.pivotal
+    #regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
 
 - name: pas-stemcell
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -89,7 +101,7 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -100,21 +112,34 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
     secret_access_key: ((s3.secret_access_key))
     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
+- name: bbr-linux-product
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: \[p-bosh-backup-and-restore,(.*)\]bbr-.*-linux-amd64
+
+
+
 # - name: pas-windows-product
 #   type: s3
 #   source:
 #     access_key_id: ((s3.access_key_id))
-#     bucket: ((s3.buckets.pivnet_products))
+#     bucket: ((s3.buckets_pivnet_products))
 #     region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
+#     endpoint: ((s3.endpoint))
+#     skip_ssl_verification: true
 #     secret_access_key: ((s3.secret_access_key))
 #     regexp: \[pas-windows,(.*)\]pas-windows-.*.pivotal
 - name: platform-automation-pivnet
@@ -129,7 +154,7 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -140,7 +165,7 @@ resources:
   type: s3
   source:
     access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets.pivnet_products))
+    bucket: ((s3.buckets_pivnet_products))
     region_name: ((s3.region_name))
     endpoint: ((s3.endpoint))
     skip_ssl_verification: true
@@ -161,8 +186,29 @@ resources:
   source:
     interval: 24h
 
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+credhub-interpolate: &credhub-interpolate
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/pipeline/vsphere/'
+    INTERPOLATION_PATHS: "download-product-configs"
+    SKIP_MISSING: true
+  input_mapping:
+    files: config
+  output_mapping:
+    interpolated-files: config
+
 jobs:
 - name: fetch-healthwatch
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
     - get: daily
@@ -175,20 +221,7 @@ jobs:
         unpack: true
     - get: config
   - task: credhub-interpolate
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/credhub-interpolate.yml
-    params: &credhub_interpolate_params
-      CREDHUB_CLIENT: ((credhub_client))
-      CREDHUB_SECRET: ((credhub_secret))
-      CREDHUB_SERVER: ((credhub_server))
-      CREDHUB_CA_CERT: ((credhub_ca_cert))
-      PREFIX: '/pipeline/vsphere'
-      INTERPOLATION_PATHS: "download-product-configs"
-      SKIP_MISSING: true
-    input_mapping:
-      files: config
-    output_mapping:
-      interpolated-files: config
+    <<: *credhub-interpolate
   - task: download-healthwatch-product-and-stemcell
     image: platform-automation-image
     file: platform-automation-tasks/tasks/download-product.yml
@@ -204,6 +237,8 @@ jobs:
         file: healthwatch-stemcell/*.tgz
 
 - name: fetch-opsman
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
     - get: daily
@@ -216,13 +251,7 @@ jobs:
         unpack: true
     - get: config
   - task: credhub-interpolate
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/credhub-interpolate.yml
-    params: *credhub_interpolate_params
-    input_mapping:
-      files: config
-    output_mapping:
-      interpolated-files: config
+    <<: *credhub-interpolate
   - task: download-opsman-image
     image: platform-automation-image
     file: platform-automation-tasks/tasks/download-product.yml
@@ -234,6 +263,8 @@ jobs:
         file: downloaded-product/*
 
 - name: fetch-pas
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
     - get: daily
@@ -246,13 +277,7 @@ jobs:
         unpack: true
     - get: config
   - task: credhub-interpolate
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/credhub-interpolate.yml
-    params: *credhub_interpolate_params
-    input_mapping:
-      files: config
-    output_mapping:
-      interpolated-files: config
+    <<: *credhub-interpolate
   - task: download-pas-product-and-stemcell
     image: platform-automation-image
     file: platform-automation-tasks/tasks/download-product.yml
@@ -267,31 +292,9 @@ jobs:
       params:
         file: pas-stemcell/*.tgz
 
-# - name: fetch-pas-windows
-#   plan:
-#   - aggregate:
-#     - get: daily
-#       trigger: true
-#     - get: platform-automation-image
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#     - get: config
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#   - task: download-pas-windows-product
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/download-product.yml
-#     params:
-#       CONFIG_FILE: download-product-configs/pas-windows.yml
-#   - aggregate:
-#     - put: pas-windows-product
-#       params:
-#         file: downloaded-product/*.pivotal
-
 - name: fetch-pks
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
       - get: daily
@@ -304,13 +307,7 @@ jobs:
           unpack: true
       - get: config
   - task: credhub-interpolate
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/credhub-interpolate.yml
-    params: *credhub_interpolate_params
-    input_mapping:
-      files: config
-    output_mapping:
-      interpolated-files: config
+    <<: *credhub-interpolate
   - task: download-pks-product-and-stemcell
     image: platform-automation-image
     file: platform-automation-tasks/tasks/download-product.yml
@@ -326,6 +323,8 @@ jobs:
           file: pks-stemcell/*.tgz
 
 - name: fetch-harbor
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
       - get: daily
@@ -338,19 +337,13 @@ jobs:
           unpack: true
       - get: config
   - task: credhub-interpolate
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/credhub-interpolate.yml
-    params: *credhub_interpolate_params
-    input_mapping:
-      files: config
-    output_mapping:
-      interpolated-files: config
+    <<: *credhub-interpolate
   - task: download-harbor-product-and-stemcell
     image: platform-automation-image
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/harbor.yml
-    output_mapping: {downloaded-stemcell: pks-stemcell}
+    output_mapping: {downloaded-stemcell: harbor-stemcell}
   - aggregate:
       - put: harbor-product
         params:
@@ -359,7 +352,61 @@ jobs:
         params:
           file: harbor-stemcell/*.tgz
 
+- name: fetch-nsx
+  build_log_retention:
+    builds: 4
+  plan:
+  - aggregate:
+      - get: daily
+        trigger: true
+      - get: platform-automation-image
+        params:
+          unpack: true
+      - get: platform-automation-tasks
+        params:
+          unpack: true
+      - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-nsx-product
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/nsx-t.yml
+  - aggregate:
+      - put: nsx-product
+        params:
+          file: downloaded-product/*.pivotal
+
+- name: fetch-bbr
+  build_log_retention:
+    builds: 4
+  plan:
+  - aggregate:
+      - get: daily
+        trigger: true
+      - get: platform-automation-image
+        params:
+          unpack: true
+      - get: platform-automation-tasks
+        params:
+          unpack: true
+      - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-bbr-product
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/bbr.yml
+  - aggregate:
+      - put: bbr-linux-product
+        params:
+          file: downloaded-product/*
+
 - name: fetch-platform-automation
+  build_log_retention:
+    builds: 4
   # We use the pivnet resource to bootstrap the pipeline,
   # and because this product is part of the pipeline, not the foundation
   plan:

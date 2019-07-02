@@ -1,0 +1,25 @@
+---
+# many of these mnay be passed directly or interpolayted by credhub integration with concourse
+foundation: pks # foundation name is used in retrieving values from config repo and concourse - not used in retrieve pipeline
+debug: false # some tasks return extra verbiage is debug is enabled
+
+credhub_client: concourse-to-credhub
+#credhub_secret: #interpolated from credhub /concourse/teamname/credhub_secret
+credhub_server: https://opsmanager.local:8844
+#credhub_ca_cert: #interpolated from credhub
+
+s3.endpoint: https://minio.local
+s3.buckets.pivnet_products: binaries
+s3.buckets.backup_bucket: backup
+s3.region_name: us-east1
+s3.access_key_id: MYACCESSKEY # interpolated from credhub /concourse/teamname/s3.access_key_id
+s3.secret_access_key: MYSECRETKEY # interpolated from credhub /concourse/teamname/s3.secret_access_key_id
+
+github_username: # [R] Your github username
+github_author_email: # [R] Your github emailaddress
+config_github_repo: https://github.com/yourgithubusername/repowithconfigs
+config_github_branch: master #dev
+
+# source for custom tasks
+PlatformAutomation_github_repo: https://github.com/BrianRagazzi/PlatformAutomation
+PlatformAutomation_github_branch: master

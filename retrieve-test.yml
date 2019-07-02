@@ -1,0 +1,88 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+
+- name: platform-automation-pivnet
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: platform-automation
+    product_version: 3\.(.*)
+    sort_by: semver
+
+- name: platform-automation-tasks
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-image
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: platform-automation-image-(.*).tgz
+
+- name: platform-automation-image-harbor
+  type: docker-image
+  source:
+    repository: ((registry.endpoint))/((registry.repo))
+    username: ((registry.username))
+    password: ((registry.password))
+    insecure_registries: ["((registry.endpoint))"]
+
+- name: platform-automation-image-uaac-harbor
+  type: docker-image
+  source:
+    repository: ((registry.endpoint))/((registry.repo))-uaac
+    username: ((registry.username))
+    password: ((registry.password))
+    insecure_registries: ["((registry.endpoint))"]
+
+- name: config
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["images"]
+
+
+jobs:
+- name: fetch-platform-automation
+  build_log_retention:
+    builds: 4
+  # We use the pivnet resource to bootstrap the pipeline,
+  # and because this product is part of the pipeline, not the foundation
+  plan:
+  - get: platform-automation-pivnet
+    trigger: true
+  - get: config
+  - aggregate:
+    - put: platform-automation-tasks
+      params:
+        file: platform-automation-pivnet/*tasks*.zip
+    - put: platform-automation-image
+      params:
+        file: platform-automation-pivnet/*image*.tgz
+    - put: platform-automation-image-harbor
+      params:
+        import_file: platform-automation-pivnet/*image*.tgz
+    - put: platform-automation-image-uaac-harbor
+      params:
+         build: config/images/platautouaac

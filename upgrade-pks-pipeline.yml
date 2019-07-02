@@ -1,0 +1,341 @@
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tags: latest-final
+
+resources:
+- name: platform-automation
+  type: pivnet
+  source:
+    api_token: ((pivnet_token))
+    product_slug: platform-automation
+
+
+- name: opsman-image
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
+    skip_ssl_verification: true
+    regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
+
+- name: pks-stemcell
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
+    skip_ssl_verification: true
+    regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: pks-product
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
+    skip_ssl_verification: true
+    regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
+
+- name: harbor-stemcell
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
+    skip_ssl_verification: true
+    regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: harbor-product
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_pivnet_products))
+    skip_ssl_verification: true
+    regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-(.*).pivotal
+
+
+- name: configuration
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["((foundation))"]
+
+- name: state
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+# - name: custom-tasks
+#   type: git
+#   source:
+#     uri: ((config_github_repo))
+#     branch: ((config_github_branch))
+#     username: ((github_username))
+#     password: ((github_token))
+
+- name: installation
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_backup_bucket))
+    skip_ssl_verification: true
+    regexp: ((foundation))/installation-(.*).zip
+
+- name: one-time-trigger
+  type: time
+  source:
+    interval: 999999h
+
+- name: daily-trigger
+  type: time
+  source:
+    interval: 24h
+
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+interpolate-creds: &interpolate-creds
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/foundation/((foundation))'
+    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars ((foundation))/config download-product-configs"
+    SKIP_MISSING: true
+  input_mapping:
+    files: configuration
+  output_mapping:
+    interpolated-files: interpolated-creds
+
+
+jobs:
+ - name: export-installation
+   serial: true
+   plan:
+     - aggregate:
+         - get: one-time-trigger
+         - get: daily-trigger
+           trigger: true
+         - get: platform-automation-image
+           resource: platform-automation
+           params:
+             unpack: true
+             globs: ["*image*"]
+         - get: platform-automation-tasks
+           resource: platform-automation
+           params:
+             unpack: true
+             globs: ["*tasks*"]
+         - get: configuration
+     - task: interpolate-creds
+       <<: *interpolate-creds
+     - task: export-installation
+       image: platform-automation-image
+       file: platform-automation-tasks/tasks/export-installation.yml
+       input_mapping:
+         env: interpolated-creds
+       params:
+         ENV_FILE: ((foundation))/env/env.yml
+         INSTALLATION_FILE: installation-$timestamp.zip
+     - put: installation
+       params:
+         file: installation/installation*.zip
+
+ - name: upgrade-opsman
+   plan:
+     - aggregate:
+         - get: opsman-image
+         - get: state
+         - get: one-time-trigger
+           passed: [ export-installation ]
+         - get: platform-automation-image
+           resource: platform-automation
+           params:
+             unpack: true
+             globs: ["*image*"]
+         - get: platform-automation-tasks
+           resource: platform-automation
+           params:
+             unpack: true
+             globs: ["*tasks*"]
+         - get: installation
+           passed: [ export-installation ]
+         - get: configuration
+
+     - task: interpolate-creds
+       <<: *interpolate-creds
+
+     - task: upgrade-opsman
+       image: platform-automation-image
+       file: platform-automation-tasks/tasks/upgrade-opsman.yml
+       input_mapping:
+         state: state
+         config: interpolated-creds
+         image: opsman-image
+         env: interpolated-creds
+         vars: interpolated-creds
+         installation: installation
+       params:
+         INSTALLATION_FILE: installation*.zip
+         VARS_FILES: vars/((foundation))/vars/opsman-defaults.yml vars/((foundation))/vars/opsman-vars.yml
+         ENV_FILE: ((foundation))/env/env.yml
+         OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml
+         STATE_FILE: ((foundation))/state/state.yml
+
+
+ - name: upgrade-pks
+   serial: true
+   plan:
+   - aggregate:
+     - get: configuration
+       trigger: true
+     - get: pks-product
+     - get: pks-stemcell
+     - get: platform-automation-image
+       resource: platform-automation
+       params:
+         unpack: true
+         globs: ["*image*"]
+     - get: platform-automation-tasks
+       passed: [ upgrade-opsman ]
+       resource: platform-automation
+       params:
+         unpack: true
+         globs: ["*tasks*"]
+
+   - task: interpolate-creds
+     <<: *interpolate-creds
+
+   - task: upload-product-pks
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/upload-product.yml
+     input_mapping:
+       product: pks-product
+       config: configuration
+       env: interpolated-creds
+       vars: interpolated-creds
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+   - task: stage-product-pks
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/stage-product.yml
+     input_mapping:
+       product: pks-product
+       env: interpolated-creds
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+   - task: upload-pks-stemcell
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/upload-stemcell.yml
+     input_mapping:
+       env: interpolated-creds
+       stemcell: pks-stemcell
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+
+ - name: upgrade-harbor
+   serial: true
+   plan:
+   - aggregate:
+     - get: harbor-product
+     - get: harbor-stemcell
+     - get: configuration
+       trigger: true
+     - get: platform-automation-image
+       resource: platform-automation
+       params:
+         unpack: true
+         globs: ["*image*"]
+     - get: platform-automation-tasks
+       resource: platform-automation
+       passed: [ upgrade-opsman ]
+       params:
+         unpack: true
+         globs: ["*tasks*"]
+
+   - task: interpolate-creds
+     <<: *interpolate-creds
+
+   - task: upload-product-harbor
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/upload-product.yml
+     input_mapping:
+       product: harbor-product
+       config: configuration
+       download-config: configuration
+       env: interpolated-creds
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+   - task: stage-product-harbor
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/stage-product.yml
+     input_mapping:
+       product: harbor-product
+       env: interpolated-creds
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+   - task: upload-harbor-stemcell
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/upload-stemcell.yml
+     input_mapping:
+       env: interpolated-creds
+       stemcell: harbor-stemcell
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
+
+
+ - name: apply-changes
+   serial: true
+   plan:
+   - aggregate:
+     - get: configuration
+       trigger: true
+       passed: [ upgrade-pks, upgrade-harbor ]
+     - get: platform-automation-image
+       resource: platform-automation
+       params:
+         unpack: true
+         globs: ["*image*"]
+     - get: platform-automation-tasks
+       resource: platform-automation
+       params:
+         unpack: true
+         globs: ["*tasks*"]
+
+   - task: interpolate-creds
+     <<: *interpolate-creds
+
+   - task: apply-product-changes
+     image: platform-automation-image
+     file: platform-automation-tasks/tasks/apply-changes.yml
+     input_mapping:
+       config: configuration
+       env: interpolated-creds
+     params:
+       ENV_FILE: ((foundation))/env/env.yml
