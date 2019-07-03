@@ -132,16 +132,17 @@ resources:
 
 
 
-# - name: pas-windows-product
-#   type: s3
-#   source:
-#     access_key_id: ((s3.access_key_id))
-#     bucket: ((s3.buckets_pivnet_products))
-#     region_name: ((s3.region_name))
-#     endpoint: ((s3.endpoint))
-#     skip_ssl_verification: true
-#     secret_access_key: ((s3.secret_access_key))
-#     regexp: \[pas-windows,(.*)\]pas-windows-.*.pivotal
+- name: pas-windows-product
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: \[pas-windows,(.*)\]pas-windows-.*.pivotal
+
 - name: platform-automation-pivnet
   type: pivnet
   source:
@@ -291,6 +292,30 @@ jobs:
     - put: pas-stemcell
       params:
         file: pas-stemcell/*.tgz
+
+- name: fetch-pas-windows
+  plan:
+  - aggregate:
+    - get: daily
+      trigger: true
+    - get: platform-automation-image
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+    - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-pas-windows-product
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/pas-windows.yml
+  - aggregate:
+    - put: pas-windows-product
+      params:
+        file: downloaded-product/*.pivotal
 
 - name: fetch-pks
   build_log_retention:
