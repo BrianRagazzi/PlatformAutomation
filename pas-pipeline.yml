@@ -119,6 +119,16 @@ resources:
     skip_ssl_verification: true
     regexp: ((foundation))/installation-(.*).zip
 
+- name: config-backup
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_backup_bucket)) #Different Bucket
+    skip_ssl_verification: true
+    regexp: ((foundation))/(.*).yml
+
 - name: configuration
   type: git
   source:
@@ -172,9 +182,7 @@ groups:
 - name: save-state
   jobs:
   - export-installation
-  - staged-director-config
-  - staged-pas-config
-  - staged-healthwatch-config
+  - staged-config-backup
 - name: teardown
   jobs:
   - destroy-installation
@@ -482,7 +490,6 @@ jobs:
       PAS_ADMIN_PASSWORD: ((pas_admin_password))
       PAS_ADMIN_ORG: ((pas_admin_org))
 
-
 - name: export-installation
   serial: true
   plan:
@@ -512,12 +519,14 @@ jobs:
         file: installation/installation*.zip
 
 
-- name: staged-director-config
+- name: staged-config-backup
   serial: true
   plan:
     - aggregate:
         - get: platform-automation-tasks
           params: {unpack: true}
+          passed:
+            - export-installation
         - get: platform-automation-image
           params: {unpack: true}
         - get: configuration
@@ -530,21 +539,7 @@ jobs:
         env: interpolated-creds
       params:
         ENV_FILE: ((foundation))/env/env.yml
-      ensure: *make-state-commit
-
-- name: staged-pas-config
-  plan:
-    - aggregate:
-        - get: platform-automation-image
-          params:
-            unpack: true
-        - get: platform-automation-tasks
-          params:
-            unpack: true
-        - get: configuration
-    - task: interpolate-creds
-      <<: *interpolate-creds
-    - task: staged-config
+    - task: staged-pas-config
       image: platform-automation-image
       file: platform-automation-tasks/tasks/staged-config.yml
       input_mapping:
@@ -552,21 +547,7 @@ jobs:
       params:
         PRODUCT_NAME: cf
         ENV_FILE: ((foundation))/env/env.yml
-      ensure: *make-state-commit
-
-- name: staged-healthwatch-config
-  plan:
-    - aggregate:
-        - get: platform-automation-image
-          params:
-            unpack: true
-        - get: platform-automation-tasks
-          params:
-            unpack: true
-        - get: configuration
-    - task: interpolate-creds
-      <<: *interpolate-creds
-    - task: staged-config
+    - task: staged-healthwatch-config
       image: platform-automation-image
       file: platform-automation-tasks/tasks/staged-config.yml
       input_mapping:
@@ -574,7 +555,9 @@ jobs:
       params:
         PRODUCT_NAME: p-healthwatch
         ENV_FILE: ((foundation))/env/env.yml
-      ensure: *make-state-commit
+    - put: config-backup
+      params:
+        file: generated-config/*.yml
 
 
 - name: destroy-installation
