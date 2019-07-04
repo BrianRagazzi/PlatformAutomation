@@ -235,6 +235,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
       AUTH_CONFIG_FILE: ((foundation))/vars/auth.yml
+
   - task: configure-director
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-director.yml
@@ -568,7 +569,6 @@ jobs:
     - get: configuration
     - get: state
     - get: platform-automation-image
-      passed: [apply-changes]
       trigger: false
       params:
         unpack: true
@@ -599,5 +599,5 @@ jobs:
       STATE_FILE: ((foundation))/state/state.yml
       OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml
       VARS_FILES: |
-        vars/((foundation))/config/vars/opsman-defaults.yml
-        vars/((foundation))/config/vars/opsman-vars.yml
+        vars/((foundation))/vars/opsman-defaults.yml
+        vars/((foundation))/vars/opsman-vars.yml
