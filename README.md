@@ -8,7 +8,7 @@
 Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
 
 ### To Do ###
-* Fix Config Backup
+* Disable CF errands post-deploy
 * Enable LDAP integration
 * Create new users and add to scopes post-deploy
 * Validate NSX-T configuration meets requirements
