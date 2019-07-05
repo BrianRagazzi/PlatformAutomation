@@ -51,6 +51,29 @@ resources:
     secret_access_key: ((s3.secret_access_key))
     regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
+- name: mysql-product
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+     # harbor-container-registry-1.7.5-build.11.pivotal
+
+- name: mysql-stemcell
+  type: s3
+  source:
+    access_key_id: ((s3.access_key_id))
+    bucket: ((s3.buckets_pivnet_products))
+    region_name: ((s3.region_name))
+    endpoint: ((s3.endpoint))
+    skip_ssl_verification: true
+    secret_access_key: ((s3.secret_access_key))
+    regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
 
 - name: opsman-product
   type: s3
@@ -428,6 +451,36 @@ jobs:
       - put: bbr-linux-product
         params:
           file: downloaded-product/*
+
+- name: fetch-mysql
+  build_log_retention:
+    builds: 4
+  plan:
+  - aggregate:
+      - get: daily
+        trigger: true
+      - get: platform-automation-image
+        params:
+          unpack: true
+      - get: platform-automation-tasks
+        params:
+          unpack: true
+      - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-mysql-product-and-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/mysql.yml
+    output_mapping: {downloaded-stemcell: harbor-stemcell}
+  - aggregate:
+      - put: mysql-product
+        params:
+          file: downloaded-product/*.pivotal
+      - put: mysql-stemcell
+        params:
+          file: mysql-stemcell/*.tgz
 
 - name: fetch-platform-automation
   build_log_retention:
