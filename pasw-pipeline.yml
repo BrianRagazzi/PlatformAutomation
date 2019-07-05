@@ -91,6 +91,18 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
 
+- name: pas-windows-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pas-windows,(.*)\]pas-windows-.*.pivotal
+
+- name: pas-windows-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pas-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
 - name: healthwatch-stemcell
   type: s3
   source:
@@ -173,6 +185,7 @@ groups:
   jobs:
   - install-opsman
   - pas
+  - pas-windows
   - nsx
   - healthwatch
   - apply-changes
@@ -184,6 +197,7 @@ groups:
   - export-installation
   - staged-director-config-backup
   - staged-config-pas-backup
+  - staged-config-pasw-backup
   - staged-config-healthwatch-backup
   - staged-config-nsxt-backup
 - name: teardown
@@ -333,6 +347,62 @@ jobs:
         vars/((foundation))/vars/cf-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
+- name: pas-windows
+  serial: true
+  plan:
+    - aggregate:
+        - get: platform-automation-image
+          params:
+            unpack: true
+          passed:
+            - pas
+          trigger: true
+        - get: platform-automation-tasks
+          params:
+            unpack: true
+        - get: pas-windows-product
+        - get: pas-windows-stemcell
+        - get: configuration
+    - task: interpolate-creds
+      <<: *interpolate-creds
+    - task: upload-product
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/upload-product.yml
+      input_mapping:
+        product: pas-windows-product
+        env: interpolated-creds
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+    - task: upload-pas-windows-stemcell
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/upload-stemcell.yml
+      input_mapping:
+        env: interpolated-creds
+        stemcell: pas-windows-stemcell
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+    - task: stage-product
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/stage-product.yml
+      input_mapping:
+        product: pas-windows-product
+        env: interpolated-creds
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+    - task: configure-pas
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/configure-product.yml
+      input_mapping:
+        config: configuration
+        env: interpolated-creds
+        vars: interpolated-creds
+      params:
+        CONFIG_FILE: ((foundation))/config/pas-windows.yml
+        VARS_FILES: |
+          vars/((foundation))/vars/pas-windows-defaults.yml
+          vars/((foundation))/vars/pas-windows-vars.yml
+        ENV_FILE: ((foundation))/env/env.yml
+
 - name: nsx
   serial: true
   plan:
@@ -444,7 +514,7 @@ jobs:
   - aggregate:
     - get: configuration
       trigger: true
-      passed: [ nsx, healthwatch]
+      passed: [ nsx, healthwatch, pas-windows, mysql]
     - get: platform-automation-image
       params:
         unpack: true
@@ -569,6 +639,29 @@ jobs:
     params:
       file: generated-config/*.yml
 
+- name: staged-config-pasw-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: pas-windows
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
 
 - name: staged-config-healthwatch-backup
   plan:
