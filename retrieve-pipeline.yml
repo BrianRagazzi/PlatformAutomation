@@ -1,3 +1,23 @@
+---
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+credhub-interpolate: &credhub-interpolate
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/pipeline/vsphere/'
+    INTERPOLATION_PATHS: "download-product-configs"
+    SKIP_MISSING: true
+  input_mapping:
+    files: config
+  output_mapping:
+    interpolated-files: config
+
 resource_types:
 - name: pivnet
   type: docker-image
@@ -154,7 +174,6 @@ resources:
     regexp: \[p-bosh-backup-and-restore,(.*)\]bbr-.*-linux-amd64
 
 
-
 - name: pas-windows-product
   type: s3
   source:
@@ -210,24 +229,7 @@ resources:
   source:
     interval: 24h
 
-# code_snippet multiple-product-interpolate-creds start yaml
-# This task is used in multiple jobs
-# The yaml anchor "*interpolate-creds" is used in its place
-credhub-interpolate: &credhub-interpolate
-  image: platform-automation-image
-  file: platform-automation-tasks/tasks/credhub-interpolate.yml
-  params:
-    CREDHUB_CLIENT: ((credhub_client))
-    CREDHUB_SECRET: ((credhub_secret))
-    CREDHUB_SERVER: ((credhub_server))
-    CREDHUB_CA_CERT: ((credhub_ca_cert))
-    PREFIX: '/pipeline/vsphere/'
-    INTERPOLATION_PATHS: "download-product-configs"
-    SKIP_MISSING: true
-  input_mapping:
-    files: config
-  output_mapping:
-    interpolated-files: config
+
 
 jobs:
 - name: fetch-healthwatch
