@@ -185,15 +185,8 @@ Create_NSX_LoadBalancer() {
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/services | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
-   #'.results[].display_name' | grep "$1")
-   #jq -r '.results[] | select(.display_name == "$1") | .id')
- #echo chk: $chk
  if [ -n "$chk" ]; then
    echo LB $1 already exists, skipping
-   # curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   #   -u $NSXUSERNAME:$NSXPASSWORD \
-   #   $NSXHOSTNAME/api/v1/loadbalancer/services | \
-   #   jq -r --arg name "$1" '.results[] | select(.display_name == $name)' > lb.json
  else
    echo "Creating $1"
    #identify virtual servers
@@ -671,5 +664,233 @@ Create_NSX_T1DownlinkPort() {
        -u $NSXUSERNAME:$NSXPASSWORD \
        $NSXHOSTNAME/api/v1/logical-router-ports \
        -X POST -d "$downlink_config"
+ fi
+}
+
+Create_NSX_NAT_rule() {
+ # $1 T0 Router Name
+ # $2 Type/Action
+ # $3 Source
+ # $4 Destination
+ # $5 Translated
+ # $6 Priority
+ # $7 Description
+ # GET T0 ID
+ local t0id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-routers | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.router_type == "TIER0") | .id')
+ if [ -z "$t0id" ]; then
+   echo "Tier 0 Router $1 Does not exist, cannot proceed"
+   return 1
+ fi
+ #check for existing rule matching action, source,  dest & Trans
+ if [ $3 == "Any" ]; then
+  #check for existing rule matching action, dest & Trans
+  local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
+    jq -r \
+    --arg action "$2" \
+    --arg dest "$4" \
+    --arg trans "$5" \
+    '.results[] | select(.action == $action) | select(.match_destination_network == $dest) | select(.translated_network == $trans) | .id')
+ elif [ $4 == "Any" ]; then
+   #check for existing rule matching action, source & Trans
+   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
+     jq -r \
+     --arg action "$2" \
+     --arg source "$3" \
+     --arg trans "$5" \
+     '.results[] | select(.action == $action) | select(.match_source_network == $source) | select(.translated_network == $trans) | .id')
+ else
+   #check for existing rule matching action, source & Trans
+   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
+     jq -r \
+     --arg action "$2" \
+     --arg source "$3" \
+     --arg trans "$5" \
+     --arg dest "$4" \
+     '.results[] | select(.action == $action) | select(.match_source_network == $source) | select(.translated_network == $trans) | select(.match_destination_network == $dest) | .id')
+ fi
+
+ if [ -n "$chk" ]; then
+   echo $2 rule already exists, skipping
+   echo $chk
+ else
+   nat_config=$(
+     jq -n \
+     --arg t0id "$t0id" \
+     --arg action "$2" \
+     --arg source "$3" \
+     --arg dest "$4" \
+     --arg trans "$5" \
+     --arg priority "$6" \
+     --arg description "$7" \
+     '
+     {
+       "resource_type": "NatRule",
+       "display_name": $description,
+       "description": $description,
+       "logical_router_id": $t0id,
+       "nat_pass": true,
+       "action": $action,
+       "logging": false,
+       "rule_priority": $priority,
+       "translated_network": $trans,
+       "enabled": true
+     }
+     +
+     if $dest != "Any" then
+     {
+       "match_destination_network": $dest,
+     }
+     else .
+     end
+     +
+     if $source != "Any" then
+     {
+       "match_source_network": $source,
+     }
+     else .
+     end
+     '
+   )
+   #echo $nat_config
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules \
+     -X POST -d "$nat_config"
+
+ fi
+}
+
+Create_NSX_IP_Block() {
+ # $1 - Name
+ # $2 - CIDR
+ # $3 - Description
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/pools/ip-blocks | \
+   jq -r --arg cidr $2 '.results[] | select(.cidr == $cidr) | .id')
+ if [ -n "$chk" ]; then
+   echo Block with CIDR $2 already exists, skipping
+   return 1
+ else
+   echo "Creating IP Block $1"
+   block_config=$(
+     jq -n \
+     --arg display_name "$1" \
+     --arg cidr "$2" \
+     --arg desc "$3" \
+     '
+     {
+      "display_name": $display_name,
+      "description": $desc,
+      "cidr": $cidr
+     }
+     '
+   )
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/pools/ip-blocks \
+     -X POST -d "$block_config"
+ fi
+}
+
+Delete_NSX_IP_Pool() {
+ # $1 - Name
+ # Check that it exists and has zero allocations
+ local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/pools/ip-pools | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.pool_usage.allocated_ids == 0)| .id')
+
+ if [ -n "$chk" ]; then
+   echo Pool $1 exists and has no allocations, deleting it
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/pools/ip-pools/${chk}?force=true \
+     -X DELETE
+ else
+   echo "Pool $1 either does not exist or has allocated IPs"
+ fi
+}
+
+Create_NSX_IP_Pool() {
+ # $1 - Name
+ # $2 - CIDR
+ # $3 - Description
+ # $4 - Gateway address
+ # $5 - Allocation Range ex: 192.168.1.20-192.168.1.40
+ # $6 - DNS Servers (Comma separated, optional)
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/pools/ip-pools | \
+   jq -r --arg cidr $2 '.results[].subnets[] | select(.cidr == $cidr) | .id')
+ if [ -n "$chk" ]; then
+   echo Pool with CIDR $2 already exists, skipping
+   return 1
+ else
+   echo "Creating IP Pool $1"
+   local range_start=$(echo $5 | cut -d "-" -f1)
+   local range_end=$(echo $5 | cut -d "-" -f2)
+   local dns_server1=$(echo $6 | cut -d "," -f1)
+   local dns_server2=$(echo $6 | cut -d "," -f2)
+   pool_config=$(
+     jq -n \
+     --arg display_name "$1" \
+     --arg cidr "$2" \
+     --arg desc "$3" \
+     --arg gateway "$4" \
+     --arg range_start "$range_start" \
+     --arg range_end "$range_end" \
+     --arg dns_server1 "$dns_server1" \
+     --arg dns_server2 "$dns_server2" \
+     '
+     {
+      "display_name": $display_name,
+      "description": $desc
+     }
+     +
+     if $dns_server1 != "" then
+     {
+      "subnets": [
+        {
+         "allocation_ranges": [
+            {
+             "start": $range_start,
+             "end": $range_end
+            }],
+         "gateway_ip": $gateway,
+         "cidr": $cidr,
+         "dns_nameservers": [ $dns_server1,$dns_server2 ]
+        }]
+     }
+     else
+     {
+      "subnets": [
+        {
+         "allocation_ranges": [
+            {
+             "start": $range_start,
+             "end": $range_end
+            }],
+         "gateway_ip": $gateway,
+         "cidr": $cidr
+        }]
+     }
+     end
+     '
+   )
+   echo $pool_config
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/pools/ip-pools \
+     -X POST -d "$pool_config"
  fi
 }
