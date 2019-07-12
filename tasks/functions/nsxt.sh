@@ -1051,13 +1051,14 @@ Delete_NSX_LB_ServerPool() {
 
 Delete_NSX_LB_VirtualServer() {
  # $1 - Virtual Server Name ex:  pas-web-vs
+ # $2 - IP address to verify
  ###################################################
- ###  Deletes the Virtual Server if it existst   ###
+ ###  Deletes the Virtual Server if it exists    ###
  ###################################################
  local chk=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+   jq -r --arg name "$1" --arg vip "$2" '.results[] | select(.display_name == $name) | select(.ip_address == $vip)| .id')
 
  if [ -n "$chk" ]; then
    echo Virtual Server $1 exists, deleting it
@@ -1066,7 +1067,7 @@ Delete_NSX_LB_VirtualServer() {
      $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers/${chk}?delete_associated_rules=true \
      -X DELETE
  else
-   echo Virtual Server $1 Does not exist
+   echo "Virtual Server $1 with IP $2 Does not exist"
 
  fi
 }
