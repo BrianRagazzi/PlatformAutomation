@@ -244,6 +244,7 @@ Create_NSX_LoadBalancer() {
 }
 
 Delete_NSX_T1Router(){
+ # $1 - Logical Router Name
  local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-routers | \
@@ -277,7 +278,7 @@ Delete_NSX_LogicalRouterPort(){
  # Delete by ID rather than name
  curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-router-ports/$1 \
+   $NSXHOSTNAME/api/v1/logical-router-ports/${1}?force=true \
    -X DELETE
 }
 
@@ -766,6 +767,80 @@ Create_NSX_NAT_rule() {
      $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules \
      -X POST -d "$nat_config"
 
+ fi
+}
+
+Delete_NSX_NAT_rule() {
+ # $1 T0 Router Name
+ # $2 Type/Action
+ # $3 Source
+ # $4 Destination
+ # $5 Translated
+ # $6 Actually Delete
+ # GET T0 ID
+ local t0id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-routers | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.router_type == "TIER0") | .id')
+ if [ -z "$t0id" ]; then
+   echo "Tier 0 Router $1 Does not exist, cannot proceed"
+   return 1
+ fi
+ #check for existing rule matching action, source,  dest & Trans
+ if [ $3 == "Any" ]; then
+  #check for existing rule matching action, dest & Trans
+  local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
+    jq -r \
+    --arg action "$2" \
+    --arg dest "$4" \
+    --arg trans "$5" \
+    '.results[] | select(.action == $action) | select(.match_destination_network == $dest) | select(.translated_network == $trans) | .id')
+ elif [ $4 == "Any" ]; then
+   #check for existing rule matching action, source & Trans
+   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
+     jq -r \
+     --arg action "$2" \
+     --arg source "$3" \
+     --arg trans "$5" \
+     '.results[] | select(.action == $action) | select(.match_source_network == $source) | select(.translated_network == $trans) | .id')
+ else
+   #check for existing rule matching action, source & Trans
+   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
+     jq -r \
+     --arg action "$2" \
+     --arg source "$3" \
+     --arg trans "$5" \
+     --arg dest "$4" \
+     '.results[] | select(.action == $action) | select(.match_source_network == $source) | select(.translated_network == $trans) | select(.match_destination_network == $dest) | .id')
+ fi
+
+ if [ -n "$chk" ]; then
+   if [ $6 == "DELETE" ]; then
+    echo "$2 rule exists, deleting it"
+    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+      -u $NSXUSERNAME:$NSXPASSWORD \
+      $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules/$chk \
+      -X DELETE
+   else
+     #Disable it instead
+     echo "$2 rule exists, disabling it"
+     natconfig=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+       -u $NSXUSERNAME:$NSXPASSWORD -X GET \
+       $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules/$chk \
+       | jq -r '.enabled = "false"')
+     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+       -u $NSXUSERNAME:$NSXPASSWORD \
+       $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules/$chk \
+       -X PUT -d "$natconfig"
+   fi
+ else
+   echo "$2 rule for $3 to $4, translated to $4 does not exist"
  fi
 }
 
