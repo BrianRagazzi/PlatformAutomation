@@ -14,7 +14,7 @@ Create_NSX_LB_Monitor() {
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
    #'.results[].display_name' | grep "$1")
    #jq -r '.results[] | select(.display_name == "$1") | .id')
- echo monchk: $monchk
+ #echo monchk: $monchk
  if [ -n "$monchk" ]; then
    echo Monitor $1 already exists, skipping
  else
@@ -27,10 +27,6 @@ Create_NSX_LB_Monitor() {
        --arg monitor_protocol "$3" \
        --arg monitor_url "$4" \
        '{
-        "request_method": "GET",
-        "response_status_codes": [200],
-        "request_version": "HTTP_VERSION_1_1",
-        "request_url": $monitor_url,
         "monitor_port": $monitor_port,
         "fall_count": 1,
         "interval": 1,
@@ -39,7 +35,25 @@ Create_NSX_LB_Monitor() {
         "resource_type": $monitor_protocol,
         "display_name": $monitor_name,
         "description": $monitor_name
-       }'
+       }
+       +
+       if $monitor_protocol == "LbHttpMonitor" then
+       {
+        "request_method": "GET",
+        "response_status_codes": [200],
+        "request_version": "HTTP_VERSION_1_1",
+        "request_url": $monitor_url
+       }
+       elif $monitor_protocol == "LbHttpsMonitor" then
+       {
+        "request_method": "GET",
+        "response_status_codes": [200],
+        "request_version": "HTTP_VERSION_1_1",
+        "request_url": $monitor_url
+       }
+       else .
+       end
+       '
    )
 
    #echo $monitor_config
@@ -99,7 +113,7 @@ Create_NSX_LB_ServerPool() {
      '
    )
 
-   #echo $pool_config
+   echo $pool_config
 
    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
@@ -194,39 +208,10 @@ Create_NSX_LoadBalancer() {
      $NSXHOSTNAME/api/v1/logical-routers | \
      jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
 
-     vs_names = ""
-     vs_ids = ""
-     for vs_name in ${3//,/ }
-     do
-       #vs_names = "${vs_name},"
-       vsid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-       -u $NSXUSERNAME:$NSXPASSWORD \
-       $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-       jq -r --arg name "$vs_name" '.results[] | select(.display_name == $name) | .id')
-       vs_ids = "${vsid},"
-     done
-   # local vs1id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   #   -u $NSXUSERNAME:$NSXPASSWORD \
-   #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-   #   jq -r --arg name "$3" '.results[] | select(.display_name == $name) | .id')
-   #
-   # local vs2id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   #   -u $NSXUSERNAME:$NSXPASSWORD \
-   #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-   #   jq -r --arg name "$4" '.results[] | select(.display_name == $name) | .id')
-   #
-   # local vs3id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   #   -u $NSXUSERNAME:$NSXPASSWORD \
-   #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-   #   jq -r --arg name "$5" '.results[] | select(.display_name == $name) | .id')
-
    lb_config=$(
      jq -n \
        --arg lb_name "$1" \
        --arg t1_routerid "$t1_routerid" \
-       --arg vs_ids "$vs_ids" \
-       --arg vs2id "$vs2id" \
-       --arg vs3id "$vs3id" \
        '
        {
          "display_name": "pas-lb",
@@ -234,14 +219,25 @@ Create_NSX_LoadBalancer() {
          "attachment": {"target_id": $t1_routerid},
          "error_log_level": "INFO",
          "access_log_enabled": false,
-         "virtual_server_ids": [
-           $vs_ids
-         ],
-         "enabled": true,
+         "virtual_server_ids": [],
+         "enabled": true
        }
        '
    )
-   echo $lb_config
+
+   for vs_name in ${3//,/ }
+   do
+     #vs_names = "${vs_name},"
+     #echo "Need to add $vs_name"
+     vsid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
+     jq -r --arg name "$vs_name" '.results[] | select(.display_name == $name) | .id')
+     lb_config=$(echo $lb_config | \
+     jq -r --arg vsid $vsid '.virtual_server_ids[.virtual_server_ids|length] += $vsid')
+   done
+
+   #echo $lb_config
    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/services \
