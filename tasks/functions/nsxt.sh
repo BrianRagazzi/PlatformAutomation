@@ -8,7 +8,7 @@ Create_NSX_LB_Monitor() {
  ##################################################################
  ### Creates the Requested Monitor if it does not already exist ###
  ##################################################################
- local monchk=$(curl -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local monchk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/monitors | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -43,7 +43,7 @@ Create_NSX_LB_Monitor() {
    )
 
    #echo $monitor_config
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/monitors \
      -X POST -d "$monitor_config"
@@ -57,7 +57,7 @@ Create_NSX_LB_ServerPool() {
  ######################################################################
  ### Creates the Requested Server Pool if it does not already exist ###
  ######################################################################
- local chk=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/pools | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -67,7 +67,7 @@ Create_NSX_LB_ServerPool() {
  else
    echo "Creating $1"
 
-   local monid=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   local monid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/monitors | \
      jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
@@ -101,7 +101,7 @@ Create_NSX_LB_ServerPool() {
 
    #echo $pool_config
 
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/pools \
      -X POST -d "$pool_config"
@@ -118,7 +118,7 @@ Create_NSX_LB_VirtualServer() {
  ##################################################################
  ###  Creates the Virtual Server if it does not already exist   ###
  ##################################################################
- local chk=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -128,12 +128,12 @@ Create_NSX_LB_VirtualServer() {
  else
    echo "Creating $1"
    #get applicatgion Profile named "nsx-default-lb-fast-tcp-profile"
-   local poolid=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   local poolid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/pools | \
      jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
 
-   local profid=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   local profid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/application-profiles | \
      jq -r --arg name "$2" '.results[] | select(.display_name == "nsx-default-lb-fast-tcp-profile") | .id')
@@ -164,7 +164,7 @@ Create_NSX_LB_VirtualServer() {
    )
 
    echo $vs_config
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers \
      -X POST -d "$vs_config"
@@ -179,7 +179,7 @@ Create_NSX_LoadBalancer() {
  ##################################################################
  ###   Creates the Load Balancer if it does not already exist   ###
  ##################################################################
- local chk=$(curl -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/services | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -189,7 +189,7 @@ Create_NSX_LoadBalancer() {
    echo "Creating $1"
    #identify virtual servers
    #identify logical router for
-   local t1_routerid=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   local t1_routerid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-routers | \
      jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
@@ -199,23 +199,23 @@ Create_NSX_LoadBalancer() {
      for vs_name in ${3//,/ }
      do
        #vs_names = "${vs_name},"
-       vsid=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+       vsid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
        -u $NSXUSERNAME:$NSXPASSWORD \
        $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
        jq -r --arg name "$vs_name" '.results[] | select(.display_name == $name) | .id')
        vs_ids = "${vsid},"
      done
-   # local vs1id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   # local vs1id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    #   -u $NSXUSERNAME:$NSXPASSWORD \
    #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
    #   jq -r --arg name "$3" '.results[] | select(.display_name == $name) | .id')
    #
-   # local vs2id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   # local vs2id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    #   -u $NSXUSERNAME:$NSXPASSWORD \
    #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
    #   jq -r --arg name "$4" '.results[] | select(.display_name == $name) | .id')
    #
-   # local vs3id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   # local vs3id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    #   -u $NSXUSERNAME:$NSXPASSWORD \
    #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
    #   jq -r --arg name "$5" '.results[] | select(.display_name == $name) | .id')
@@ -242,7 +242,7 @@ Create_NSX_LoadBalancer() {
        '
    )
    echo $lb_config
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/services \
      -X POST -d "$lb_config"
@@ -806,7 +806,7 @@ Enable_Route_Advertisement_T1() {
  )
 
  # echo $adv_config
- curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+ curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    ${NSXHOSTNAME}/api/v1/logical-routers/${t1id}/routing/advertisement/ \
    -X PUT -d "$adv_config"
@@ -1016,14 +1016,14 @@ Delete_NSX_LB_Monitor() {
  ###################################################
  ###  Deletes the Virtual Server if it existst   ###
  ###################################################
- local chk=$(curl -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/monitors | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
 
  if [ -n "$chk" ]; then
    echo Monitor $1 exists, deleting it
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/monitors/$chk \
      -X DELETE
@@ -1037,14 +1037,14 @@ Delete_NSX_LB_ServerPool() {
  ###################################################
  ###  Deletes the Virtual Server if it existst   ###
  ###################################################
- local chk=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/pools | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
 
  if [ -n "$chk" ]; then
    echo Server Pool $1 exists, deleting it
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/pools/$chk \
      -X DELETE
@@ -1060,14 +1060,14 @@ Delete_NSX_LB_VirtualServer() {
  ###################################################
  ###  Deletes the Virtual Server if it exists    ###
  ###################################################
- local chk=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
    jq -r --arg name "$1" --arg vip "$2" '.results[] | select(.display_name == $name) | select(.ip_address == $vip)| .id')
 
  if [ -n "$chk" ]; then
    echo Virtual Server $1 exists, deleting it
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers/${chk}?delete_associated_rules=true \
      -X DELETE
@@ -1082,7 +1082,7 @@ Delete_NSX_LoadBalancer() {
  ###############################################
  ###  Deletes the Load Balancer if it exists ###
  ###############################################
- local chk=$(curl -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/services | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -1091,7 +1091,7 @@ Delete_NSX_LoadBalancer() {
  #echo chk: $chk
  if [ -n "$chk" ]; then
    echo LB $1  exists, deleting
-   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/loadbalancer/services/$chk \
      -X DELETE
