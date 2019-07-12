@@ -181,7 +181,7 @@ Create_NSX_LoadBalancer() {
  ##################################################################
  ###   Creates the Load Balancer if it does not already exist   ###
  ##################################################################
- local chk=$(curl -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/services | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -240,82 +240,6 @@ Create_NSX_LoadBalancer() {
      $NSXHOSTNAME/api/v1/loadbalancer/services \
      -X POST -d "$lb_config"
 
- fi
-}
-
-Delete_NSX_T1Router(){
- # $1 - Logical Router Name
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-routers | \
-   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
-
- if [ -n "$chk" ]; then
-   echo Router $1 exists, deleting it
-   # get the logical router ports (and corresponding Linked ports on T0) and delete them
-   local lrps=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
-     -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$chk | \
-     jq -r --arg name "$1" '.results[] | .id, .linked_logical_router_port_id.target_id')
-   for lrp in $lrps
-     do
-       if [ -n "$lrp" ]; then
-         echo Deleting logical Router Port $lrp
-         Delete_NSX_LogicalRouterPort $lrp
-       fi
-     done
-
-   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-     -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/logical-routers/${chk}?force=true \
-     -X DELETE
- else
-   echo Router $1 Does not exist
- fi
-}
-
-Delete_NSX_LogicalRouterPort(){
- # Delete by ID rather than name
- curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-router-ports/${1}?force=true \
-   -X DELETE
-}
-
-Delete_NSX_LogicalSwitchPort(){
- # Delete by ID rather than name
- curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-ports/$1?detach=true \
-   -X DELETE
-}
-
-Delete_NSX_LogicalSwitch(){
- # $1 - Logical Switch Name
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-switches | \
-   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
-
- if [ -n "$chk" ]; then
-   echo Switch $1 exists, deleting it
-   #Find and delete the Logical Switch Ports
-   local lsps=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
-     -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/logical-ports?logical_switch_id=$chk | \
-     jq -r --arg name "$1" '.results[] | .id')
-   for lsp in $lsps
-     do
-       echo Deleting logical Switch Port $lsp
-       Delete_NSX_LogicalSwitchPort $lsp
-     done
-
-   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-     -u $NSXUSERNAME:$NSXPASSWORD  -X DELETE \
-     ${NSXHOSTNAME}/api/v1/logical-switches/${chk}?detach=true&cascade=true
-
- else
-   echo Switch $1 Does not exist
  fi
 }
 
@@ -476,120 +400,111 @@ Create_NSX_T1Router() {
  fi
 }
 
-Connect_NSX_T1T0() {
- # $1 T0 Name
- # $2 T1 Name
- # used internally
- local t0display_name="LinkedPort_$2"
- local t1display_name="LinkedPort_$1"
-
- local t0id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+Create_NSX_IP_Pool() {
+ # $1 - Name
+ # $2 - CIDR
+ # $3 - Description
+ # $4 - Gateway address
+ # $5 - Allocation Range ex: 192.168.1.20-192.168.1.40
+ # $6 - DNS Servers (Comma separated, optional)
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-routers | \
-   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.router_type == "TIER0") | .id')
-
- local t1id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-routers | \
-   jq -r --arg name "$2" '.results[] | select(.display_name == $name) | select(.router_type == "TIER1") | .id')
-
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$t0id | \
-   jq -r --arg name "$t0display_name" '.results[] | select(.display_name == $name) | .id')
-
-
+   $NSXHOSTNAME/api/v1/pools/ip-pools | \
+   jq -r --arg cidr $2 '.results[].subnets[] | select(.cidr == $cidr) | .id')
  if [ -n "$chk" ]; then
-   echo  "T0 link port to $2 already exists"
+   echo Pool with CIDR $2 already exists, skipping
+   return 1
  else
-   t0linkport_config=$(
+   echo "Creating IP Pool $1"
+   local range_start=$(echo $5 | cut -d "-" -f1)
+   local range_end=$(echo $5 | cut -d "-" -f2)
+   local dns_server1=$(echo $6 | cut -d "," -f1)
+   local dns_server2=$(echo $6 | cut -d "," -f2)
+   pool_config=$(
      jq -n \
-     --arg t0id "$t0id" \
-     --arg display_name "$t0display_name" \
+     --arg display_name "$1" \
+     --arg cidr "$2" \
+     --arg desc "$3" \
+     --arg gateway "$4" \
+     --arg range_start "$range_start" \
+     --arg range_end "$range_end" \
+     --arg dns_server1 "$dns_server1" \
+     --arg dns_server2 "$dns_server2" \
      '
      {
-      "resource_type": "LogicalRouterLinkPortOnTIER0",
-      "logical_router_id": $t0id,
-      "display_name": $display_name
-     }
-     '
-   )
-   echo "Creating Linked port named $t0display_name on $1"
-   local t0_linkport_id=$(
-     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-       -u $NSXUSERNAME:$NSXPASSWORD \
-       $NSXHOSTNAME/api/v1/logical-router-ports \
-       -X POST -d "$t0linkport_config" | \
-     jq -r '.id'
-   )
-
-   t1linkport_config=$(
-     jq -n \
-     --arg t1id "$t1id" \
-     --arg display_name "$t1display_name" \
-     --arg t0_linkport_id "$t0_linkport_id" \
-     '
-     {
-      "resource_type": "LogicalRouterLinkPortOnTIER1",
-      "logical_router_id": $t1id,
       "display_name": $display_name,
-      "linked_logical_router_port_id": {"target_type": "LogicalPort", "target_id": "'"$t0_linkport_id"'"}
+      "description": $desc
      }
+     +
+     if $dns_server1 != "" then
+     {
+      "subnets": [
+        {
+         "allocation_ranges": [
+            {
+             "start": $range_start,
+             "end": $range_end
+            }],
+         "gateway_ip": $gateway,
+         "cidr": $cidr,
+         "dns_nameservers": [ $dns_server1,$dns_server2 ]
+        }]
+     }
+     else
+     {
+      "subnets": [
+        {
+         "allocation_ranges": [
+            {
+             "start": $range_start,
+             "end": $range_end
+            }],
+         "gateway_ip": $gateway,
+         "cidr": $cidr
+        }]
+     }
+     end
      '
-     )
-     #echo $t1linkport_config
-     echo "Creating Linked port named $t1display_name on $2"
-     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-       -u $NSXUSERNAME:$NSXPASSWORD \
-       $NSXHOSTNAME/api/v1/logical-router-ports \
-       -X POST -d "$t1linkport_config"
-
+   )
+   echo $pool_config
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/pools/ip-pools \
+     -X POST -d "$pool_config"
  fi
-
 }
 
-Enable_Route_Advertisement_T1() {
- # $1 - T1 Name
- # Used Internally
- local t1id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+Create_NSX_IP_Block() {
+ # $1 - Name
+ # $2 - CIDR
+ # $3 - Description
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-routers | \
-   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.router_type == "TIER1") | .id')
-
-  if [ -z "$t1id" ]; then
-    echo "Router $1 does not exist, cannot proceed"
-    return 1
-  fi
-
- curr_rev=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-routers/${t1id}/routing/advertisement | \
-   jq | jq '._revision')
-
- adv_config=$(
-   jq -n \
-   --arg rev "$curr_rev" \
-   '
-   {
-    "resource_type": "AdvertisementConfig",
-    "description": "Enable advertisement",
-    "advertise_nsx_connected_routes": true,
-    "advertise_static_routes": false,
-    "advertise_nat_routes": false,
-    "advertise_lb_vip": true,
-    "advertise_lb_snat_ip": false,
-    "enabled": true,
-    "_revision": $rev
-   }
-   '
- )
-
- # echo $adv_config
- curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-   -u $NSXUSERNAME:$NSXPASSWORD \
-   ${NSXHOSTNAME}/api/v1/logical-routers/${t1id}/routing/advertisement/ \
-   -X PUT -d "$adv_config"
-
+   $NSXHOSTNAME/api/v1/pools/ip-blocks | \
+   jq -r --arg cidr $2 '.results[] | select(.cidr == $cidr) | .id')
+ if [ -n "$chk" ]; then
+   echo Block with CIDR $2 already exists, skipping
+   return 1
+ else
+   echo "Creating IP Block $1"
+   block_config=$(
+     jq -n \
+     --arg display_name "$1" \
+     --arg cidr "$2" \
+     --arg desc "$3" \
+     '
+     {
+      "display_name": $display_name,
+      "description": $desc,
+      "cidr": $cidr
+     }
+     '
+   )
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/pools/ip-blocks \
+     -X POST -d "$block_config"
+ fi
 }
 
 Create_NSX_T1DownlinkPort() {
@@ -770,6 +685,122 @@ Create_NSX_NAT_rule() {
  fi
 }
 
+Connect_NSX_T1T0() {
+ # $1 T0 Name
+ # $2 T1 Name
+ # used internally
+ local t0display_name="LinkedPort_$2"
+ local t1display_name="LinkedPort_$1"
+
+ local t0id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-routers | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.router_type == "TIER0") | .id')
+
+ local t1id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-routers | \
+   jq -r --arg name "$2" '.results[] | select(.display_name == $name) | select(.router_type == "TIER1") | .id')
+
+ local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$t0id | \
+   jq -r --arg name "$t0display_name" '.results[] | select(.display_name == $name) | .id')
+
+
+ if [ -n "$chk" ]; then
+   echo  "T0 link port to $2 already exists"
+ else
+   t0linkport_config=$(
+     jq -n \
+     --arg t0id "$t0id" \
+     --arg display_name "$t0display_name" \
+     '
+     {
+      "resource_type": "LogicalRouterLinkPortOnTIER0",
+      "logical_router_id": $t0id,
+      "display_name": $display_name
+     }
+     '
+   )
+   echo "Creating Linked port named $t0display_name on $1"
+   local t0_linkport_id=$(
+     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+       -u $NSXUSERNAME:$NSXPASSWORD \
+       $NSXHOSTNAME/api/v1/logical-router-ports \
+       -X POST -d "$t0linkport_config" | \
+     jq -r '.id'
+   )
+
+   t1linkport_config=$(
+     jq -n \
+     --arg t1id "$t1id" \
+     --arg display_name "$t1display_name" \
+     --arg t0_linkport_id "$t0_linkport_id" \
+     '
+     {
+      "resource_type": "LogicalRouterLinkPortOnTIER1",
+      "logical_router_id": $t1id,
+      "display_name": $display_name,
+      "linked_logical_router_port_id": {"target_type": "LogicalPort", "target_id": "'"$t0_linkport_id"'"}
+     }
+     '
+     )
+     #echo $t1linkport_config
+     echo "Creating Linked port named $t1display_name on $2"
+     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+       -u $NSXUSERNAME:$NSXPASSWORD \
+       $NSXHOSTNAME/api/v1/logical-router-ports \
+       -X POST -d "$t1linkport_config"
+
+ fi
+
+}
+
+Enable_Route_Advertisement_T1() {
+ # $1 - T1 Name
+ # Used Internally
+ local t1id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-routers | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.router_type == "TIER1") | .id')
+
+  if [ -z "$t1id" ]; then
+    echo "Router $1 does not exist, cannot proceed"
+    return 1
+  fi
+
+ curr_rev=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-routers/${t1id}/routing/advertisement | \
+   jq | jq '._revision')
+
+ adv_config=$(
+   jq -n \
+   --arg rev "$curr_rev" \
+   '
+   {
+    "resource_type": "AdvertisementConfig",
+    "description": "Enable advertisement",
+    "advertise_nsx_connected_routes": true,
+    "advertise_static_routes": false,
+    "advertise_nat_routes": false,
+    "advertise_lb_vip": true,
+    "advertise_lb_snat_ip": false,
+    "enabled": true,
+    "_revision": $rev
+   }
+   '
+ )
+
+ # echo $adv_config
+ curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   ${NSXHOSTNAME}/api/v1/logical-routers/${t1id}/routing/advertisement/ \
+   -X PUT -d "$adv_config"
+
+}
+
 Delete_NSX_NAT_rule() {
  # $1 T0 Router Name
  # $2 Type/Action
@@ -844,36 +875,32 @@ Delete_NSX_NAT_rule() {
  fi
 }
 
-Create_NSX_IP_Block() {
+Delete_NSX_IP_Block() {
  # $1 - Name
- # $2 - CIDR
- # $3 - Description
- local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+ # Check that it exists and has zero allocations
+ local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/pools/ip-blocks | \
-   jq -r --arg cidr $2 '.results[] | select(.cidr == $cidr) | .id')
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
  if [ -n "$chk" ]; then
-   echo Block with CIDR $2 already exists, skipping
-   return 1
- else
-   echo "Creating IP Block $1"
-   block_config=$(
-     jq -n \
-     --arg display_name "$1" \
-     --arg cidr "$2" \
-     --arg desc "$3" \
-     '
-     {
-      "display_name": $display_name,
-      "description": $desc,
-      "cidr": $cidr
-     }
-     '
-   )
-   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   echo "Block $1 exists, checking for subnets"
+   subnet_count=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/pools/ip-blocks \
-     -X POST -d "$block_config"
+     $NSXHOSTNAME/api/v1/pools/ip-subnets?block_id=${chk} | \
+     jq -r '.result_count')
+   if [ $subnet_count == "0" ]; then
+    echo "Deleting IP Block $1"
+    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+      -u $NSXUSERNAME:$NSXPASSWORD \
+      $NSXHOSTNAME/api/v1/pools/ip-blocks/${chk} \
+      -X DELETE
+   else
+     echo "Block $1 exists, but has $subnet_count allocated subnets, not deleting"
+   fi
+
+ else
+   echo "Block $1 does not exist"
  fi
 }
 
@@ -896,76 +923,166 @@ Delete_NSX_IP_Pool() {
  fi
 }
 
-Create_NSX_IP_Pool() {
- # $1 - Name
- # $2 - CIDR
- # $3 - Description
- # $4 - Gateway address
- # $5 - Allocation Range ex: 192.168.1.20-192.168.1.40
- # $6 - DNS Servers (Comma separated, optional)
- local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+Delete_NSX_T1Router(){
+ # $1 - Logical Router Name
+ local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/pools/ip-pools | \
-   jq -r --arg cidr $2 '.results[].subnets[] | select(.cidr == $cidr) | .id')
+   $NSXHOSTNAME/api/v1/logical-routers | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
  if [ -n "$chk" ]; then
-   echo Pool with CIDR $2 already exists, skipping
-   return 1
- else
-   echo "Creating IP Pool $1"
-   local range_start=$(echo $5 | cut -d "-" -f1)
-   local range_end=$(echo $5 | cut -d "-" -f2)
-   local dns_server1=$(echo $6 | cut -d "," -f1)
-   local dns_server2=$(echo $6 | cut -d "," -f2)
-   pool_config=$(
-     jq -n \
-     --arg display_name "$1" \
-     --arg cidr "$2" \
-     --arg desc "$3" \
-     --arg gateway "$4" \
-     --arg range_start "$range_start" \
-     --arg range_end "$range_end" \
-     --arg dns_server1 "$dns_server1" \
-     --arg dns_server2 "$dns_server2" \
-     '
-     {
-      "display_name": $display_name,
-      "description": $desc
-     }
-     +
-     if $dns_server1 != "" then
-     {
-      "subnets": [
-        {
-         "allocation_ranges": [
-            {
-             "start": $range_start,
-             "end": $range_end
-            }],
-         "gateway_ip": $gateway,
-         "cidr": $cidr,
-         "dns_nameservers": [ $dns_server1,$dns_server2 ]
-        }]
-     }
-     else
-     {
-      "subnets": [
-        {
-         "allocation_ranges": [
-            {
-             "start": $range_start,
-             "end": $range_end
-            }],
-         "gateway_ip": $gateway,
-         "cidr": $cidr
-        }]
-     }
-     end
-     '
-   )
-   echo $pool_config
+   echo Router $1 exists, deleting it
+   # get the logical router ports (and corresponding Linked ports on T0) and delete them
+   local lrps=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$chk | \
+     jq -r --arg name "$1" '.results[] | .id, .linked_logical_router_port_id.target_id')
+   for lrp in $lrps
+     do
+       if [ -n "$lrp" ]; then
+         echo Deleting logical Router Port $lrp
+         Delete_NSX_LogicalRouterPort $lrp
+       fi
+     done
+
    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/pools/ip-pools \
-     -X POST -d "$pool_config"
+     $NSXHOSTNAME/api/v1/logical-routers/${chk}?force=true \
+     -X DELETE
+ else
+   echo Router $1 Does not exist
+ fi
+}
+
+Delete_NSX_LogicalRouterPort(){
+ # Delete by ID rather than name
+ curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-router-ports/${1}?force=true \
+   -X DELETE
+}
+
+Delete_NSX_LogicalSwitchPort(){
+ # Delete by ID rather than name
+ curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-ports/$1?detach=true \
+   -X DELETE
+}
+
+Delete_NSX_LogicalSwitch(){
+ # $1 - Logical Switch Name
+ local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-switches | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+ if [ -n "$chk" ]; then
+   echo Switch $1 exists, deleting it
+   #Find and delete the Logical Switch Ports
+   local lsps=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-ports?logical_switch_id=$chk | \
+     jq -r --arg name "$1" '.results[] | .id')
+   for lsp in $lsps
+     do
+       echo Deleting logical Switch Port $lsp
+       Delete_NSX_LogicalSwitchPort $lsp
+     done
+
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD  -X DELETE \
+     ${NSXHOSTNAME}/api/v1/logical-switches/${chk}?detach=true&cascade=true
+
+ else
+   echo Switch $1 Does not exist
+ fi
+}
+
+Delete_NSX_LB_Monitor() {
+ # $1 - monitor Name ex:  pas-web-monitor
+ ###################################################
+ ###  Deletes the Virtual Server if it existst   ###
+ ###################################################
+ local chk=$(curl -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/loadbalancer/monitors | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+ if [ -n "$chk" ]; then
+   echo Monitor $1 exists, deleting it
+   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/loadbalancer/monitors/$chk \
+     -X DELETE
+ else
+   echo Virtual Server $1 Does not exist
+ fi
+}
+
+Delete_NSX_LB_ServerPool() {
+ # $1 - Virtual Server Name ex:  pas-web-vs
+ ###################################################
+ ###  Deletes the Virtual Server if it existst   ###
+ ###################################################
+ local chk=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/loadbalancer/pools | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+ if [ -n "$chk" ]; then
+   echo Server Pool $1 exists, deleting it
+   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/loadbalancer/pools/$chk \
+     -X DELETE
+ else
+   echo Server Pool $1 Does not exist
+
+ fi
+}
+
+Delete_NSX_LB_VirtualServer() {
+ # $1 - Virtual Server Name ex:  pas-web-vs
+ ###################################################
+ ###  Deletes the Virtual Server if it existst   ###
+ ###################################################
+ local chk=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+ if [ -n "$chk" ]; then
+   echo Virtual Server $1 exists, deleting it
+   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers/${chk}?delete_associated_rules=true \
+     -X DELETE
+ else
+   echo Virtual Server $1 Does not exist
+
+ fi
+}
+
+Delete_NSX_LoadBalancer() {
+ # $1 - Load Balancer Name ex:  pas-lb
+ ###############################################
+ ###  Deletes the Load Balancer if it exists ###
+ ###############################################
+ local chk=$(curl -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/loadbalancer/services | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+   #'.results[].display_name' | grep "$1")
+   #jq -r '.results[] | select(.display_name == "$1") | .id')
+ #echo chk: $chk
+ if [ -n "$chk" ]; then
+   echo LB $1  exists, deleting
+   curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/loadbalancer/services/$chk \
+     -X DELETE
+ else
+   echo LB $1 Does not exist
  fi
 }
