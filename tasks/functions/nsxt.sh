@@ -175,9 +175,7 @@ Create_NSX_LB_VirtualServer() {
 Create_NSX_LoadBalancer() {
  # $1 - Load Balancer Name ex:  pas-lb
  # $2 - T1 router Name  ex:  t1-pas
- # $3 - Virtual Server Name to bind to the LB ex:  pas-web-vs
- # $4 - Virtual Server Name to bind to the LB ex:  pas-tcp-vs
- # $5 - Virtual Server Name to bind to the LB ex:  pas-ssh-vs
+ # $3 - Virtual Server Names to bind to ex: pas-web-vs,pas-tcp-vs,pas-ssh-vs
  ##################################################################
  ###   Creates the Load Balancer if it does not already exist   ###
  ##################################################################
@@ -196,26 +194,37 @@ Create_NSX_LoadBalancer() {
      $NSXHOSTNAME/api/v1/logical-routers | \
      jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
 
-   local vs1id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-     -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-     jq -r --arg name "$3" '.results[] | select(.display_name == $name) | .id')
-
-   local vs2id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-     -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-     jq -r --arg name "$4" '.results[] | select(.display_name == $name) | .id')
-
-   local vs3id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-     -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
-     jq -r --arg name "$5" '.results[] | select(.display_name == $name) | .id')
+     vs_names = ""
+     vs_ids = ""
+     for vs_name in ${3//,/ }
+     do
+       #vs_names = "${vs_name},"
+       vsid=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+       -u $NSXUSERNAME:$NSXPASSWORD \
+       $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
+       jq -r --arg name "$vs_name" '.results[] | select(.display_name == $name) | .id')
+       vs_ids = "${vsid},"
+     done
+   # local vs1id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   #   -u $NSXUSERNAME:$NSXPASSWORD \
+   #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
+   #   jq -r --arg name "$3" '.results[] | select(.display_name == $name) | .id')
+   #
+   # local vs2id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   #   -u $NSXUSERNAME:$NSXPASSWORD \
+   #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
+   #   jq -r --arg name "$4" '.results[] | select(.display_name == $name) | .id')
+   #
+   # local vs3id=$(curl -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   #   -u $NSXUSERNAME:$NSXPASSWORD \
+   #   $NSXHOSTNAME/api/v1/loadbalancer/virtual-servers | \
+   #   jq -r --arg name "$5" '.results[] | select(.display_name == $name) | .id')
 
    lb_config=$(
      jq -n \
        --arg lb_name "$1" \
        --arg t1_routerid "$t1_routerid" \
-       --arg vs1id "$vs1id" \
+       --arg vs_ids "$vs_ids" \
        --arg vs2id "$vs2id" \
        --arg vs3id "$vs3id" \
        '
@@ -226,9 +235,7 @@ Create_NSX_LoadBalancer() {
          "error_log_level": "INFO",
          "access_log_enabled": false,
          "virtual_server_ids": [
-           $vs1id,
-           $vs2id,
-           $vs3id
+           $vs_ids
          ],
          "enabled": true,
        }
