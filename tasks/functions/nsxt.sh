@@ -539,26 +539,31 @@ Create_NSX_T1DownlinkPort() {
  fi
 
  local display_name="$1-$2"
+ local ip_address=$(echo $3 | cut -d "/" -f1)
+ local subnet_mask=$(echo $3 | cut -d "/" -f2)
 
+ echo "Checking T1 $t1id for $ip_address"
  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$t1_routerid | \
-   jq -r --arg name "$display_name" \
-   '.results[] | select(.display_name == $name) | .id')
+   $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$t1id | \
+   jq -r --arg ip_address "$ip_address" \
+   '.results[] |
+   select(.resource_type == "LogicalRouterDownLinkPort") |
+   .subnets[] |
+   select(.ip_addresses[] == $ip_address)')
    # Check for existing LRP for this T1 and Logical Switch
    # Come back to this
 
-
+ #echo "CHK: $chk"
  if [ -n "$chk" ]; then
-   echo Router Port $1 already exists, skipping
+   echo "Router Port $1 with IP $ip_address already exists, skipping"
  else
    echo "Creating Router Port on $1 for $2"
    #Create Logical Switch Port first
    lspid=$(Create_NSX_LogicalSwitchPortforT1 $2 $1)
    #echo "lspid:" $lspid
    # then attach switch port id to router and set subnet
-   local ip_address=$(echo $3 | cut -d "/" -f1)
-   local subnet_mask=$(echo $3 | cut -d "/" -f2)
+
 
    downlink_config=$(
      jq -n \
@@ -581,7 +586,7 @@ Create_NSX_T1DownlinkPort() {
      }
      '
      )
-     echo $downlink_config
+     # echo $downlink_config
      echo "Adding Router Port for $2 to $1 with IP: $ip_address"
      curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
        -u $NSXUSERNAME:$NSXPASSWORD \
