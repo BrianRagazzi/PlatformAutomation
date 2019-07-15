@@ -11,8 +11,6 @@ inputs:
 
 
 params:
-  NSXT_ADMIN_USERNAME:
-  NSXT_ADMIN_PASSWORD:
   NSXT_INFRA_CONFIG_FILE: nsx-infra.yml
 
 
@@ -22,6 +20,11 @@ run:
   - "-c"
   - |
     set -eux
+
+    export NSXUSERNAME = $(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
+    export NSXPASSWORD = $(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
+
+
 
     source custom-tasks/functions/nsxt.sh
     source custom-tasks/functions/nsx-yml.sh
