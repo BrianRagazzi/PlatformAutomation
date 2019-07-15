@@ -1,0 +1,34 @@
+---
+platform: linux
+
+
+inputs:
+- name: config # contains the env file with target OpsMan Information
+- name: vars # variable files to be made available
+- name: secrets
+  optional: true
+- name: custom-tasks
+
+
+params:
+  NSXT_ADMIN_USERNAME:
+  NSXT_ADMIN_PASSWORD:
+  NSXT_INFRA_CONFIG_FILE: nsx-infra.yml
+
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    set -eux
+
+    source custom-tasks/functions/nsxt.sh
+    source custom-tasks/functions/nsx-yml.sh
+
+    Delete_Logical_Switches $NSXT_INFRA_CONFIG_FILE
+    Delete_T1_Routers $NSXT_INFRA_CONFIG_FILE
+    Delete_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE
+    Delete_IP_Pools $NSXT_INFRA_CONFIG_FILE
+    Delete_IP_Blocks $NSXT_INFRA_CONFIG_FILE
+    Delete_Load_Balancers $NSXT_INFRA_CONFIG_FILE
