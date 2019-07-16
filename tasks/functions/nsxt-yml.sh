@@ -185,7 +185,7 @@ Delete_IP_Blocks() {
 Create_Load_Balancers() {
  # $1 Config_file
  lbchk=$(yq -t r $1 'load_balancers[*].name')
- if [ -z "$lbchk" ]; then
+ if [ $lbchk == "null" ]; then
    echo "No Load-Balancers to create"
  else
    lbs=$(yq -t r $1 'load_balancers[*].name' -j | jq -r '.[]')
