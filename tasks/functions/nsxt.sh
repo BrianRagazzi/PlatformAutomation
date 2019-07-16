@@ -642,10 +642,10 @@ Create_NSX_NAT_rule() {
  fi
 
  if [ -n "$chk" ]; then
-   natconfig=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   ruleenabled=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD -X GET \
-     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules/$chk)
-   ruleenabled=$(echo natconfig | jq -r '.enabled')
+     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules/$chk \
+     | jq -r '.enabled')
    if [ $ruleenabled == "true" ]; then
      echo "Rule exists and is enabled, skipping"
    else
@@ -653,7 +653,7 @@ Create_NSX_NAT_rule() {
      natconfig=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
        -u $NSXUSERNAME:$NSXPASSWORD -X GET \
        $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules/$chk \
-       | jq -r '.enabled = "false"')
+       | jq -r '.enabled = "true"')
      curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
        -u $NSXUSERNAME:$NSXPASSWORD \
        $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules/$chk \
