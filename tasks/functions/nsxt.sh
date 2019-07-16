@@ -799,7 +799,7 @@ Enable_Route_Advertisement_T1() {
 
  adv_config=$(
    jq -n \
-   --arg rev "$curr_rev" \
+   --arg rev $curr_rev \
    '
    {
     "resource_type": "AdvertisementConfig",
@@ -815,7 +815,7 @@ Enable_Route_Advertisement_T1() {
    '
  )
 
- # echo $adv_config
+ #echo $adv_config
  curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    ${NSXHOSTNAME}/api/v1/logical-routers/${t1id}/routing/advertisement/ \
