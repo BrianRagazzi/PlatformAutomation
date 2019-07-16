@@ -416,7 +416,6 @@ Create_NSX_IP_Pool() {
    jq -r --arg cidr $2 '.results[].subnets[] | select(.cidr == $cidr) | .id')
  if [ -n "$chk" ]; then
    echo Pool with CIDR $2 already exists, skipping
-   return 1
  else
    echo "Creating IP Pool $1"
    local range_start=$(echo $5 | cut -d "-" -f1)
