@@ -369,6 +369,7 @@ Create_NSX_T1Router() {
    else
      echo "Not binding to an edgecluster"
      local useedgecluster="false"
+     local ecid=""
    fi
 
    router_config=$(
