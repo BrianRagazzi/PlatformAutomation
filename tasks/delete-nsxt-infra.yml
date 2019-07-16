@@ -12,6 +12,7 @@ inputs:
 
 params:
   NSXT_INFRA_CONFIG_FILE: nsx-infra.yml
+  ACTUALLY_DELETE_NAT_RULES: false
 
 
 run:
@@ -32,7 +33,7 @@ run:
 
     Delete_Logical_Switches $NSXT_INFRA_CONFIG_FILE
     Delete_T1_Routers $NSXT_INFRA_CONFIG_FILE
-    Delete_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE
+    Delete_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE $ACTUALLY_DELETE_NAT_RULES
     Delete_IP_Pools $NSXT_INFRA_CONFIG_FILE
     Delete_IP_Blocks $NSXT_INFRA_CONFIG_FILE
     Delete_Load_Balancers $NSXT_INFRA_CONFIG_FILE
