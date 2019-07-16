@@ -11,8 +11,6 @@ inputs:
 
 
 params:
-  NSXT_ADMIN_USERNAME:
-  NSXT_ADMIN_PASSWORD:
   NSXT_INFRA_CONFIG_FILE: nsx-infra.yml
 
 
@@ -21,10 +19,16 @@ run:
   args:
   - "-c"
   - |
+    set -eu
+
+    export NSXUSERNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
+    export NSXPASSWORD=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
+    export NSXHOSTNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_manager')
+
     set -eux
 
-    source custom-tasks/functions/nsxt.sh
-    source custom-tasks/functions/nsx-yml.sh
+    source custom-tasks/tasks/functions/nsxt.sh
+    source custom-tasks/tasks/functions/nsxt-yml.sh
 
     Delete_Logical_Switches $NSXT_INFRA_CONFIG_FILE
     Delete_T1_Routers $NSXT_INFRA_CONFIG_FILE
