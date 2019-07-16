@@ -254,36 +254,39 @@ Create_Load_Balancers() {
 
 Delete_Load_Balancers() {
  # $1 Config file
- lbs=$(yq -t r $1 'load_balancers[*].name' -j | jq -r '.[]')
- for lb_name in $lbs
-   do
-     Delete_NSX_LoadBalancer $lb_name
+ lbchk=$(yq -t r $1 'load_balancers[*].name')
+ if [ $lbchk == "null" ]; then
+   echo "No Load-Balancers to create"
+ else
+   lbs=$(yq -t r $1 'load_balancers[*].name' -j | jq -r '.[]')
+   for lb_name in $lbs
+     do
+       Delete_NSX_LoadBalancer $lb_name
 
-     virtualservers=$(yq -t r $1 'load_balancers[*]' -j | \
-     jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .virtual_servers[] | .name')
-     for vs_name in $virtualservers
-       do
-         vs_vip=$(yq -t r $1 'load_balancers[*]' -j | \
-         jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
-         '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .virtual_ip')
-         Delete_NSX_LB_VirtualServer "$vs_name" "$vs_vip"
-       done
+       virtualservers=$(yq -t r $1 'load_balancers[*]' -j | \
+       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .virtual_servers[] | .name')
+       for vs_name in $virtualservers
+         do
+           vs_vip=$(yq -t r $1 'load_balancers[*]' -j | \
+           jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
+           '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .virtual_ip')
+           Delete_NSX_LB_VirtualServer "$vs_name" "$vs_vip"
+         done
 
-     serverpools=$(yq -t r $1 'load_balancers[*]' -j | \
-     jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .server_pools[] | .name')
-     for pool_name in $serverpools
-       do
-        Delete_NSX_LB_ServerPool "$pool_name"
-       done
+       serverpools=$(yq -t r $1 'load_balancers[*]' -j | \
+       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .server_pools[] | .name')
+       for pool_name in $serverpools
+         do
+          Delete_NSX_LB_ServerPool "$pool_name"
+         done
 
-     # monitors: yq -t r $1 'load_balancers[*]' -j | jq -r '.[] | .monitors[]'
-     monitors=$(yq -t r $1 'load_balancers[*]' -j | \
-     jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .monitors[] | .name')
-     for mon_name in $monitors
-       do
-         Delete_NSX_LB_Monitor "$mon_name"
-       done
-   done
-
-
+       # monitors: yq -t r $1 'load_balancers[*]' -j | jq -r '.[] | .monitors[]'
+       monitors=$(yq -t r $1 'load_balancers[*]' -j | \
+       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .monitors[] | .name')
+       for mon_name in $monitors
+         do
+           Delete_NSX_LB_Monitor "$mon_name"
+         done
+     done
+ fi
 }
