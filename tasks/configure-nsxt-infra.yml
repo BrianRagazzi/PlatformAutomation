@@ -19,7 +19,7 @@ run:
   args:
   - "-c"
   - |
-    set -eux
+    set -eu
 
     export NSXUSERNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
     export NSXPASSWORD=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
