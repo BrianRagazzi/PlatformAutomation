@@ -486,7 +486,6 @@ Create_NSX_IP_Block() {
    jq -r --arg cidr $2 '.results[] | select(.cidr == $cidr) | .id')
  if [ -n "$chk" ]; then
    echo Block with CIDR $2 already exists, skipping
-   return 1
  else
    echo "Creating IP Block $1"
    block_config=$(
