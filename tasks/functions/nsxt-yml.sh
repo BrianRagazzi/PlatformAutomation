@@ -47,6 +47,7 @@ Create_T1_Routers() {
         echo "Adding downlink to $lr_name for $ls_name with IP: $rp_cidr"
         Create_NSX_T1DownlinkPort "$lr_name" "$ls_name" "$rp_cidr"
        done
+     Enable_Route_Advertisement_T1 $lr_name
    done
 }
 
