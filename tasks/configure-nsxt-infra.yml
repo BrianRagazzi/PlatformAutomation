@@ -21,8 +21,8 @@ run:
   - |
     set -eux
 
-    export NSXUSERNAME = $(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
-    export NSXPASSWORD = $(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
+    export NSXUSERNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
+    export NSXPASSWORD=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
 
 
 
