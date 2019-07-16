@@ -319,6 +319,8 @@ jobs:
         file: pas-stemcell/*.tgz
 
 - name: fetch-pas-windows
+  build_log_retention:
+    builds: 4
   plan:
   - aggregate:
     - get: daily
