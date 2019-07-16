@@ -253,15 +253,15 @@ Delete_Load_Balancers() {
  for lb_name in $lbs
    do
      Delete_NSX_LoadBalancer $lb_name
-
+     
      virtualservers=$(yq -t r $1 'load_balancers[*]' -j | \
      jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .virtual_servers[] | .name')
      for vs_name in $virtualservers
        do
-        vs_vip=$(yq -t r $1 'virtual_servers[*]' -j | \
-        jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
-        '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .virtual_ip')
-        Delete_NSX_LB_VirtualServer "$vs_name" "$vs_vip"
+         vs_vip=$(yq -t r $1 'load_balancers[*]' -j | \
+         jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
+         '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .virtual_ip')
+         Delete_NSX_LB_VirtualServer "$vs_name" "$vs_vip"
        done
 
      serverpools=$(yq -t r $1 'load_balancers[*]' -j | \
@@ -279,4 +279,6 @@ Delete_Load_Balancers() {
          Delete_NSX_LB_Monitor "$mon_name"
        done
    done
+
+
 }
