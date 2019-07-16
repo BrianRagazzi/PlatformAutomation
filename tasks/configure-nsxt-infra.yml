@@ -26,8 +26,8 @@ run:
 
 
 
-    source custom-tasks/functions/nsxt.sh
-    source custom-tasks/functions/nsx-yml.sh
+    source custom-tasks/tasks/functions/nsxt.sh
+    source custom-tasks/tasks/functions/nsx-yml.sh
 
     Create_Logical_Switches $NSXT_INFRA_CONFIG_FILE
     Create_T1_Routers $NSXT_INFRA_CONFIG_FILE
