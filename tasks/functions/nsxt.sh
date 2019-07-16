@@ -794,8 +794,7 @@ Enable_Route_Advertisement_T1() {
 
  curr_rev=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-routers/${t1id}/routing/advertisement | \
-   | jq '._revision')
+   $NSXHOSTNAME/api/v1/logical-routers/${t1id}/routing/advertisement | jq '._revision')
 
  adv_config=$(
    jq -n \
