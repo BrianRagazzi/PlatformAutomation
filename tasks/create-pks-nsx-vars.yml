@@ -38,7 +38,7 @@ run:
     poolid=$(Get_NSX_IP_Pool_ID $poolname)
     podsblockname=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_ip-block-name')
     podsblockid=$(Get_NSX_IP_Block_ID $podsblockname)
-    nodesblockname=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_nodes_ip-block-name')
+    nodesblockname=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_nodes-ip-block-name')
     nodesblockid=$(Get_NSX_IP_Block_ID $nodesblockname)
     t0name=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_t0-router-name')
     t0id=$(Get_NSX_T0Router_ID $t0name)
