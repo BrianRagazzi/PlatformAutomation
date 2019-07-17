@@ -422,9 +422,9 @@ Create_NSX_IP_Pool() {
  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/pools/ip-pools | \
-   jq -r --arg cidr $2 '.results[].subnets[] | select(.cidr == $cidr) | .id')
+   jq -r --arg cidr $2 '.results[].subnets[] | select(.cidr == $cidr) | select(.range_start == $range_start) | select(.range_end == $range_end) | .id')
  if [ -n "$chk" ]; then
-   echo Pool with CIDR $2 already exists, skipping
+   echo "Pool with CIDR $2 and range $5 already exists, skipping"
  else
    echo "Creating IP Pool $1"
    local range_start=$(echo $5 | cut -d "-" -f1)
