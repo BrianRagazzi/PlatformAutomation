@@ -404,6 +404,14 @@ Create_NSX_T1Router() {
  fi
 }
 
+Get_NSX_T0Router_ID() {
+ local t0id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/logical-routers | \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.router_type == "TIER0") | .id')
+ echo $t0id
+}
+
 Create_NSX_IP_Pool() {
  # $1 - Name
  # $2 - CIDR
@@ -477,6 +485,15 @@ Create_NSX_IP_Pool() {
  fi
 }
 
+Get_NSX_IP_Pool_ID() {
+ # $1 NAME
+ local poolid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/pools/ip-pools | \
+   jq -r --arg name $1 '.results[] | select(.display_name == $name) | .id')
+ echo $poolid
+}
+
 Create_NSX_IP_Block() {
  # $1 - Name
  # $2 - CIDR
@@ -507,6 +524,15 @@ Create_NSX_IP_Block() {
      $NSXHOSTNAME/api/v1/pools/ip-blocks \
      -X POST -d "$block_config"
  fi
+}
+
+Get_NSX_IP_Block_ID() {
+ # $1 NAME
+ local blkid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/api/v1/pools/ip-blocks | \
+   jq -r --arg name $1 '.results[] | select(.display_name == $name) | .id')
+ echo $blkid
 }
 
 Create_NSX_T1DownlinkPort() {
