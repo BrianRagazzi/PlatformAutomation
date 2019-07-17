@@ -1,0 +1,47 @@
+---
+platform: linux
+
+
+inputs:
+- name: config # contains the env file with target OpsMan Information
+- name: vars # variable files to be made available
+- name: secrets
+  optional: true
+- name: custom-tasks
+
+outputs:
+ - name: vars
+
+params:
+  NSXT_INFRA_CONFIG_FILE: pks-vars.yml
+  NSX_VARS_FILE: pks-nsx-vars.yml
+
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    set -eu
+
+    export NSXUSERNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
+    export NSXPASSWORD=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
+    export NSXHOSTNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_manager')
+
+    set -eux
+
+    source custom-tasks/tasks/functions/nsxt.sh
+    source custom-tasks/tasks/functions/nsxt-yml.sh
+
+    poolname=$(yq -t r $1 'properties_network_selector_nsx_floating-ip-pool-name')
+    poolid=$(Get_NSX_IP_Pool_ID $poolname)
+    podsblockname=$(yr -t r $1 'properties_network_selector_nsx_ip-block-name')
+    podsblockid=$(Get_NSX_IP_Block_ID $podsblockname)
+    nodesblockname=$(yr -t r $1 'properties_network_selector_nsx_nodes_ip-block-name')
+    nodesblockid=$(Get_NSX_IP_Block_ID $nodesblockname)
+    t0name=$(yq -t r $1 'properties_network_selector_nsx_t0-router-name')
+    t0id=$(Get_NSX_T0Router_ID $t0name)
+    echo "properties_network_selector_nsx_floating-ip-pool-ids: $poolid >> NSX_VARS_FILE
+    echo "properties_network_selector_nsx_nodes-ip-block-id: $nodesblockid >> NSX_VARS_FILE
+    echo "properties_network_selector_nsx_ip-block-id: $podsblockid >> NSX_VARS_FILE
+    echo "properties_network_selector_nsx_t0-router-id: $t0id" >> NSX_VARS_FILE
