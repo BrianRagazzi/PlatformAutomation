@@ -1141,10 +1141,11 @@ Get_PKS_SuperUser_ID(){
    -u $NSXUSERNAME:$NSXPASSWORD $NSXHOSTNAME/api/v1/trust-management/certificates | \
    jq -r --arg certname "$1" '.results[] | select(.display_name == $certname) | .id')
  if [ -z "$certid" ]; then
-   # Need to Create it
+   echo "Need to Create it"
    local NSX_SUPERUSER_CERT_FILE="pks-nsx-t-superuser.crt"
    local NSX_SUPERUSER_KEY_FILE="pks-nsx-t-superuser.key"
-   local NODE_ID=$(cat /proc/sys/kernel/random/uuid)
+   # local NODE_ID=$(cat /proc/sys/kernel/random/uuid) #linux
+   local NODE_ID=$(uuidgen) #MAC OS
 
    openssl req -newkey rsa:2048 -x509 -nodes \
      -keyout "$NSX_SUPERUSER_KEY_FILE" \
@@ -1154,18 +1155,20 @@ Get_PKS_SuperUser_ID(){
      -sha256 -days 730 2>/dev/null
 
    cert_req=$(
+     #--arg pem "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_CERT_FILE)" \
+     #--arg key "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_KEY_FILE)" \
+
      jq -n \
      --arg display_name "$1" \
-     --arg pem "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_CERT_FILE)" \
-     --arg key "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_KEY_FILE)" \
+     --arg pem "$(cat $NSX_SUPERUSER_CERT_FILE)" \
      '
      {
       "display_name": $display_name,
-      "pem_encoded": $pem,
-      "private_key": $key
+      "pem_encoded": $pem
      }
      '
    )
+   # echo $cert_req
    certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD $NSXHOSTNAME/api/v1/trust-management/certificates?action=import \
      -X POST -d "$cert_req" | \
@@ -1186,7 +1189,7 @@ Get_PKS_SuperUser_ID(){
      }
      '
    )
-
+   #echo $pi_req
    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD $NSXHOSTNAME/api/v1/trust-management/principal-identities \
      -X POST -d "$pi_req"
