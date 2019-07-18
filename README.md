@@ -29,7 +29,7 @@ Configure NSX-T Objects, Install PKS & Harbor on 3 AZs using binaries from local
 
 ### To Do ###
 * Prep cluster for helm & tiller
-* LDAP/UAA credentials not set correctly
+
 
 
 ## RETRIEVE
