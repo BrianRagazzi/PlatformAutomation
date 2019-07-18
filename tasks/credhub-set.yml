@@ -1,0 +1,53 @@
+# The inputs, outputs, params, filename, and filepath
+# of this task file are part of its semantically versioned API.
+# See our documentation for a detailed discussion of our semver API.
+# See www.semver.org for an explanation of semantic versioning.
+
+# code_snippet credhub-interpolate start yaml
+---
+platform: linux
+
+params:
+
+  CREDHUB_CLIENT:
+  CREDHUB_SECRET:
+  CREDHUB_SERVER:
+  # - Required
+  # - Credentials to talk to credhub server
+
+  CREDHUB_CA_CERT:
+  # - Optional
+  # - This is only necessary if your Concourse worker
+  #   is not already configured to trust the CA used for Credhub
+
+
+  CRED_NAME:
+  # Name/Path of Credential to set
+  CRED_TYPE:
+  # What type of Credential to set\
+  CRED_VALUE:
+  # The value to set
+
+
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    cat /var/version && echo ""
+    set -euo pipefail
+
+    # NOTE: The credhub cli does not ignore empty/null environment variables.
+    # https://github.com/cloudfoundry-incubator/credhub-cli/issues/68
+    if [ -z "$CREDHUB_CA_CERT" ]; then
+      unset CREDHUB_CA_CERT
+    fi
+
+    credhub --version
+
+    credhub set -n $CRED_NAME -t $CRED_TYPE -v $CRED_VALUE
+
+
+
+# code_snippet credhub-interpolate end
