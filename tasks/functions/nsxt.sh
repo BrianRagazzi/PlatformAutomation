@@ -8,7 +8,7 @@ Create_NSX_LB_Monitor() {
  ##################################################################
  ### Creates the Requested Monitor if it does not already exist ###
  ##################################################################
- local monchk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local monchk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/monitors | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -193,7 +193,7 @@ Create_NSX_LoadBalancer() {
  ##################################################################
  ###   Creates the Load Balancer if it does not already exist   ###
  ##################################################################
- local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/services | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -249,7 +249,7 @@ Create_NSX_LoadBalancer() {
 Create_NSX_LogicalSwitch() {
  # $1 - Logical Switch name
  # $2 - Transport Zone Name
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-switches | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -290,7 +290,7 @@ Create_NSX_LogicalSwitchPortforT1() {
  # $2 T1 Router Name
  # Called in-line, do not add echos
  local display_name="$2"-"$1"
- local lsid=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local lsid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-switches | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -300,7 +300,7 @@ Create_NSX_LogicalSwitchPortforT1() {
      return 1
    fi
 
- local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-ports?logical_switch_id=$lsid | \
    jq -r --arg name "$display_name" '.results[] | select(.display_name == $name)| .id')
@@ -332,7 +332,7 @@ Create_NSX_LogicalSwitchPortforT1() {
      -X POST -d "$lsp_config" > /dev/null
 
    #sleep 5
-   local lsp_id=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+   local lsp_id=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-ports?logical_switch_id=${lsid} | \
      jq -r --arg name "$display_name" '.results[] | select(.display_name == $name) | .id')
@@ -549,7 +549,7 @@ Create_NSX_T1DownlinkPort() {
    return 1
  fi
 
- local lsid=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local lsid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-switches | \
    jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
@@ -636,7 +636,7 @@ Create_NSX_NAT_rule() {
  #check for existing rule matching action, source,  dest & Trans
  if [ $3 == "Any" ]; then
   #check for existing rule matching action, dest & Trans
-  local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
     -u $NSXUSERNAME:$NSXPASSWORD \
     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
     jq -r \
@@ -646,7 +646,7 @@ Create_NSX_NAT_rule() {
     '.results[] | select(.action == $action) | select(.match_destination_network == $dest) | select(.translated_network == $trans) | .id')
  elif [ $4 == "Any" ]; then
    #check for existing rule matching action, source & Trans
-   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+   local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
      jq -r \
@@ -656,7 +656,7 @@ Create_NSX_NAT_rule() {
      '.results[] | select(.action == $action) | select(.match_source_network == $source) | select(.translated_network == $trans) | .id')
  else
    #check for existing rule matching action, source & Trans
-   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+   local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
      jq -r \
@@ -750,7 +750,7 @@ Connect_NSX_T1T0() {
    $NSXHOSTNAME/api/v1/logical-routers | \
    jq -r --arg name "$2" '.results[] | select(.display_name == $name) | select(.router_type == "TIER1") | .id')
 
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$t0id | \
    jq -r --arg name "$t0display_name" '.results[] | select(.display_name == $name) | .id')
@@ -867,7 +867,7 @@ Delete_NSX_NAT_rule() {
  #check for existing rule matching action, source,  dest & Trans
  if [ $3 == "Any" ]; then
   #check for existing rule matching action, dest & Trans
-  local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
     -u $NSXUSERNAME:$NSXPASSWORD \
     $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
     jq -r \
@@ -877,7 +877,7 @@ Delete_NSX_NAT_rule() {
     '.results[] | select(.action == $action) | select(.match_destination_network == $dest) | select(.translated_network == $trans) | .id')
  elif [ $4 == "Any" ]; then
    #check for existing rule matching action, source & Trans
-   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+   local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
      jq -r \
@@ -887,7 +887,7 @@ Delete_NSX_NAT_rule() {
      '.results[] | select(.action == $action) | select(.match_source_network == $source) | select(.translated_network == $trans) | .id')
  else
    #check for existing rule matching action, source & Trans
-   local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+   local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-routers/${t0id}/nat/rules | \
      jq -r \
@@ -925,7 +925,7 @@ Delete_NSX_NAT_rule() {
 Delete_NSX_IP_Block() {
  # $1 - Name
  # Check that it exists and has zero allocations
- local chk=$(curl -s -k -H "Content-Type: Application/xml" -H "X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/pools/ip-blocks | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -954,7 +954,7 @@ Delete_NSX_IP_Block() {
 Delete_NSX_IP_Pool() {
  # $1 - Name
  # Check that it exists and has zero allocations
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/pools/ip-pools | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | select(.pool_usage.allocated_ids == 0)| .id')
@@ -972,7 +972,7 @@ Delete_NSX_IP_Pool() {
 
 Delete_NSX_T1Router(){
  # $1 - Logical Router Name
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-routers | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -980,7 +980,7 @@ Delete_NSX_T1Router(){
  if [ -n "$chk" ]; then
    echo Router $1 exists, deleting it
    # get the logical router ports (and corresponding Linked ports on T0) and delete them
-   local lrps=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+   local lrps=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-router-ports?logical_router_id=$chk | \
      jq -r --arg name "$1" '.results[] | .id, .linked_logical_router_port_id.target_id')
@@ -1019,7 +1019,7 @@ Delete_NSX_LogicalSwitchPort(){
 
 Delete_NSX_LogicalSwitch(){
  # $1 - Logical Switch Name
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/logical-switches | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -1027,7 +1027,7 @@ Delete_NSX_LogicalSwitch(){
  if [ -n "$chk" ]; then
    echo Switch $1 exists, deleting it
    #Find and delete the Logical Switch Ports
-   local lsps=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+   local lsps=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-ports?logical_switch_id=$chk | \
      jq -r --arg name "$1" '.results[] | .id')
@@ -1051,7 +1051,7 @@ Delete_NSX_LB_Monitor() {
  ###################################################
  ###  Deletes the Virtual Server if it existst   ###
  ###################################################
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/monitors | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -1117,7 +1117,7 @@ Delete_NSX_LoadBalancer() {
  ###############################################
  ###  Deletes the Load Balancer if it exists ###
  ###############################################
- local chk=$(curl -s -k -H "Content-Type: Application/xml X-Allow-Overwrite: true" \
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/loadbalancer/services | \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
@@ -1132,5 +1132,64 @@ Delete_NSX_LoadBalancer() {
      -X DELETE
  else
    echo LB $1 Does not exist
+ fi
+}
+
+Get_PKS_SuperUser_ID(){
+ # $1 = superuser_name
+ certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD $NSXHOSTNAME/api/v1/trust-management/certificates | \
+   jq -r --arg certname "$1" '.results[] | select(.display_name == $certname) | .id')
+ if [ -z "$certid" ]; then
+   # Need to Create it
+   local NSX_SUPERUSER_CERT_FILE="pks-nsx-t-superuser.crt"
+   local NSX_SUPERUSER_KEY_FILE="pks-nsx-t-superuser.key"
+   local NODE_ID=$(cat /proc/sys/kernel/random/uuid)
+
+   openssl req -newkey rsa:2048 -x509 -nodes \
+     -keyout "$NSX_SUPERUSER_KEY_FILE" \
+     -new -out "$NSX_SUPERUSER_CERT_FILE" \
+     -subj /CN=pks-nsx-t-superuser -extensions client_server_ssl \
+     -config <(cat /etc/ssl/openssl.cnf <(printf '[client_server_ssl]\nextendedKeyUsage = clientAuth\n')) \
+     -sha256 -days 730 2>/dev/null
+
+   cert_req=$(
+     jq -n \
+     --arg display_name "$1" \
+     --arg pem "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_CERT_FILE)" \
+     '
+     {
+      "display_name": $display_name,
+      "pem_encoded": $pem
+     }
+     '
+   )
+   certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD $NSXHOSTNAME/api/v1/trust-management/certificates?action=import \
+     -X POST -d "$cert_req" | \
+     jq -r --arg display_name "$1" '.results[] | select(.display_name == $display_name) | .id')
+
+   pi_req=$(
+     jq -n \
+     --arg pi_name "$1" \
+     --arg certid "$certid" \
+     --arg nodeid "$NODE_ID" \
+     '
+     {
+       "display_name": $pi_name,
+       "name": $pi_name,
+       "permission_group": "superusers",
+       "certificate_id": $certid,
+       "node_id": $nodeid
+     }
+     '
+   )
+
+   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD $NSXHOSTNAME/api/v1/trust-management/principal-identities \
+     -X POST -d "$pi_req"
+   echo $certid
+ else
+   echo $certid
  fi
 }
