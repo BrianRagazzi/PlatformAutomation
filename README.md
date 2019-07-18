@@ -4,18 +4,17 @@
 # Pipelines
 
 ## PAS
-Configure NSX-T Objects, Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
+Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
 
 ### Features ###
 * Credhub for secrets
 * Syslog configured
-* Configures NSX-T Objects, including load-balancer from yml
+* Create new users and add to scopes post-deploy
 
 ### To Do ###
+* Configure NSX-T Objects, including load-balancer from yml
 * Disable CF errands post-deploy
 * Enable LDAP integration
-* Create new users and add to scopes post-deploy
-* Validate NSX-T configuration meets requirements
 * Add/include PCF Metrics
 
 ## PKS
