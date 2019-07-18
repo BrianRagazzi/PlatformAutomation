@@ -1157,10 +1157,12 @@ Get_PKS_SuperUser_ID(){
      jq -n \
      --arg display_name "$1" \
      --arg pem "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_CERT_FILE)" \
+     --arg key "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_KEY_FILE)" \
      '
      {
       "display_name": $display_name,
-      "pem_encoded": $pem
+      "pem_encoded": $pem,
+      "private_key": $key
      }
      '
    )
@@ -1188,8 +1190,6 @@ Get_PKS_SuperUser_ID(){
    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD $NSXHOSTNAME/api/v1/trust-management/principal-identities \
      -X POST -d "$pi_req"
-   echo $certid
- else
-   echo $certid
  fi
+ echo $certid
 }
