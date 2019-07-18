@@ -3,9 +3,8 @@
 
 # Pipelines
 
-
 ## PAS
-Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
+Configure NSX-T Objects, Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
 
 ### To Do ###
 * Disable CF errands post-deploy
@@ -15,7 +14,7 @@ Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
 * Add/include PCF Metrics
 
 ## PKS
-Install PKS & Harbor on 3 AZs using binaries from local S3
+Configure NSX-T Objects, Install PKS & Harbor on 3 AZs using binaries from local S3
 ### Features ###
 * Credhub for secrets
 * LDAP Integration
@@ -40,6 +39,12 @@ Save binaries for run-time pipelines to local S3
 
 ## backup
 
-### TO Do ###
+### To Do ###
 * New Tasks
 * Determine where it can be run, what is needed in order for concourse to reach targets
+
+
+# Functions & Custom Tasks
+## nsxt.sh
+### To Do ###
+* Add and finish creation of superuser; figure out how to save cert and key
