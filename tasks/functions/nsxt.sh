@@ -1152,7 +1152,7 @@ Get_PKS_SuperUser_ID(){
      -new -out "$NSX_SUPERUSER_CERT_FILE" \
      -subj /CN=pks-nsx-t-superuser -extensions client_server_ssl \
      -config <(cat /etc/ssl/openssl.cnf <(printf '[client_server_ssl]\nextendedKeyUsage = clientAuth\n')) \
-     -sha256 -days 730 2>/dev/null
+     -sha256 -days 730 2>/dev/null #hide output from stdout
 
    cert_req=$(
      #--arg pem "$(awk '{printf "%s\\n", $0}' $NSX_SUPERUSER_CERT_FILE)" \
