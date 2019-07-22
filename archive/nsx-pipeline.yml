@@ -1,0 +1,148 @@
+---
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+interpolate-creds: &interpolate-creds
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/foundation/((foundation))'
+    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
+    SKIP_MISSING: true
+  input_mapping:
+    files: configuration
+  output_mapping:
+    interpolated-files: interpolated-creds
+
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((access_key_id))
+  secret_access_key: ((secret_access_key))
+  endpoint: ((s3.endpoint))
+  bucket: ((s3.buckets_pivnet_products))
+  region_name: ((s3.region_name))
+  skip_ssl_verification: true
+
+
+resources:
+# - name: platform-automation
+#   type: pivnet
+#   source:
+#     api_token: ((pivnet_token))
+#     product_slug: platform-automation
+
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-image-(.*).tgz
+
+- name: custom-task-image
+  type: docker-image
+  source:
+    repository: harbor.ragazzilab.com/platauto/platautouaac
+    tag: 3.0.4
+    username: concourse
+    password: VMware1!
+
+- name: configuration
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["((foundation))"]
+
+# - name: state
+#   type: git
+#   source:
+#     uri: ((config_github_repo))
+#     branch: ((config_github_branch))
+#     username: ((github_username))
+#     password: ((github_token))
+
+- name: custom-tasks
+  type: git
+  source:
+    uri: ((PlatformAutomation_github_repo))
+    branch: ((PlatformAutomation_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["tasks"]
+
+
+groups:
+- name: create
+  jobs:
+  - create-nsx-objects
+- name: destroy
+  jobs:
+  - delete-nsx-objects
+
+jobs:
+- name: create-nsx-objects
+  serial: true
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: custom-tasks
+    - get: custom-task-image
+    - get: platform-automation-image
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: create-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/configure-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+
+- name: delete-nsx-objects
+  serial: true
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: custom-tasks
+    - get: custom-task-image
+    - get: platform-automation-image
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: delete-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/delete-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-taskls: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+      ACTUALLY_DELETE_NAT_RULES: false #when not set to "DELETE", rule is simply disabled
