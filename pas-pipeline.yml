@@ -55,11 +55,6 @@ resource_types:
     tags: latest-final
 
 resources:
-# - name: platform-automation
-#   type: pivnet
-#   source:
-#     api_token: ((pivnet_token))
-#     product_slug: platform-automation
 
 - name: platform-automation-tasks
   type: s3
