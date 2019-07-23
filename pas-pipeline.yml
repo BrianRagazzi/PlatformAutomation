@@ -73,6 +73,14 @@ resources:
     <<: *s3_credentials_binaries
     regexp: platform-automation-image-(.*).tgz
 
+- name: custom-task-image
+  type: docker-image
+  source:
+    repository: ((registry.endpoint))/((registry.repo))
+    tag: 3.0.5
+    username: ((registry.username))
+    password: ((registry.password))
+
 - name: opsman-image
   type: s3
   source:
@@ -108,6 +116,31 @@ resources:
   source:
     <<: *s3_credentials_binaries
     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
+
+# - name: mysql-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+#
+# - name: mysql-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+
+# - name: pas-windows-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[pas-windows,(.*)\]pas-windows-.*.pivotal
+#
+# - name: pas-windows-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: pas-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
 
 - name: installation
   type: s3
@@ -171,10 +204,13 @@ resources:
 groups:
 - name: deploy
   jobs:
+  - create-nsx-objects
   - install-opsman
   - pas
+#  - pas-windows
   - nsx
   - healthwatch
+#  - mysql
   - apply-changes
 - name: post-deploy
   jobs:
@@ -184,14 +220,45 @@ groups:
   - export-installation
   - staged-director-config-backup
   - staged-config-pas-backup
+#  - staged-config-pasw-backup
   - staged-config-healthwatch-backup
   - staged-config-nsxt-backup
 - name: teardown
   jobs:
   - destroy-installation
+  - delete-nsx-objects
 
 
 jobs:
+- name: create-nsx-objects
+  serial: true
+  serial_groups: [ install ]
+  plan:
+  - get: one-time-trigger
+    trigger: true
+  - get: configuration
+  - get: custom-tasks
+  - get: custom-task-image
+  - get: platform-automation-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: create-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/configure-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+
 - name: install-opsman
   serial: true
   serial_groups: [ install ]
@@ -199,13 +266,13 @@ jobs:
   - aggregate:
     - get: opsman-image
     - get: configuration
-    - get: one-time-trigger
-      trigger: true
     - get: state
     - get: platform-automation-image
       params:
         unpack: true
     - get: platform-automation-tasks
+      passed: [create-nsx-objects]
+      trigger: true
       params:
         unpack: true
 
@@ -333,6 +400,62 @@ jobs:
         vars/((foundation))/vars/cf-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
+# - name: pas-windows
+#   serial: true
+#   plan:
+#     - aggregate:
+#         - get: platform-automation-image
+#           params:
+#             unpack: true
+#           passed:
+#             - pas
+#           trigger: true
+#         - get: platform-automation-tasks
+#           params:
+#             unpack: true
+#         - get: pas-windows-product
+#         - get: pas-windows-stemcell
+#         - get: configuration
+#     - task: interpolate-creds
+#       <<: *interpolate-creds
+#     - task: upload-product
+#       image: platform-automation-image
+#       file: platform-automation-tasks/tasks/upload-product.yml
+#       input_mapping:
+#         product: pas-windows-product
+#         env: interpolated-creds
+#       params:
+#         ENV_FILE: ((foundation))/env/env.yml
+#     - task: upload-pas-windows-stemcell
+#       image: platform-automation-image
+#       file: platform-automation-tasks/tasks/upload-stemcell.yml
+#       input_mapping:
+#         env: interpolated-creds
+#         stemcell: pas-windows-stemcell
+#       params:
+#         ENV_FILE: ((foundation))/env/env.yml
+#     - task: stage-product
+#       image: platform-automation-image
+#       file: platform-automation-tasks/tasks/stage-product.yml
+#       input_mapping:
+#         product: pas-windows-product
+#         env: interpolated-creds
+#       params:
+#         ENV_FILE: ((foundation))/env/env.yml
+#     - task: configure-pas
+#       image: platform-automation-image
+#       file: platform-automation-tasks/tasks/configure-product.yml
+#       input_mapping:
+#         config: configuration
+#         env: interpolated-creds
+#         vars: interpolated-creds
+#       params:
+#         CONFIG_FILE: ((foundation))/config/pas-windows.yml
+#         VARS_FILES: |
+#           vars/((foundation))/vars/pas-windows-defaults.yml
+#           vars/((foundation))/vars/pas-windows-vars.yml
+#         ENV_FILE: ((foundation))/env/env.yml
+
 - name: nsx
   serial: true
   plan:
@@ -438,13 +561,78 @@ jobs:
         vars/((foundation))/vars/p-healthwatch-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
+# - name: mysql
+#   serial: true
+#   plan:
+#   - aggregate:
+#     - get: mysql-product
+#     - get: mysql-stemcell
+#     - get: configuration
+#       trigger: true
+#     - get: platform-automation-image
+#       passed: [ pas ]
+#       params:
+#         unpack: true
+#     - get: platform-automation-tasks
+#       params:
+#         unpack: true
+#
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#
+#   - task: upload-product-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/upload-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       config: configuration
+#       download-config: configuration
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: stage-product-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/stage-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       config: configuration
+#       download-config: configuration
+#       env: interpolated-creds
+#       secrets: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: upload-mysql-stemcell
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/upload-stemcell.yml
+#     input_mapping:
+#       env: interpolated-creds
+#       stemcell: mysql-stemcell
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: configure-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/configure-product.yml
+#     input_mapping:
+#       config: configuration
+#       env: interpolated-creds
+#       vars: interpolated-creds
+#     params:
+#       CONFIG_FILE: ((foundation))/config/mysql.yml
+#       VARS_FILES: |
+#         vars/((foundation))/vars/mysql-defaults.yml
+#         vars/((foundation))/vars/mysql-vars.yml
+#       ENV_FILE: ((foundation))/env/env.yml
+
 - name: apply-changes
   serial: true
   plan:
   - aggregate:
     - get: configuration
       trigger: true
-      passed: [ nsx, healthwatch]
+      passed: [ nsx, healthwatch ] #, mysql, pas-windows]
     - get: platform-automation-image
       params:
         unpack: true
@@ -569,6 +757,29 @@ jobs:
     params:
       file: generated-config/*.yml
 
+# - name: staged-config-pasw-backup
+#   plan:
+#   - get: platform-automation-tasks
+#     params: {unpack: true}
+#     trigger: true
+#     passed:
+#       - export-installation
+#   - get: platform-automation-image
+#     params: {unpack: true}
+#   - get: configuration
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#   - task: staged-pas-config
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/staged-config.yml
+#     input_mapping:
+#       env: interpolated-creds
+#     params:
+#       PRODUCT_NAME: pas-windows
+#       ENV_FILE: ((foundation))/env/env.yml
+#   - put: config-backup
+#     params:
+#       file: generated-config/*.yml
 
 - name: staged-config-healthwatch-backup
   plan:
@@ -618,7 +829,6 @@ jobs:
     params:
       file: generated-config/*.yml
 
-
 - name: destroy-installation
   serial: true
   serial_groups: [ teardown ]
@@ -659,3 +869,33 @@ jobs:
       VARS_FILES: |
         vars/((foundation))/vars/opsman-defaults.yml
         vars/((foundation))/vars/opsman-vars.yml
+
+- name: delete-nsx-objects
+  serial: true
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: custom-tasks
+    - get: custom-task-image
+    - get: platform-automation-image
+      passed: [destroy-installation]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: delete-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/delete-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+      ACTUALLY_DELETE_NAT_RULES: false #when not set to "DELETE", rule is simply disabled
