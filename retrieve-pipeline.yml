@@ -18,6 +18,15 @@ credhub-interpolate: &credhub-interpolate
   output_mapping:
     interpolated-files: config
 
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((s3.access_key_id))
+  secret_access_key: ((s3.secret_access_key))
+  endpoint: ((s3.endpoint))
+  bucket: ((s3.buckets_pivnet_products))
+  region_name: ((s3.region_name))
+  skip_ssl_verification: true
+
+
 resource_types:
 - name: pivnet
   type: docker-image
@@ -29,160 +38,90 @@ resources:
 - name: healthwatch-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[p-healthwatch,(.*)\]p-healthwatch-.*.pivotal
 
 - name: healthwatch-stemcell
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: healthwatch-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: harbor-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-.*.pivotal
      # harbor-container-registry-1.7.5-build.11.pivotal
 
 - name: harbor-stemcell
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: mysql-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
      # harbor-container-registry-1.7.5-build.11.pivotal
 
 - name: mysql-stemcell
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 
 - name: opsman-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[ops-manager,(.*)\].*.ova
 
 - name: nsx-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
 - name: pas-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[elastic-runtime,(.*)\].*.pivotal
     #regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
 
 - name: pas-stemcell
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: pas-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: pks-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
 
 - name: pks-stemcell
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: bbr-linux-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[p-bosh-backup-and-restore,(.*)\]bbr-.*-linux-amd64
 
 
 - name: pas-windows-product
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: \[pas-windows,(.*)\]pas-windows-.*.pivotal
 
 - name: platform-automation-pivnet
@@ -196,23 +135,13 @@ resources:
 - name: platform-automation-tasks
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: platform-automation-tasks-(.*).zip
 
 - name: platform-automation-image
   type: s3
   source:
-    access_key_id: ((s3.access_key_id))
-    bucket: ((s3.buckets_pivnet_products))
-    region_name: ((s3.region_name))
-    endpoint: ((s3.endpoint))
-    skip_ssl_verification: true
-    secret_access_key: ((s3.secret_access_key))
+    <<: *s3_credentials_binaries
     regexp: platform-automation-image-(.*).tgz
 
 - name: config
