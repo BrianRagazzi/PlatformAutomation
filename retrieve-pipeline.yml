@@ -162,6 +162,8 @@ resources:
 
 jobs:
 - name: fetch-healthwatch
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
@@ -192,6 +194,8 @@ jobs:
         file: healthwatch-stemcell/*.tgz
 
 - name: fetch-opsman
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
@@ -218,6 +222,8 @@ jobs:
         file: downloaded-product/*
 
 - name: fetch-pas
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
@@ -248,6 +254,8 @@ jobs:
         file: pas-stemcell/*.tgz
 
 - name: fetch-pas-windows
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
@@ -274,6 +282,8 @@ jobs:
         file: downloaded-product/*.pivotal
 
 - name: fetch-pks
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
@@ -304,6 +314,8 @@ jobs:
           file: pks-stemcell/*.tgz
 
 - name: fetch-harbor
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
@@ -334,6 +346,8 @@ jobs:
           file: harbor-stemcell/*.tgz
 
 - name: fetch-nsx
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
@@ -386,6 +400,8 @@ jobs:
           file: downloaded-product/*
 
 - name: fetch-mysql
+  serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 4
   plan:
