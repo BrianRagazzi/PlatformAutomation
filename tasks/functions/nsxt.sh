@@ -447,7 +447,7 @@ Create_NSX_IP_Pool() {
       "description": $desc
      }
      +
-     if $dns_server1 != "" then
+     if $dns_server1 != "null" then
      {
       "subnets": [
         {
