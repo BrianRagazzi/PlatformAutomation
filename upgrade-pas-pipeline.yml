@@ -200,7 +200,7 @@ jobs:
        file: platform-automation-tasks/tasks/upgrade-opsman.yml
        input_mapping:
          state: state
-         config: interpolated-creds
+         config: configuration
          image: opsman-image
          env: interpolated-creds
          vars: interpolated-creds

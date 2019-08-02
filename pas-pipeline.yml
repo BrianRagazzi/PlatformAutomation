@@ -331,7 +331,7 @@ jobs:
   plan:
   - aggregate:
     - get: configuration
-      trigger: false
+      trigger: true
     - get: pas-product
     - get: pas-stemcell
     - get: healthwatch-stemcell
