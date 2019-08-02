@@ -970,6 +970,27 @@ Delete_NSX_IP_Pool() {
  fi
 }
 
+Release_IP_from_NSX_IP_Pool() {
+ # $1 NAME
+ # $2 IP
+ local poolid=$(Get_NSX_IP_Pool_ID $1)
+ echo $poolid
+
+ release_config=$(
+   jq -n \
+   --arg ip "$2" \
+   '
+   {
+    "allocation_id": $ip
+   }
+   '
+ )
+ curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   ${NSXHOSTNAME}/api/v1/pools/ip-pools/${poolid}?action=RELEASE \
+   -X POST -d "$release_config"
+}
+
 Delete_NSX_T1Router(){
  # $1 - Logical Router Name
  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
