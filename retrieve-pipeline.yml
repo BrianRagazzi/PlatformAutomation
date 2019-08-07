@@ -86,6 +86,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
+- name: compliance-scanner-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[p-compliance-scanner,(.*)\]p-compliance-scanner-.*.pivotal
+
 - name: pas-product
   type: s3
   source:
@@ -165,7 +171,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
     - get: daily
@@ -197,7 +203,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
     - get: daily
@@ -225,7 +231,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
     - get: daily
@@ -257,7 +263,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
     - get: daily
@@ -285,7 +291,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
       - get: daily
@@ -317,7 +323,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
       - get: daily
@@ -349,7 +355,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
       - get: daily
@@ -373,9 +379,37 @@ jobs:
         params:
           file: downloaded-product/*.pivotal
 
+- name: fetch-compliance-scanner
+  serial: true
+  serial_groups: [ fetch ]
+  build_log_retention:
+    builds: 2
+  plan:
+  - aggregate:
+      - get: daily
+        trigger: true
+      - get: platform-automation-image
+        params:
+          unpack: true
+      - get: platform-automation-tasks
+        params:
+          unpack: true
+      - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-compliance-scanner-product
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/compliance-scanner.yml
+  - aggregate:
+      - put: compliance-scanner-product
+        params:
+          file: downloaded-product/*.pivotal
+
 - name: fetch-bbr
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
       - get: daily
@@ -403,7 +437,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - aggregate:
       - get: daily
@@ -433,7 +467,7 @@ jobs:
 
 - name: fetch-platform-automation
   build_log_retention:
-    builds: 4
+    builds: 2
   # We use the pivnet resource to bootstrap the pipeline,
   # and because this product is part of the pipeline, not the foundation
   plan:
