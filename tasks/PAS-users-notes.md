@@ -1,11 +1,13 @@
 
 # Add admin user to PAS
+## Notes
+  * This adds a LOCAL account as an admin, not tied to LDAP
 
-uaac target uaa.system.domain --skip-ssl-validation
+uaac target uaa.system.domain.com --skip-ssl-validation
 
 uaac token client get admin -s <uaa.admin_client.credential.password>
 
-uaac user add pksadmin -p password --emails pksadmin@domain
+uaac user add pksadmin -p password --emails pksadmin@domain.com
 
 uaac member add cloud_controller.admin pksadmin
 
