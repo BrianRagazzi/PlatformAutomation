@@ -7,15 +7,16 @@
 Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
 
 ### Features ###
+* Configure NSX-T Objects, including load-balancer from yml
 * Credhub for secrets
 * Syslog configured
-* Create new users and add to scopes post-deploy
+* LDAP integration configured
+* Add LDAP groups to UAA admin scopes post-deploy
+* Disable CF errands post-deploy
 
 ### To Do ###
-* Configure NSX-T Objects, including load-balancer from yml
-* Disable CF errands post-deploy
-* Enable LDAP integration
 * Add/include PCF Metrics
+* Auto-create Orgs, spaces and LDAP-linked users (https://github.com/pivotalservices/uaausersimport)
 
 ## PKS
 Configure NSX-T Objects, Install PKS & Harbor on 3 AZs using binaries from local S3
