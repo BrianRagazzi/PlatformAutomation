@@ -2,13 +2,17 @@
 # Add admin user to PAS
 
 uaac target uaa.system.domain --skip-ssl-validation
+
 uaac token client get admin -s <uaa.admin_client.credential.password>
 
 uaac user add pksadmin -p password --emails pksadmin@domain
 
 uaac member add cloud_controller.admin pksadmin
+
 uaac member add uaa.admin pksadmin
+
 uaac member add scim.read pksadmin
+
 uaac member add scim.write pksadmin
 
 
