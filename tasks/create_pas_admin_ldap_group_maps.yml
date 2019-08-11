@@ -70,7 +70,8 @@ run:
 
     GROUP_DISTINGUISHED_NAME=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /pas_admin_ldap_group_dn)
 
-    UAA_URL=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /properties_pks_api_hostname)
+    SYS_DOMAIN=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /cloud_controller/system_domain)
+
 
     CF_GUID=$(om --env env/"${ENV_FILE}" curl --silent --path \
       "/api/v0/deployed/products" | \
@@ -80,9 +81,9 @@ run:
       "/api/v0/deployed/products/${CF_GUID}/credentials/.uaa.admin_client_credentials" | \
       jq -rc '.credential.value.password')
 
-    echo "Connecting to PAS UAA server [$UAA_URL]..."
+    echo "Connecting to PAS UAA server [uaa.$SYS_DOMAIN]..."
     # login to PAS UAA
-    uaac target https://$UAA_URL --skip-ssl-validation
+    uaac target https://uaa.$SYS_DOMAIN --skip-ssl-validation
     uaac token client get admin --secret $ADMIN_CLIENT_PASSWORD
 
     # set +eu
