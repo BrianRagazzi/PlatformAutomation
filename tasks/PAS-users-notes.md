@@ -7,15 +7,35 @@ uaac target uaa.system.domain.com --skip-ssl-validation
 
 uaac token client get admin -s <uaa.admin_client.credential.password>
 
-uaac user add pksadmin -p password --emails pksadmin@domain.com
+uaac user add pasadmin -p password --emails pasadmin@domain.com
 
-uaac member add cloud_controller.admin pksadmin
+uaac member add cloud_controller.admin pasadmin
 
-uaac member add uaa.admin pksadmin
+uaac member add uaa.admin pasadmin
 
-uaac member add scim.read pksadmin
+uaac member add scim.read pasadmin
 
-uaac member add scim.write pksadmin
+uaac member add scim.write pasadmin
+
+# Add admin user to PAS
+## Notes
+  * This adds an LDAP account as an admin
+## Assumptions
+  * "group-distinguished-name" is the DN for an existing group in LDAP
+
+uaac target uaa.system.domain.com --skip-ssl-validation
+
+uaac token client get admin -s <uaa.admin_client.credential.password>
+
+uaac user add pasadmin@domain.com --email pasadmin@domain.local --origin ldap
+
+uaac member add cloud_controller.admin pasadmin@domain.com
+
+uaac member add uaa.admin pasadmin@domain.com
+
+uaac member add scim.read pasadmin@domain.com
+
+uaac member add scim.write pasadmin@domain.com
 
 
 # Grant Admin roles to LDAP Group
