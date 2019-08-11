@@ -83,7 +83,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
+    regexp: \[elastic-runtime,(.*)\].*.pivotal
 
 - name: healthwatch-stemcell
   type: s3
