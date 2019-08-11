@@ -214,6 +214,7 @@ groups:
   jobs:
   #- create-org-admin
   - add-pas-admin-group
+  - update-errands-apply
 - name: save-state
   jobs:
   - export-installation
@@ -711,7 +712,64 @@ jobs:
       config: interpolated-creds #Note this is different
       env: interpolated-creds
     params:
-      CONFIG_FILE: ((foundation))/vars/pas-vars.yml  #Note this is different
+      CONFIG_FILE: ((foundation))/vars/cf-vars.yml  #Note this is different
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+- name: update-errands-apply
+  serial: false  # try  false 052219
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: platform-automation-image
+      trigger: true
+      passed: [add-pas-admin-group]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: configure-pas
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/cf.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/cf-defaults.yml
+        vars/((foundation))/vars/cf-vars.yml
+        vars/((foundation))/vars/cf-errands.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-healthwatch
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/p-healthwatch-defaults.yml
+        vars/((foundation))/vars/p-healthwatch-vars.yml
+        vars/((foundation))/vars/p-healthwatch-errands.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: apply-product-changes
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+    params:
       ENV_FILE: ((foundation))/env/env.yml
 
 
