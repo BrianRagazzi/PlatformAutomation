@@ -17,7 +17,7 @@ uaac member add scim.read pasadmin
 
 uaac member add scim.write pasadmin
 
-# Add admin user to PAS
+# Add LDAP admin user to PAS
 ## Notes
   * This adds an LDAP account as an admin
 ## Assumptions
