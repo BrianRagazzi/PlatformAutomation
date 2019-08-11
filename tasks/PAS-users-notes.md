@@ -24,9 +24,13 @@ uaac member add scim.write pksadmin
 
 
 cf target https://api.system.domain.com
+
 cf login (login as admin with admin_client_credentials)
 
 cf create-user cfadmin@domain.com --origin ldap
+
 cf set-org-role cfadmin@domain.com my-org OrgManager
+
 cf set-org-role cfadmin@domain.com my-org BillingManager
+
 cf set-org-role cfadmin@domain.com my-org OrgAuditor
