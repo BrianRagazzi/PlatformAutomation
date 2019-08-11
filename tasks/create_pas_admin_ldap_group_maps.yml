@@ -46,8 +46,8 @@ run:
     set -eux
 
     # add dependencies to platform automation image
-    curl https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | apt-key add -
-    echo "deb https://packages.cloudfoundry.org/debian stable main" | tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+    # curl https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | apt-key add -
+    # echo "deb https://packages.cloudfoundry.org/debian stable main" | tee /etc/apt/sources.list.d/cloudfoundry-cli.list
     # apt-get -y update
     # apt-get install jq ruby-full -y
     # gem install cf-uaac
@@ -70,12 +70,14 @@ run:
 
     GROUP_DISTINGUISHED_NAME=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /pas_admin_ldap_group_dn)
 
-    SYS_DOMAIN=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /cloud_controller/system_domain)
-
 
     CF_GUID=$(om --env env/"${ENV_FILE}" curl --silent --path \
       "/api/v0/deployed/products" | \
       jq -r '.[] | .installation_name' | grep cf- | tail -1)
+
+    SYS_DOMAIN=$(om --env env/"${ENV_FILE}" curl --silent --path \
+      "/api/v0/staged/products/${CF_GUID}/properties" | \
+      jq -r '.[] | .[".cloud_controller.system_domain"].value')
 
     ADMIN_CLIENT_PASSWORD=$(om --env env/"${ENV_FILE}" curl --silent --path \
       "/api/v0/deployed/products/${CF_GUID}/credentials/.uaa.admin_client_credentials" | \
