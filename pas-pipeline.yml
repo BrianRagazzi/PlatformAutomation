@@ -95,7 +95,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
+    regexp: \[elastic-runtime,(.*)\].*.pivotal #generic for cf or srt - note that cf will be found first
 
 - name: healthwatch-stemcell
   type: s3
@@ -212,7 +212,8 @@ groups:
   - apply-changes
 - name: post-deploy
   jobs:
-  - create-org-admin
+  #- create-org-admin
+  - add-pas-admin-group
 - name: save-state
   jobs:
   - export-installation
@@ -650,15 +651,50 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-- name: create-org-admin
+
+# Use this for creating a local cf admin
+# - name: create-org-admin
+#   serial: true
+#   serial_groups: [ post-deploy ]
+#   plan:
+#   - aggregate:
+#     - get: configuration
+#       trigger: false
+#     - get: custom-tasks
+#     - get: platform-automation-image
+#       params:
+#         unpack: true
+#     - get: platform-automation-tasks
+#       params:
+#         unpack: true
+#
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#
+#   - task: config-pas-admin-user
+#     image: platform-automation-image
+#     file: custom-tasks/tasks/create_pas_org_admin.yml
+#     input_mapping:
+#       vars: interpolated-creds
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#       PAS_ADMIN_USERNAME: ((pas_admin_username))
+#       PAS_ADMIN_PASSWORD: ((pas_admin_password))
+#       PAS_ADMIN_ORG: ((pas_admin_org))
+
+# Use this to add an LDAP security group to UAA admin roles
+- name: add-pas-admin-group
   serial: true
   serial_groups: [ post-deploy ]
   plan:
   - aggregate:
     - get: configuration
-      trigger: false
     - get: custom-tasks
+    - get: custom-task-image
     - get: platform-automation-image
+      passed: [apply-changes]
+      trigger: false
       params:
         unpack: true
     - get: platform-automation-tasks
@@ -668,17 +704,16 @@ jobs:
   - task: interpolate-creds
     <<: *interpolate-creds
 
-  - task: config-pas-admin-user
-    image: platform-automation-image
-    file: custom-tasks/tasks/create_pas_org_admin.yml
+  - task: config-pas-admin-group
+    image: custom-task-image
+    file: custom-tasks/tasks/create_pas_admin_ldap_group_maps.yml
     input_mapping:
-      vars: interpolated-creds
+      config: interpolated-creds #Note this is different
       env: interpolated-creds
     params:
+      CONFIG_FILE: ((foundation))/vars/pas-vars.yml  #Note this is different
       ENV_FILE: ((foundation))/env/env.yml
-      PAS_ADMIN_USERNAME: ((pas_admin_username))
-      PAS_ADMIN_PASSWORD: ((pas_admin_password))
-      PAS_ADMIN_ORG: ((pas_admin_org))
+
 
 - name: export-installation
   serial: true
