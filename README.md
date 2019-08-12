@@ -4,7 +4,7 @@
 # Pipelines
 
 ## PAS
-Install PAS, NSX-T NCP & Healthwatch onto 3 AZs using binaries from local S3
+Install PAS, NSX-T NCP, MySQL & Healthwatch onto 3 AZs using binaries from local S3
 
 ### Features ###
 * Configure NSX-T Objects, including load-balancer from yml

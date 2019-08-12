@@ -103,6 +103,18 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
+- name: mysql-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: mysql-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+
 - name: installation
   type: s3
   source:
@@ -143,242 +155,292 @@ resources:
 
 
 jobs:
- - name: export-installation
-   serial: true
-   plan:
-     - aggregate:
-         - get: one-time-trigger
-         - get: daily-trigger
-           trigger: true
-         - get: platform-automation-image
-           params:
-             unpack: true
-             globs: ["*image*"]
-         - get: platform-automation-tasks
-           params:
-             unpack: true
-             globs: ["*tasks*"]
-         - get: configuration
-     - task: interpolate-creds
-       <<: *interpolate-creds
-     - task: export-installation
-       image: platform-automation-image
-       file: platform-automation-tasks/tasks/export-installation.yml
-       input_mapping:
-         env: interpolated-creds
-       params:
-         ENV_FILE: ((foundation))/env/env.yml
-         INSTALLATION_FILE: installation-$timestamp.zip
-     - put: installation
-       params:
-         file: installation/installation*.zip
+- name: export-installation
+  serial: true
+  plan:
+    - aggregate:
+        - get: one-time-trigger
+        - get: daily-trigger
+          trigger: true
+        - get: platform-automation-image
+          params:
+            unpack: true
+            globs: ["*image*"]
+        - get: platform-automation-tasks
+          params:
+            unpack: true
+            globs: ["*tasks*"]
+        - get: configuration
+    - task: interpolate-creds
+      <<: *interpolate-creds
+    - task: export-installation
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/export-installation.yml
+      input_mapping:
+        env: interpolated-creds
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+        INSTALLATION_FILE: installation-$timestamp.zip
+    - put: installation
+      params:
+        file: installation/installation*.zip
 
- - name: upgrade-opsman
-   plan:
-     - aggregate:
-         - get: opsman-image
-         - get: state
-         - get: one-time-trigger
-           passed: [ export-installation ]
-         - get: platform-automation-image
-           params:
-             unpack: true
-             globs: ["*image*"]
-         - get: platform-automation-tasks
-           params:
-             unpack: true
-             globs: ["*tasks*"]
-         - get: installation
-           passed: [ export-installation ]
-         - get: configuration
+- name: upgrade-opsman
+  plan:
+    - aggregate:
+        - get: opsman-image
+        - get: state
+        - get: one-time-trigger
+          passed: [ export-installation ]
+        - get: platform-automation-image
+          params:
+            unpack: true
+            globs: ["*image*"]
+        - get: platform-automation-tasks
+          params:
+            unpack: true
+            globs: ["*tasks*"]
+        - get: installation
+          passed: [ export-installation ]
+        - get: configuration
 
-     - task: interpolate-creds
-       <<: *interpolate-creds
+    - task: interpolate-creds
+      <<: *interpolate-creds
 
-     - task: upgrade-opsman
-       image: platform-automation-image
-       file: platform-automation-tasks/tasks/upgrade-opsman.yml
-       input_mapping:
-         state: state
-         config: configuration
-         image: opsman-image
-         env: interpolated-creds
-         vars: interpolated-creds
-         installation: installation
-       params:
-         INSTALLATION_FILE: installation*.zip
-         VARS_FILES: vars/((foundation))/vars/opsman-defaults.yml vars/((foundation))/vars/opsman-vars.yml
-         ENV_FILE: ((foundation))/env/env.yml
-         OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml
-         STATE_FILE: ((foundation))/state/state.yml
-
-
- - name: upgrade-pas
-   serial: true
-   plan:
-   - aggregate:
-     - get: configuration
-       trigger: true
-     - get: pas-product
-     - get: pas-stemcell
-     - get: platform-automation-image
-       params:
-         unpack: true
-         globs: ["*image*"]
-     - get: platform-automation-tasks
-       passed: [ upgrade-opsman ]
-       params:
-         unpack: true
-         globs: ["*tasks*"]
-
-   - task: interpolate-creds
-     <<: *interpolate-creds
-
-   - task: upload-product-pas
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/upload-product.yml
-     input_mapping:
-       product: pas-product
-       config: configuration
-       env: interpolated-creds
-       vars: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
-
-   - task: stage-product-pas
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/stage-product.yml
-     input_mapping:
-       product: pas-product
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
-
-   - task: upload-pas-stemcell
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/upload-stemcell.yml
-     input_mapping:
-       env: interpolated-creds
-       stemcell: pas-stemcell
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
+    - task: upgrade-opsman
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/upgrade-opsman.yml
+      input_mapping:
+        state: state
+        config: configuration
+        image: opsman-image
+        env: interpolated-creds
+        vars: interpolated-creds
+        installation: installation
+      params:
+        INSTALLATION_FILE: installation*.zip
+        VARS_FILES: vars/((foundation))/vars/opsman-defaults.yml vars/((foundation))/vars/opsman-vars.yml
+        ENV_FILE: ((foundation))/env/env.yml
+        OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml
+        STATE_FILE: ((foundation))/state/state.yml
 
 
- - name: upgrade-healthwatch
-   serial: true
-   plan:
-   - aggregate:
-     - get: healthwatch-product
-     - get: healthwatch-stemcell
-     - get: configuration
-       trigger: true
-     - get: platform-automation-image
-       params:
-         unpack: true
-         globs: ["*image*"]
-     - get: platform-automation-tasks
-       passed: [ upgrade-opsman ]
-       params:
-         unpack: true
-         globs: ["*tasks*"]
+- name: upgrade-pas
+  serial: true
+  plan:
+  - aggregate:
+    - get: configuration
+      trigger: true
+    - get: pas-product
+    - get: pas-stemcell
+    - get: platform-automation-image
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      passed: [ upgrade-opsman ]
+      params:
+        unpack: true
+        globs: ["*tasks*"]
 
-   - task: interpolate-creds
-     <<: *interpolate-creds
+  - task: interpolate-creds
+    <<: *interpolate-creds
 
-   - task: upload-product-healthwatch
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/upload-product.yml
-     input_mapping:
-       product: healthwatch-product
-       config: configuration
-       download-config: configuration
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
+  - task: upload-product-pas
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: pas-product
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
 
-   - task: stage-product-healthwatch
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/stage-product.yml
-     input_mapping:
-       product: healthwatch-product
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
+  - task: stage-product-pas
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: pas-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
 
-   - task: upload-healthwatch-stemcell
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/upload-stemcell.yml
-     input_mapping:
-       env: interpolated-creds
-       stemcell: healthwatch-stemcell
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
-
- - name: upgrade-nsx
-   serial: true
-   plan:
-   - aggregate:
-     - get: nsx-product
-     - get: configuration
-       trigger: true
-     - get: platform-automation-image
-       params:
-         unpack: true
-         globs: ["*image*"]
-     - get: platform-automation-tasks
-       passed: [ upgrade-opsman ]
-       params:
-         unpack: true
-         globs: ["*tasks*"]
-
-   - task: interpolate-creds
-     <<: *interpolate-creds
-
-   - task: upload-product-nsx
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/upload-product.yml
-     input_mapping:
-       product: nsx-product
-       config: configuration
-       download-config: configuration
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
-
-   - task: stage-product-nsx
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/stage-product.yml
-     input_mapping:
-       product: nsx-product
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
+  - task: upload-pas-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: pas-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
 
 
- - name: apply-changes
-   serial: true
-   plan:
-   - aggregate:
-     - get: configuration
-       trigger: true
-       passed: [ upgrade-pas, upgrade-healthwatch,  upgrade-nsx ]
-     - get: platform-automation-image
-       params:
-         unpack: true
-         globs: ["*image*"]
-     - get: platform-automation-tasks
-       params:
-         unpack: true
-         globs: ["*tasks*"]
+- name: upgrade-healthwatch
+  serial: true
+  plan:
+  - aggregate:
+    - get: healthwatch-product
+    - get: healthwatch-stemcell
+    - get: configuration
+      trigger: true
+    - get: platform-automation-image
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      passed: [ upgrade-opsman ]
+      params:
+        unpack: true
+        globs: ["*tasks*"]
 
-   - task: interpolate-creds
-     <<: *interpolate-creds
+  - task: interpolate-creds
+    <<: *interpolate-creds
 
-   - task: apply-product-changes
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/apply-changes.yml
-     input_mapping:
-       config: configuration
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
+  - task: upload-product-healthwatch
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: healthwatch-product
+      config: configuration
+      download-config: configuration
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-healthwatch
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: healthwatch-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-healthwatch-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: healthwatch-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: upgrade-nsx
+  serial: true
+  plan:
+  - aggregate:
+    - get: nsx-product
+    - get: configuration
+      trigger: true
+    - get: platform-automation-image
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      passed: [ upgrade-opsman ]
+      params:
+        unpack: true
+        globs: ["*tasks*"]
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: upload-product-nsx
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: nsx-product
+      config: configuration
+      download-config: configuration
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-nsx
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: nsx-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: upgrade-mysql
+  serial: true
+  plan:
+  - aggregate:
+    - get: mysql-product
+    - get: mysql-stemcell
+    - get: configuration
+      trigger: true
+    - get: platform-automation-image
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      passed: [ upgrade-opsman ]
+      params:
+        unpack: true
+        globs: ["*tasks*"]
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: upload-product-mysql
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: mysql-product
+      config: configuration
+      download-config: configuration
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-mysql
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: mysql-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-mysql-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: mysql-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+- name: apply-changes
+  serial: true
+  plan:
+  - aggregate:
+    - get: configuration
+      trigger: true
+      passed: [ upgrade-pas, upgrade-healthwatch,  upgrade-nsx, upgrade-mysql]
+    - get: platform-automation-image
+      params:
+        unpack: true
+        globs: ["*image*"]
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+        globs: ["*tasks*"]
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: apply-product-changes
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
