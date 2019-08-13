@@ -222,6 +222,7 @@ groups:
   - staged-config-pas-backup
 #  - staged-config-pasw-backup
   - staged-config-healthwatch-backup
+  - staged-config-mysql-backup
   - staged-config-nsxt-backup
 - name: teardown
   jobs:
@@ -918,6 +919,30 @@ jobs:
       env: interpolated-creds
     params:
       PRODUCT_NAME: p-healthwatch
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-mysql-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: pivotal-mysql
       ENV_FILE: ((foundation))/env/env.yml
   - put: config-backup
     params:
