@@ -160,16 +160,21 @@ Create_IP_Blocks() {
  # $1 - Name
  # $2 - CIDR
  # $3 - Description
- ipbs=$(yq -t r $1 'ip_blocks[*].name' -j | jq -r '.[]')
- for ipb_name in $ipbs
-   do
-    cidr=$(yq -t r $1 'ip_blocks[*]' -j | \
-    jq -r --arg name "$ipb_name" '.[] | select(.name == $name) | .cidr')
-    desc=$(yq -t r $1 'ip_blocks[*]' -j | \
-    jq -r --arg name "$ipb_name" '.[] | select(.name == $name) | .description')
-    #echo "Creating IP Pool named $ipp_name for $cidr, $desc"
-    Create_NSX_IP_Block "$ipb_name" "$cidr" "$desc"
-   done
+ ipbchk=$(yq -t r $1 'ip_blocks[*].name')
+ if [ $ipbchk == "null" ]; then
+   echo "No IP Blocks to create"
+ else
+  ipbs=$(yq -t r $1 'ip_blocks[*].name' -j | jq -r '.[]')
+  for ipb_name in $ipbs
+    do
+     cidr=$(yq -t r $1 'ip_blocks[*]' -j | \
+     jq -r --arg name "$ipb_name" '.[] | select(.name == $name) | .cidr')
+     desc=$(yq -t r $1 'ip_blocks[*]' -j | \
+     jq -r --arg name "$ipb_name" '.[] | select(.name == $name) | .description')
+     #echo "Creating IP Pool named $ipp_name for $cidr, $desc"
+     Create_NSX_IP_Block "$ipb_name" "$cidr" "$desc"
+    done
+ fi
 }
 
 Delete_IP_Blocks() {
