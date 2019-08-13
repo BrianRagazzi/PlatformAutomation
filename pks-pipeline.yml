@@ -57,7 +57,7 @@ resources:
   type: docker-image
   source:
     repository: ((registry.endpoint))/((registry.repo))
-    tag: 3.0.4
+    tag: 3.0.5
     username: ((registry.username))
     password: ((registry.password))
 
