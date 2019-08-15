@@ -60,6 +60,10 @@ resources:
     tag: 3.0.5
     username: ((registry.username))
     password: ((registry.password))
+    insecure-registries: [((registry.endpoint))]
+    ca_certs:
+      - domain: ((registry.endpoint))
+        cert: ((registry.ca_cert))
 
 - name: opsman-image
   type: s3
