@@ -181,11 +181,16 @@ Delete_IP_Blocks() {
  # $1 - Config File
  # Params of Delete_NSX_IP_Pool
  # $1 - Name
- ipps=$(yq -t r $1 'ip_blocks[*].name' -j | jq -r '.[]')
- for ipp_name in $ipps
-   do
-    Delete_NSX_IP_Block "$ipp_name"
-   done
+ ipbchk=$(yq -t r $1 'ip_blocks[*].name')
+ if [ $ipbchk == "null" ]; then
+   echo "No IP Blocks to delete"
+ else
+  ipps=$(yq -t r $1 'ip_blocks[*].name' -j | jq -r '.[]')
+  for ipp_name in $ipps
+    do
+     Delete_NSX_IP_Block "$ipp_name"
+    done
+ fi
 }
 
 Create_Load_Balancers() {
