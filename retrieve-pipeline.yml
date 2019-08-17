@@ -171,7 +171,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
     - get: daily
@@ -203,7 +203,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
     - get: daily
@@ -231,7 +231,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
     - get: daily
@@ -263,7 +263,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
     - get: daily
@@ -291,7 +291,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
       - get: daily
@@ -323,7 +323,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
       - get: daily
@@ -355,7 +355,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
       - get: daily
@@ -383,7 +383,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
       - get: daily
@@ -409,7 +409,7 @@ jobs:
 
 - name: fetch-bbr
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
       - get: daily
@@ -437,7 +437,7 @@ jobs:
   serial: true
   serial_groups: [ fetch ]
   build_log_retention:
-    builds: 2
+    builds: 1
   plan:
   - aggregate:
       - get: daily
@@ -467,7 +467,7 @@ jobs:
 
 - name: fetch-platform-automation
   build_log_retention:
-    builds: 2
+    builds: 1
   # We use the pivnet resource to bootstrap the pipeline,
   # and because this product is part of the pipeline, not the foundation
   plan:
