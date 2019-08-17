@@ -95,6 +95,26 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-(.*).pivotal
 
+- name: installation
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_backup_bucket)) #Different Bucket
+    skip_ssl_verification: true
+    regexp: ((foundation))/installation-(.*).zip
+
+- name: config-backup
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_backup_bucket)) #Different Bucket
+    skip_ssl_verification: true
+    regexp: ((foundation))/(.*).yml
+
 - name: configuration
   type: git
   source:
@@ -121,7 +141,16 @@ resources:
     password: ((github_token))
     paths: ["tasks"]
 
+# triggers used to have jobs do something in a timely manner
+- name: one-time-trigger
+  type: time
+  source:
+    interval: 999999h
 
+- name: daily-trigger
+  type: time
+  source:
+    interval: 24h
 
 groups:
 - name: deploy
@@ -134,6 +163,12 @@ groups:
 - name: post-deploy
   jobs:
   - add-pks-admin-group
+- name: save-state
+  jobs:
+  - export-installation
+  - staged-director-config-backup
+  - staged-config-pks-backup
+  - staged-config-harbor-backup
 - name: teardown
   jobs:
   - destroy-installation
@@ -144,6 +179,8 @@ jobs:
 - name: create-nsx-objects
   serial: true
   serial_groups: [ install ]
+  build_log_retention:
+    builds: 2
   plan:
   - get: configuration
   - get: custom-tasks
@@ -171,6 +208,8 @@ jobs:
 - name: install-opsman
   serial: true
   serial_groups: [ install ]
+  build_log_retention:
+    builds: 2
   plan:
   - aggregate:
     - get: opsman-image
@@ -255,6 +294,8 @@ jobs:
 
 - name: pks
   serial: true
+  build_log_retention:
+    builds: 2
   plan:
   - aggregate:
     - get: configuration
@@ -334,6 +375,8 @@ jobs:
 
 - name: harbor
   serial: true
+  build_log_retention:
+    builds: 2
   plan:
   - aggregate:
     - get: harbor-product
@@ -399,6 +442,8 @@ jobs:
 
 - name: apply-changes
   serial: true
+  build_log_retention:
+    builds: 2
   plan:
   - aggregate:
     - get: configuration
@@ -423,9 +468,118 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
+- name: export-installation
+  build_log_retention:
+    builds: 2
+  serial: true
+  plan:
+    - aggregate:
+        - get: one-time-trigger
+        - get: daily-trigger
+          trigger: true
+        - get: platform-automation-image
+          params:
+            unpack: true
+        - get: platform-automation-tasks
+          params:
+            unpack: true
+        - get: configuration
+    - task: interpolate-creds
+      <<: *interpolate-creds
+    - task: export-installation
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/export-installation.yml
+      input_mapping:
+        env: interpolated-creds
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+        INSTALLATION_FILE: installation-$timestamp.zip
+    - put: installation
+      params:
+        file: installation/installation*.zip
+
+- name: staged-director-config-backup
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-director-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-director-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-pks-backup
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: pivotal-container-service
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-harbor-backup
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: harbor-container-registry
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
 - name: add-pks-admin-group
   serial: true
   serial_groups: [ post-deploy ]
+  build_log_retention:
+    builds: 2
   plan:
   - aggregate:
     - get: configuration
@@ -456,6 +610,8 @@ jobs:
 - name: destroy-installation
   serial: true
   serial_groups: [ teardown ]
+  build_log_retention:
+    builds: 2
   plan:
   - aggregate:
     - get: configuration
@@ -497,6 +653,8 @@ jobs:
 
 - name: delete-nsx-objects
   serial: true
+  build_log_retention:
+    builds: 2
   plan:
   - aggregate:
     - get: configuration
