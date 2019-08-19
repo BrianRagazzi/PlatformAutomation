@@ -587,7 +587,7 @@ jobs:
     - get: custom-task-image
     - get: platform-automation-image
       passed: [apply-changes]
-      trigger: false
+      trigger: true
       params:
         unpack: true
     - get: platform-automation-tasks
