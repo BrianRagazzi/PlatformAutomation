@@ -419,6 +419,8 @@ Create_NSX_IP_Pool() {
  # $4 - Gateway address
  # $5 - Allocation Range ex: 192.168.1.20-192.168.1.40
  # $6 - DNS Servers (Comma separated, optional)
+ local range_start=$(echo $5 | cut -d "-" -f1)
+ local range_end=$(echo $5 | cut -d "-" -f2)
  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/pools/ip-pools | \
@@ -427,8 +429,6 @@ Create_NSX_IP_Pool() {
    echo "Pool with CIDR $2 and range $5 already exists, skipping"
  else
    echo "Creating IP Pool $1"
-   local range_start=$(echo $5 | cut -d "-" -f1)
-   local range_end=$(echo $5 | cut -d "-" -f2)
    local dns_server1=$(echo $6 | cut -d "," -f1)
    local dns_server2=$(echo $6 | cut -d "," -f2)
    pool_config=$(
