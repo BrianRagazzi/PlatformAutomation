@@ -419,17 +419,20 @@ Create_NSX_IP_Pool() {
  # $4 - Gateway address
  # $5 - Allocation Range ex: 192.168.1.20-192.168.1.40
  # $6 - DNS Servers (Comma separated, optional)
- local range_start=$(echo $5 | cut -d "-" -f1)
- local range_end=$(echo $5 | cut -d "-" -f2)
+
  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
    $NSXHOSTNAME/api/v1/pools/ip-pools | \
-   jq -r --arg cidr $2 --arg range_start $range_start --arg range_end $range_end \
-   '.results[].subnets[] | select(.cidr == $cidr) | select(.range_start == $range_start) | select(.range_end == $range_end) | .id')
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id' )
+   # jq -r --arg cidr $2 --arg range_start $range_start --arg range_end $range_end \
+   # '.results[].subnets[] | select(.cidr == $cidr) | select(.allocation_ranges[].range_start == $range_start) | select(.allocation_ranges[].range_end == $range_end)')
  if [ -n "$chk" ]; then
-   echo "Pool with CIDR $2 and range $5 already exists, skipping"
+   #echo "Pool with CIDR $2 and range $5 already exists, skipping"
+   echo "Pool named $1 already exists"
  else
    echo "Creating IP Pool $1"
+   local range_start=$(echo $5 | cut -d "-" -f1)
+   local range_end=$(echo $5 | cut -d "-" -f2)
    local dns_server1=$(echo $6 | cut -d "," -f1)
    local dns_server2=$(echo $6 | cut -d "," -f2)
    pool_config=$(
