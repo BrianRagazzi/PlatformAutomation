@@ -77,11 +77,11 @@ resources:
     <<: *s3_credentials_binaries
     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
-# - name: pks-windows-stemcell
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: pks-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+- name: pks-windows-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pas-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: pks-product
   type: s3
@@ -308,7 +308,7 @@ jobs:
       trigger: true
     - get: pks-product
     - get: pks-stemcell
-    # - get: pks-windows-stemcell
+    - get: pks-windows-stemcell
     - get: custom-tasks
     - get: custom-task-image
     - get: platform-automation-image
@@ -351,14 +351,14 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  # - task: upload-pks-windows-stemcell
-  #   image: platform-automation-image
-  #   file: platform-automation-tasks/tasks/upload-stemcell.yml
-  #   input_mapping:
-  #     env: interpolated-creds
-  #     stemcell: pks-windows-stemcell
-  #   params:
-  #     ENV_FILE: ((foundation))/env/env.yml
+  - task: upload-pks-windows-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: pks-windows-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
 
   - task: get_nsx_vars
     image: custom-task-image
@@ -389,7 +389,7 @@ jobs:
         vars/((foundation))/vars/pks-nsx-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: assign-pks-stecmcells
+  - task: assign-pks-stemcells
     image: platform-automation-image
     file: platform-automation-tasks/tasks/assign-multi-stemcell.yml
     input_mapping:
