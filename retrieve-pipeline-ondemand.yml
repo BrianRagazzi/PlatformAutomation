@@ -67,6 +67,19 @@ resources:
     regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
      # harbor-container-registry-1.7.5-build.11.pivotal
 
+- name: pas-for-kubernetes-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pas-for-kubernetes-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: pas-for-kubernetes-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pas-for-kubernetes-,(.*)\]pas-for-kubernetes-.*.pivotal
+     # harbor-container-registry-1.7.5-build.11.pivotal
+
 - name: mysql-stemcell
   type: s3
   source:
@@ -159,10 +172,10 @@ resources:
     password: ((github_token))
     paths: ["download-product-configs"]
 
-- name: daily
-  type: time
-  source:
-    interval: 24h
+# - name: daily
+#   type: time
+#   source:
+#     interval: 24h
 
 
 
@@ -174,8 +187,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-    - get: daily
-      trigger: true
+    # - get: daily
+    #   trigger: true
     - get: platform-automation-image
       params:
         unpack: true
@@ -193,7 +206,6 @@ jobs:
     output_mapping: {downloaded-stemcell: healthwatch-stemcell}
   - aggregate:
     - put: healthwatch-product
-      get_params: {skip_download: true}
       params:
         file: downloaded-product/*.pivotal
     - put: healthwatch-stemcell
@@ -207,8 +219,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-    - get: daily
-      trigger: true
+    # - get: daily
+    #   trigger: true
     - get: platform-automation-image
       params:
         unpack: true
@@ -225,7 +237,6 @@ jobs:
       CONFIG_FILE: download-product-configs/opsman.yml
   - aggregate:
     - put: opsman-product
-      get_params: {skip_download: true}
       params:
         file: downloaded-product/*
 
@@ -236,8 +247,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-    - get: daily
-      trigger: true
+    # - get: daily
+    #   trigger: true
     - get: platform-automation-image
       params:
         unpack: true
@@ -255,7 +266,6 @@ jobs:
     output_mapping: {downloaded-stemcell: pas-stemcell}
   - aggregate:
     - put: pas-product
-      get_params: {skip_download: true}
       params:
         file: downloaded-product/*.pivotal
     - put: pas-stemcell
@@ -269,8 +279,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-    - get: daily
-      trigger: true
+    # - get: daily
+    #   trigger: true
     - get: platform-automation-image
       params:
         unpack: true
@@ -287,7 +297,7 @@ jobs:
       CONFIG_FILE: download-product-configs/pas-windows.yml
   - aggregate:
     - put: pas-windows-product
-      get_params: {skip_download: true}
+
       params:
         file: downloaded-product/*.pivotal
 
@@ -298,8 +308,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-      - get: daily
-        trigger: true
+      # - get: daily
+      #   trigger: true
       - get: platform-automation-image
         params:
           unpack: true
@@ -330,8 +340,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-      - get: daily
-        trigger: true
+      # - get: daily
+      #   trigger: true
       - get: platform-automation-image
         params:
           unpack: true
@@ -362,8 +372,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-      - get: daily
-        trigger: true
+      # - get: daily
+      #   trigger: true
       - get: platform-automation-image
         params:
           unpack: true
@@ -390,8 +400,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-      - get: daily
-        trigger: true
+      # - get: daily
+      #   trigger: true
       - get: platform-automation-image
         params:
           unpack: true
@@ -416,8 +426,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-      - get: daily
-        trigger: true
+      # - get: daily
+      #   trigger: true
       - get: platform-automation-image
         params:
           unpack: true
@@ -435,7 +445,6 @@ jobs:
   - aggregate:
       - put: bbr-linux-product
         params:
-          skip_download: true
           file: downloaded-product/*
 
 - name: fetch-mysql
@@ -445,8 +454,8 @@ jobs:
     builds: 1
   plan:
   - aggregate:
-      - get: daily
-        trigger: true
+      # - get: daily
+      #   trigger: true
       - get: platform-automation-image
         params:
           unpack: true
@@ -470,6 +479,39 @@ jobs:
         params:
           file: mysql-stemcell/*.tgz
 
+- name: fetch-pas-for-kubernetes
+  serial: true
+  serial_groups: [ fetch ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - aggregate:
+      # - get: daily
+      #   trigger: true
+      - get: platform-automation-image
+        params:
+          unpack: true
+      - get: platform-automation-tasks
+        params:
+          unpack: true
+      - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-pas-for-kubernetes-product-and-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/pas-for-kubernetes.yml
+    output_mapping: {downloaded-stemcell: pas-for-kubernetes-stemcell}
+  - aggregate:
+      - put: pas-for-kubernetes-product
+        params:
+          file: downloaded-product/*.pivotal
+      - put: pas-for-kubernetes-stemcell
+        params:
+          file: pas-for-kubernetes-stemcell/*.tgz
+
+
 - name: fetch-platform-automation
   build_log_retention:
     builds: 1
@@ -477,12 +519,11 @@ jobs:
   # and because this product is part of the pipeline, not the foundation
   plan:
   - get: platform-automation-pivnet
-    trigger: true
+    # trigger: true
   - aggregate:
     - put: platform-automation-tasks
       params:
         file: platform-automation-pivnet/*tasks*.zip
     - put: platform-automation-image
-      get_params: {skip_download: true}
       params:
         file: platform-automation-pivnet/*image*.tgz
