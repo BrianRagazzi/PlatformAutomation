@@ -1,66 +1,84 @@
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+interpolate-creds: &interpolate-creds
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/foundation/((foundation))'
+    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars ((foundation))/config"
+    SKIP_MISSING: true
+  input_mapping:
+    files: configuration
+  output_mapping:
+    interpolated-files: interpolated-creds
+
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((access_key_id))
+  secret_access_key: ((secret_access_key))
+  endpoint: ((s3.endpoint))
+  bucket: ((s3.buckets_pivnet_products))
+  region_name: ((s3.region_name))
+  skip_ssl_verification: true
+
 resource_types:
-- name: pivnet
-  type: docker-image
-  source:
-    repository: pivotalcf/pivnet-resource
-    tags: latest-final
+# - name: pivnet
+#   type: docker-image
+#   source:
+#     repository: pivotalcf/pivnet-resource
+#     tags: latest-final
 
 resources:
-- name: platform-automation
-  type: pivnet
-  source:
-    api_token: ((pivnet_token))
-    product_slug: platform-automation
+# - name: platform-automation
+#   type: pivnet
+#   source:
+#     api_token: ((pivnet_token))
+#     product_slug: platform-automation
 
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-image-(.*).tgz
 
 - name: opsman-image
   type: s3
   source:
-    access_key_id: ((access_key_id))
-    secret_access_key: ((secret_access_key))
-    endpoint: ((s3.endpoint))
-    bucket: ((s3.buckets_pivnet_products))
-    skip_ssl_verification: true
+    <<: *s3_credentials_binaries
     regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
 
 - name: pks-stemcell
   type: s3
   source:
-    access_key_id: ((access_key_id))
-    secret_access_key: ((secret_access_key))
-    endpoint: ((s3.endpoint))
-    bucket: ((s3.buckets_pivnet_products))
-    skip_ssl_verification: true
+    <<: *s3_credentials_binaries
     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: pks-product
   type: s3
   source:
-    access_key_id: ((access_key_id))
-    secret_access_key: ((secret_access_key))
-    endpoint: ((s3.endpoint))
-    bucket: ((s3.buckets_pivnet_products))
-    skip_ssl_verification: true
+    <<: *s3_credentials_binaries
     regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
 
 - name: harbor-stemcell
   type: s3
   source:
-    access_key_id: ((access_key_id))
-    secret_access_key: ((secret_access_key))
-    endpoint: ((s3.endpoint))
-    bucket: ((s3.buckets_pivnet_products))
-    skip_ssl_verification: true
+    <<: *s3_credentials_binaries
     regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: harbor-product
   type: s3
   source:
-    access_key_id: ((access_key_id))
-    secret_access_key: ((secret_access_key))
-    endpoint: ((s3.endpoint))
-    bucket: ((s3.buckets_pivnet_products))
-    skip_ssl_verification: true
+    <<: *s3_credentials_binaries
     regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-(.*).pivotal
 
 
@@ -104,50 +122,30 @@ resources:
   source:
     interval: 999999h
 
-- name: daily-trigger
+- name: weekly-trigger
   type: time
   source:
-    interval: 24h
-
-# code_snippet multiple-product-interpolate-creds start yaml
-# This task is used in multiple jobs
-# The yaml anchor "*interpolate-creds" is used in its place
-interpolate-creds: &interpolate-creds
-  image: platform-automation-image
-  file: platform-automation-tasks/tasks/credhub-interpolate.yml
-  params:
-    CREDHUB_CLIENT: ((credhub_client))
-    CREDHUB_SECRET: ((credhub_secret))
-    CREDHUB_SERVER: ((credhub_server))
-    CREDHUB_CA_CERT: ((credhub_ca_cert))
-    PREFIX: '/foundation/((foundation))'
-    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars ((foundation))/config download-product-configs"
-    SKIP_MISSING: true
-  input_mapping:
-    files: configuration
-  output_mapping:
-    interpolated-files: interpolated-creds
+    days: [Wednesday, Saturday]
+    start: 8AM
+    stop: 11PM
 
 
 jobs:
  - name: export-installation
    serial: true
+   build_log_retention:
+     builds: 2
    plan:
-     - aggregate:
-         - get: one-time-trigger
-         - get: daily-trigger
-           trigger: true
-         - get: platform-automation-image
-           resource: platform-automation
-           params:
-             unpack: true
-             globs: ["*image*"]
-         - get: platform-automation-tasks
-           resource: platform-automation
-           params:
-             unpack: true
-             globs: ["*tasks*"]
-         - get: configuration
+     - get: one-time-trigger
+     - get: weekly-trigger
+       trigger: true
+     - get: platform-automation-image
+       params:
+         unpack: true
+     - get: platform-automation-tasks
+       params:
+         unpack: true
+     - get: configuration
      - task: interpolate-creds
        <<: *interpolate-creds
      - task: export-installation
@@ -164,24 +162,21 @@ jobs:
 
  - name: upgrade-opsman
    plan:
-     - aggregate:
-         - get: opsman-image
-         - get: state
-         - get: one-time-trigger
-           passed: [ export-installation ]
-         - get: platform-automation-image
-           resource: platform-automation
-           params:
-             unpack: true
-             globs: ["*image*"]
-         - get: platform-automation-tasks
-           resource: platform-automation
-           params:
-             unpack: true
-             globs: ["*tasks*"]
-         - get: installation
-           passed: [ export-installation ]
-         - get: configuration
+     - get: opsman-image
+     - get: state
+     - get: one-time-trigger
+       passed: [export-installation]
+     - get: weekly-trigger
+       passed: [export-installation]
+     - get: platform-automation-image
+       params:
+         unpack: true
+     - get: platform-automation-tasks
+       params:
+         unpack: true
+     - get: installation
+       passed: [ export-installation ]
+     - get: configuration
 
      - task: interpolate-creds
        <<: *interpolate-creds
@@ -207,22 +202,17 @@ jobs:
  - name: upgrade-pks
    serial: true
    plan:
-   - aggregate:
-     - get: configuration
-       trigger: true
-     - get: pks-product
-     - get: pks-stemcell
-     - get: platform-automation-image
-       resource: platform-automation
-       params:
-         unpack: true
-         globs: ["*image*"]
-     - get: platform-automation-tasks
-       passed: [ upgrade-opsman ]
-       resource: platform-automation
-       params:
-         unpack: true
-         globs: ["*tasks*"]
+   - get: configuration
+     trigger: true
+   - get: pks-product
+   - get: pks-stemcell
+   - get: platform-automation-image
+     params:
+       unpack: true
+   - get: platform-automation-tasks
+     passed: [ upgrade-opsman ]
+     params:
+       unpack: true
 
    - task: interpolate-creds
      <<: *interpolate-creds
@@ -260,22 +250,17 @@ jobs:
  - name: upgrade-harbor
    serial: true
    plan:
-   - aggregate:
-     - get: harbor-product
-     - get: harbor-stemcell
-     - get: configuration
-       trigger: true
-     - get: platform-automation-image
-       resource: platform-automation
-       params:
-         unpack: true
-         globs: ["*image*"]
-     - get: platform-automation-tasks
-       resource: platform-automation
-       passed: [ upgrade-opsman ]
-       params:
-         unpack: true
-         globs: ["*tasks*"]
+   - get: harbor-product
+   - get: harbor-stemcell
+   - get: configuration
+     trigger: true
+   - get: platform-automation-image
+     params:
+       unpack: true
+   - get: platform-automation-tasks
+     passed: [ upgrade-opsman ]
+     params:
+       unpack: true
 
    - task: interpolate-creds
      <<: *interpolate-creds
@@ -313,20 +298,15 @@ jobs:
  - name: apply-changes
    serial: true
    plan:
-   - aggregate:
-     - get: configuration
-       trigger: true
-       passed: [ upgrade-pks, upgrade-harbor ]
-     - get: platform-automation-image
-       resource: platform-automation
-       params:
-         unpack: true
-         globs: ["*image*"]
-     - get: platform-automation-tasks
-       resource: platform-automation
-       params:
-         unpack: true
-         globs: ["*tasks*"]
+   - get: configuration
+     trigger: true
+     passed: [ upgrade-pks, upgrade-harbor ]
+   - get: platform-automation-image
+     params:
+       unpack: true
+   - get: platform-automation-tasks
+     params:
+       unpack: true
 
    - task: interpolate-creds
      <<: *interpolate-creds
