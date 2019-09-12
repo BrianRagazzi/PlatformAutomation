@@ -81,7 +81,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: pas-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+    regexp: pks-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: pks-product
   type: s3
