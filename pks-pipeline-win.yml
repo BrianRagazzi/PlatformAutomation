@@ -57,7 +57,7 @@ resources:
   type: docker-image
   source:
     repository: ((registry.endpoint))/((registry.repo))
-    tag: 3.0.5
+    tag: 4.0.1
     username: ((registry.username))
     password: ((registry.password))
     insecure-registries: [((registry.endpoint))]
@@ -161,7 +161,7 @@ resources:
 groups:
 - name: deploy
   jobs:
-  - create-nsx-objects
+  # - create-nsx-objects
   - install-opsman
   - pks
   - harbor
@@ -178,38 +178,38 @@ groups:
 - name: teardown
   jobs:
   - destroy-installation
-  - delete-nsx-objects
+  #- delete-nsx-objects
 
 
 jobs:
-- name: create-nsx-objects
-  serial: true
-  serial_groups: [ install ]
-  build_log_retention:
-    builds: 2
-  plan:
-  - get: configuration
-  - get: custom-tasks
-  - get: custom-task-image
-  - get: platform-automation-image
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-
-  - task: interpolate-creds
-    <<: *interpolate-creds
-
-  - task: create-objects
-    image: custom-task-image
-    file: custom-tasks/tasks/configure-nsxt-infra.yml
-    input_mapping:
-      config: configuration
-      vars: interpolated-creds
-      custom-tasks: custom-tasks
-    params:
-      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+# - name: create-nsx-objects
+#   serial: true
+#   serial_groups: [ install ]
+#   build_log_retention:
+#     builds: 2
+#   plan:
+#   - get: configuration
+#   - get: custom-tasks
+#   - get: custom-task-image
+#   - get: platform-automation-image
+#     params:
+#       unpack: true
+#   - get: platform-automation-tasks
+#     params:
+#       unpack: true
+#
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#
+#   - task: create-objects
+#     image: custom-task-image
+#     file: custom-tasks/tasks/configure-nsxt-infra.yml
+#     input_mapping:
+#       config: configuration
+#       vars: interpolated-creds
+#       custom-tasks: custom-tasks
+#     params:
+#       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
 
 - name: install-opsman
   serial: true
@@ -225,7 +225,6 @@ jobs:
       params:
         unpack: true
     - get: platform-automation-tasks
-      passed: [create-nsx-objects]
       trigger: true
       params:
         unpack: true
@@ -278,6 +277,16 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
       AUTH_CONFIG_FILE: ((foundation))/vars/auth.yml
+  # - task: configure-ldap-authentication
+  #   image: platform-automation-image
+  #   file: platform-automation-tasks/tasks/configure-ldap-authentication.yml
+  #   attempts: 10
+  #   input_mapping:
+  #     env: interpolated-creds
+  #     config: interpolated-creds
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
+  #     AUTH_CONFIG_FILE: ((foundation))/vars/auth-ldap.yml
   - task: configure-director
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-director.yml
@@ -677,35 +686,35 @@ jobs:
         vars/((foundation))/vars/opsman-defaults.yml
         vars/((foundation))/vars/opsman-vars.yml
 
-- name: delete-nsx-objects
-  serial: true
-  build_log_retention:
-    builds: 2
-  plan:
-  - aggregate:
-    - get: configuration
-    - get: custom-tasks
-    - get: custom-task-image
-    - get: platform-automation-image
-      passed: [destroy-installation]
-      trigger: true
-      params:
-        unpack: true
-    - get: platform-automation-tasks
-      params:
-        unpack: true
-
-
-  - task: interpolate-creds
-    <<: *interpolate-creds
-
-  - task: delete-objects
-    image: custom-task-image
-    file: custom-tasks/tasks/delete-nsxt-infra.yml
-    input_mapping:
-      config: configuration
-      vars: interpolated-creds
-      custom-tasks: custom-tasks
-    params:
-      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
-      ACTUALLY_DELETE_NAT_RULES: false #when not set to "DELETE", rule is simply disabled
+# - name: delete-nsx-objects
+#   serial: true
+#   build_log_retention:
+#     builds: 2
+#   plan:
+#   - aggregate:
+#     - get: configuration
+#     - get: custom-tasks
+#     - get: custom-task-image
+#     - get: platform-automation-image
+#       passed: [destroy-installation]
+#       trigger: true
+#       params:
+#         unpack: true
+#     - get: platform-automation-tasks
+#       params:
+#         unpack: true
+#
+#
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#
+#   - task: delete-objects
+#     image: custom-task-image
+#     file: custom-tasks/tasks/delete-nsxt-infra.yml
+#     input_mapping:
+#       config: configuration
+#       vars: interpolated-creds
+#       custom-tasks: custom-tasks
+#     params:
+#       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+#       ACTUALLY_DELETE_NAT_RULES: false #when not set to "DELETE", rule is simply disabled

@@ -33,6 +33,7 @@ resources:
       port: ((smtp.port)) #"465" # this must be a string
       username: ((smtp.username))
       password: ((smtp.password))
+      anonymous: ((smtp.anonymous))
     from: ((email.from))
     to: ((email.to)) #optional if `params.additional_recipient` is specified
 
