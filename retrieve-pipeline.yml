@@ -159,11 +159,17 @@ resources:
     password: ((github_token))
     paths: ["download-product-configs"]
 
+# - name: daily
+#   type: time
+#   source:
+#     interval: 24h
+
 - name: daily
   type: time
   source:
-    interval: 24h
-
+    days: [Friday]
+    start: 8AM
+    stop: 11PM
 
 
 jobs:
