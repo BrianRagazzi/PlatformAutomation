@@ -136,6 +136,19 @@ resources:
     <<: *s3_credentials_binaries
     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
+- name: pae-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[platform-automation-engine,(.*)\]platform-automation-engine-.*.pivotal
+
+- name: pae-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+
 - name: bbr-linux-product
   type: s3
   source:
@@ -490,6 +503,34 @@ jobs:
 #       - put: pas-for-kubernetes-stemcell
 #         params:
 #           file: pas-for-kubernetes-stemcell/*.tgz
+
+- name: fetch-pae
+  serial: true
+  serial_groups: [ fetch ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-pae-product-and-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/pae.yml
+    output_mapping: {downloaded-stemcell: pae-stemcell}
+  - put: pae-product
+    params:
+      file: downloaded-product/*.pivotal
+  - put: pae-stemcell
+    params:
+      file: pae-stemcell/*.tgz
 
 
 - name: fetch-platform-automation
