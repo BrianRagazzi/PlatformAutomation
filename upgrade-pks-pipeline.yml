@@ -125,7 +125,7 @@ resources:
 - name: weekly-trigger
   type: time
   source:
-    days: [Wednesday, Saturday]
+    days: [Wednesday, Friday, Saturday]
     start: 8AM
     stop: 11PM
 

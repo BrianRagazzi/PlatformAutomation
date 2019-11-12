@@ -34,6 +34,7 @@ resources:
       username: ((smtp.username))
       password: ((smtp.password))
       anonymous: ((smtp.anonymous))
+      skip_ssl_validation: ((smtp.skip_ssl_validation))
     from: ((email.from))
     to: ((email.to)) #optional if `params.additional_recipient` is specified
 
@@ -119,6 +120,8 @@ resources:
 
 jobs:
 - name: compare_and_email
+  build_log_retention:
+    builds: 10
   plan:
     - get: daily
       trigger: true
