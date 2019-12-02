@@ -71,7 +71,7 @@ resources:
   type: docker-image
   source:
     repository: ((registry.endpoint))/((registry.repo))
-    tag: 3.0.5
+    tag: latest
     username: ((registry.username))
     password: ((registry.password))
     insecure-registries: [((registry.endpoint))]
@@ -97,17 +97,17 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[elastic-runtime,(.*)\].*.pivotal #generic for cf or srt - note that cf will be found first
 
-- name: healthwatch-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: healthwatch-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
-- name: healthwatch-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[p-healthwatch,(.*)\]p-healthwatch-.*.pivotal
+# - name: healthwatch-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: healthwatch-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+#
+# - name: healthwatch-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[p-healthwatch,(.*)\]p-healthwatch-.*.pivotal
 
 - name: nsx-product
   type: s3
@@ -115,17 +115,17 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
-- name: mysql-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
-- name: mysql-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+# - name: mysql-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+#
+# - name: mysql-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
 
 # - name: pas-windows-product
 #   type: s3
@@ -205,10 +205,10 @@ groups:
   - create-nsx-objects
   - install-opsman
   - pas
-#  - pas-windows
+  # - pas-windows
   - nsx
-  - healthwatch
-  - mysql
+  # - healthwatch
+  # - mysql
   - apply-changes
 - name: post-deploy
   jobs:
@@ -221,8 +221,8 @@ groups:
   - staged-director-config-backup
   - staged-config-pas-backup
 #  - staged-config-pasw-backup
-  - staged-config-healthwatch-backup
-  - staged-config-mysql-backup
+  # - staged-config-healthwatch-backup
+  # - staged-config-mysql-backup
   - staged-config-nsxt-backup
 - name: teardown
   jobs:
@@ -343,7 +343,7 @@ jobs:
       trigger: true
     - get: pas-product
     - get: pas-stemcell
-    - get: healthwatch-stemcell
+    # - get: healthwatch-stemcell
     - get: platform-automation-image
       passed: [ install-opsman ]
       params:
@@ -384,14 +384,14 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: upload-healthwatch-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-stemcell.yml
-    input_mapping:
-      env: interpolated-creds
-      stemcell: healthwatch-stemcell
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
+  # - task: upload-healthwatch-stemcell
+  #   image: platform-automation-image
+  #   file: platform-automation-tasks/tasks/upload-stemcell.yml
+  #   input_mapping:
+  #     env: interpolated-creds
+  #     stemcell: healthwatch-stemcell
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
 
   - task: configure-pas
     image: platform-automation-image
@@ -518,126 +518,126 @@ jobs:
         vars/((foundation))/vars/nsx-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-- name: healthwatch
-  serial: true
-  build_log_retention:
-    builds: 4
-  plan:
-  - aggregate:
-    - get: healthwatch-product
-    - get: configuration
-      trigger: true
-    - get: platform-automation-image
-      passed: [ pas ]
-      params:
-        unpack: true
-    - get: platform-automation-tasks
-      params:
-        unpack: true
+# - name: healthwatch
+#   serial: true
+#   build_log_retention:
+#     builds: 4
+#   plan:
+#   - aggregate:
+#     - get: healthwatch-product
+#     - get: configuration
+#       trigger: true
+#     - get: platform-automation-image
+#       passed: [ pas ]
+#       params:
+#         unpack: true
+#     - get: platform-automation-tasks
+#       params:
+#         unpack: true
+#
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#
+#   - task: upload-product-healthwatch
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/upload-product.yml
+#     input_mapping:
+#       product: healthwatch-product
+#       config: configuration
+#       env: interpolated-creds
+#       vars: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: stage-product-healthwatch
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/stage-product.yml
+#     input_mapping:
+#       product: healthwatch-product
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: configure-healthwatch
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/configure-product.yml
+#     input_mapping:
+#       config: configuration
+#       env: interpolated-creds
+#       vars: interpolated-creds
+#     params:
+#       CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
+#       VARS_FILES: |
+#         vars/((foundation))/vars/p-healthwatch-defaults.yml
+#         vars/((foundation))/vars/p-healthwatch-vars.yml
+#       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: interpolate-creds
-    <<: *interpolate-creds
-
-  - task: upload-product-healthwatch
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-product.yml
-    input_mapping:
-      product: healthwatch-product
-      config: configuration
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: stage-product-healthwatch
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/stage-product.yml
-    input_mapping:
-      product: healthwatch-product
-      env: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: configure-healthwatch
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: configuration
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
-      VARS_FILES: |
-        vars/((foundation))/vars/p-healthwatch-defaults.yml
-        vars/((foundation))/vars/p-healthwatch-vars.yml
-      ENV_FILE: ((foundation))/env/env.yml
-
-- name: mysql
-  serial: true
-  build_log_retention:
-    builds: 4
-  plan:
-  - aggregate:
-    - get: mysql-product
-    - get: mysql-stemcell
-    - get: configuration
-      trigger: true
-    - get: platform-automation-image
-      passed: [ pas ]
-      params:
-        unpack: true
-    - get: platform-automation-tasks
-      params:
-        unpack: true
-
-  - task: interpolate-creds
-    <<: *interpolate-creds
-
-  - task: upload-product-mysql
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-product.yml
-    input_mapping:
-      product: mysql-product
-      config: configuration
-      download-config: configuration
-      env: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: stage-product-mysql
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/stage-product.yml
-    input_mapping:
-      product: mysql-product
-      config: configuration
-      download-config: configuration
-      env: interpolated-creds
-      secrets: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: upload-mysql-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-stemcell.yml
-    input_mapping:
-      env: interpolated-creds
-      stemcell: mysql-stemcell
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: configure-mysql
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: configuration
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      CONFIG_FILE: ((foundation))/config/mysql.yml
-      VARS_FILES: |
-        vars/((foundation))/vars/mysql-defaults.yml
-        vars/((foundation))/vars/mysql-vars.yml
-      ENV_FILE: ((foundation))/env/env.yml
+# - name: mysql
+#   serial: true
+#   build_log_retention:
+#     builds: 4
+#   plan:
+#   - aggregate:
+#     - get: mysql-product
+#     - get: mysql-stemcell
+#     - get: configuration
+#       trigger: true
+#     - get: platform-automation-image
+#       passed: [ pas ]
+#       params:
+#         unpack: true
+#     - get: platform-automation-tasks
+#       params:
+#         unpack: true
+#
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#
+#   - task: upload-product-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/upload-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       config: configuration
+#       download-config: configuration
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: stage-product-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/stage-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       config: configuration
+#       download-config: configuration
+#       env: interpolated-creds
+#       secrets: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: upload-mysql-stemcell
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/upload-stemcell.yml
+#     input_mapping:
+#       env: interpolated-creds
+#       stemcell: mysql-stemcell
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: configure-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/configure-product.yml
+#     input_mapping:
+#       config: configuration
+#       env: interpolated-creds
+#       vars: interpolated-creds
+#     params:
+#       CONFIG_FILE: ((foundation))/config/mysql.yml
+#       VARS_FILES: |
+#         vars/((foundation))/vars/mysql-defaults.yml
+#         vars/((foundation))/vars/mysql-vars.yml
+#       ENV_FILE: ((foundation))/env/env.yml
 
 - name: apply-changes
   serial: true
@@ -645,7 +645,7 @@ jobs:
   - aggregate:
     - get: configuration
       trigger: true
-      passed: [ nsx, healthwatch, mysql ] #, mysql, pas-windows]
+      passed: [ nsx ] #, mysql ] #, healthwatch ] #, mysql, pas-windows]
     - get: platform-automation-image
       params:
         unpack: true
@@ -708,7 +708,7 @@ jobs:
     - get: custom-task-image
     - get: platform-automation-image
       passed: [apply-changes]
-      trigger: false
+      trigger: true
       params:
         unpack: true
     - get: platform-automation-tasks
@@ -761,35 +761,35 @@ jobs:
         vars/((foundation))/vars/cf-errands.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-healthwatch
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: configuration
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
-      VARS_FILES: |
-        vars/((foundation))/vars/p-healthwatch-defaults.yml
-        vars/((foundation))/vars/p-healthwatch-vars.yml
-        vars/((foundation))/vars/p-healthwatch-errands.yml
-      ENV_FILE: ((foundation))/env/env.yml
+  # - task: configure-healthwatch
+  #   image: platform-automation-image
+  #   file: platform-automation-tasks/tasks/configure-product.yml
+  #   input_mapping:
+  #     config: configuration
+  #     env: interpolated-creds
+  #     vars: interpolated-creds
+  #   params:
+  #     CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
+  #     VARS_FILES: |
+  #       vars/((foundation))/vars/p-healthwatch-defaults.yml
+  #       vars/((foundation))/vars/p-healthwatch-vars.yml
+  #       vars/((foundation))/vars/p-healthwatch-errands.yml
+  #     ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-mysql
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: configuration
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      CONFIG_FILE: ((foundation))/config/mysql.yml
-      VARS_FILES: |
-        vars/((foundation))/vars/mysql-defaults.yml
-        vars/((foundation))/vars/mysql-vars.yml
-        vars/((foundation))/vars/mysql-errands.yml
-      ENV_FILE: ((foundation))/env/env.yml
+  # - task: configure-mysql
+  #   image: platform-automation-image
+  #   file: platform-automation-tasks/tasks/configure-product.yml
+  #   input_mapping:
+  #     config: configuration
+  #     env: interpolated-creds
+  #     vars: interpolated-creds
+  #   params:
+  #     CONFIG_FILE: ((foundation))/config/mysql.yml
+  #     VARS_FILES: |
+  #       vars/((foundation))/vars/mysql-defaults.yml
+  #       vars/((foundation))/vars/mysql-vars.yml
+  #       vars/((foundation))/vars/mysql-errands.yml
+  #     ENV_FILE: ((foundation))/env/env.yml
 
   - task: apply-product-changes
     image: platform-automation-image
@@ -900,53 +900,53 @@ jobs:
 #     params:
 #       file: generated-config/*.yml
 
-- name: staged-config-healthwatch-backup
-  plan:
-  - get: platform-automation-tasks
-    params: {unpack: true}
-    trigger: true
-    passed:
-      - export-installation
-  - get: platform-automation-image
-    params: {unpack: true}
-  - get: configuration
-  - task: interpolate-creds
-    <<: *interpolate-creds
-  - task: staged-pas-config
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/staged-config.yml
-    input_mapping:
-      env: interpolated-creds
-    params:
-      PRODUCT_NAME: p-healthwatch
-      ENV_FILE: ((foundation))/env/env.yml
-  - put: config-backup
-    params:
-      file: generated-config/*.yml
+# - name: staged-config-healthwatch-backup
+#   plan:
+#   - get: platform-automation-tasks
+#     params: {unpack: true}
+#     trigger: true
+#     passed:
+#       - export-installation
+#   - get: platform-automation-image
+#     params: {unpack: true}
+#   - get: configuration
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#   - task: staged-pas-config
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/staged-config.yml
+#     input_mapping:
+#       env: interpolated-creds
+#     params:
+#       PRODUCT_NAME: p-healthwatch
+#       ENV_FILE: ((foundation))/env/env.yml
+#   - put: config-backup
+#     params:
+#       file: generated-config/*.yml
 
-- name: staged-config-mysql-backup
-  plan:
-  - get: platform-automation-tasks
-    params: {unpack: true}
-    trigger: true
-    passed:
-      - export-installation
-  - get: platform-automation-image
-    params: {unpack: true}
-  - get: configuration
-  - task: interpolate-creds
-    <<: *interpolate-creds
-  - task: staged-pas-config
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/staged-config.yml
-    input_mapping:
-      env: interpolated-creds
-    params:
-      PRODUCT_NAME: pivotal-mysql
-      ENV_FILE: ((foundation))/env/env.yml
-  - put: config-backup
-    params:
-      file: generated-config/*.yml
+# - name: staged-config-mysql-backup
+#   plan:
+#   - get: platform-automation-tasks
+#     params: {unpack: true}
+#     trigger: true
+#     passed:
+#       - export-installation
+#   - get: platform-automation-image
+#     params: {unpack: true}
+#   - get: configuration
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#   - task: staged-pas-config
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/staged-config.yml
+#     input_mapping:
+#       env: interpolated-creds
+#     params:
+#       PRODUCT_NAME: pivotal-mysql
+#       ENV_FILE: ((foundation))/env/env.yml
+#   - put: config-backup
+#     params:
+#       file: generated-config/*.yml
 
 - name: staged-config-nsxt-backup
   plan:

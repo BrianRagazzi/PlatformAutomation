@@ -69,17 +69,17 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
 
-- name: harbor-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
-- name: harbor-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-(.*).pivotal
+# - name: harbor-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+#
+# - name: harbor-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-(.*).pivotal
 
 
 - name: configuration
@@ -125,7 +125,7 @@ resources:
 - name: weekly-trigger
   type: time
   source:
-    days: [Wednesday, Friday, Saturday]
+    days: [Monday, Wednesday, Friday, Saturday]
     start: 8AM
     stop: 11PM
 
@@ -247,52 +247,52 @@ jobs:
        ENV_FILE: ((foundation))/env/env.yml
 
 
- - name: upgrade-harbor
-   serial: true
-   plan:
-   - get: harbor-product
-   - get: harbor-stemcell
-   - get: configuration
-     trigger: true
-   - get: platform-automation-image
-     params:
-       unpack: true
-   - get: platform-automation-tasks
-     passed: [ upgrade-opsman ]
-     params:
-       unpack: true
-
-   - task: interpolate-creds
-     <<: *interpolate-creds
-
-   - task: upload-product-harbor
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/upload-product.yml
-     input_mapping:
-       product: harbor-product
-       config: configuration
-       download-config: configuration
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
-
-   - task: stage-product-harbor
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/stage-product.yml
-     input_mapping:
-       product: harbor-product
-       env: interpolated-creds
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
-
-   - task: upload-harbor-stemcell
-     image: platform-automation-image
-     file: platform-automation-tasks/tasks/upload-stemcell.yml
-     input_mapping:
-       env: interpolated-creds
-       stemcell: harbor-stemcell
-     params:
-       ENV_FILE: ((foundation))/env/env.yml
+ # - name: upgrade-harbor
+ #   serial: true
+ #   plan:
+ #   - get: harbor-product
+ #   - get: harbor-stemcell
+ #   - get: configuration
+ #     trigger: true
+ #   - get: platform-automation-image
+ #     params:
+ #       unpack: true
+ #   - get: platform-automation-tasks
+ #     passed: [ upgrade-opsman ]
+ #     params:
+ #       unpack: true
+ #
+ #   - task: interpolate-creds
+ #     <<: *interpolate-creds
+ #
+ #   - task: upload-product-harbor
+ #     image: platform-automation-image
+ #     file: platform-automation-tasks/tasks/upload-product.yml
+ #     input_mapping:
+ #       product: harbor-product
+ #       config: configuration
+ #       download-config: configuration
+ #       env: interpolated-creds
+ #     params:
+ #       ENV_FILE: ((foundation))/env/env.yml
+ #
+ #   - task: stage-product-harbor
+ #     image: platform-automation-image
+ #     file: platform-automation-tasks/tasks/stage-product.yml
+ #     input_mapping:
+ #       product: harbor-product
+ #       env: interpolated-creds
+ #     params:
+ #       ENV_FILE: ((foundation))/env/env.yml
+ #
+ #   - task: upload-harbor-stemcell
+ #     image: platform-automation-image
+ #     file: platform-automation-tasks/tasks/upload-stemcell.yml
+ #     input_mapping:
+ #       env: interpolated-creds
+ #       stemcell: harbor-stemcell
+ #     params:
+ #       ENV_FILE: ((foundation))/env/env.yml
 
 
  - name: apply-changes
@@ -300,7 +300,7 @@ jobs:
    plan:
    - get: configuration
      trigger: true
-     passed: [ upgrade-pks, upgrade-harbor ]
+     passed: [ upgrade-pks ] #, upgrade-harbor ]
    - get: platform-automation-image
      params:
        unpack: true

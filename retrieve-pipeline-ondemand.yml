@@ -201,7 +201,7 @@ resources:
 jobs:
 - name: fetch-healthwatch
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -230,7 +230,7 @@ jobs:
 
 - name: fetch-opsman
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -255,7 +255,7 @@ jobs:
 
 - name: fetch-pas
   serial: true
-  serial_groups: [ fetch ]
+  
   build_log_retention:
     builds: 1
   plan:
@@ -284,7 +284,7 @@ jobs:
 
 - name: fetch-pas-windows
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -309,7 +309,7 @@ jobs:
 
 - name: fetch-pks
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -338,7 +338,7 @@ jobs:
 
 - name: fetch-harbor
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -367,7 +367,7 @@ jobs:
 
 - name: fetch-nsx
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -392,7 +392,7 @@ jobs:
 
 - name: fetch-compliance-scanner
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -445,7 +445,7 @@ jobs:
 
 - name: fetch-mysql
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:
@@ -474,7 +474,7 @@ jobs:
 
 # - name: fetch-pas-for-kubernetes
 #   serial: true
-#   serial_groups: [ fetch ]
+#
 #   build_log_retention:
 #     builds: 1
 #   plan:
@@ -506,7 +506,7 @@ jobs:
 
 - name: fetch-pae
   serial: true
-  serial_groups: [ fetch ]
+
   build_log_retention:
     builds: 1
   plan:

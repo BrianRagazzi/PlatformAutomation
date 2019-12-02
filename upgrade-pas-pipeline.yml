@@ -103,17 +103,17 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
-- name: mysql-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
-- name: mysql-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+# - name: mysql-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+#
+# - name: mysql-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
 
 - name: installation
   type: s3
@@ -366,55 +366,55 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-- name: upgrade-mysql
-  serial: true
-  plan:
-  - aggregate:
-    - get: mysql-product
-    - get: mysql-stemcell
-    - get: configuration
-      trigger: true
-    - get: platform-automation-image
-      params:
-        unpack: true
-        globs: ["*image*"]
-    - get: platform-automation-tasks
-      passed: [ upgrade-opsman ]
-      params:
-        unpack: true
-        globs: ["*tasks*"]
-
-  - task: interpolate-creds
-    <<: *interpolate-creds
-
-  - task: upload-product-mysql
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-product.yml
-    input_mapping:
-      product: mysql-product
-      config: configuration
-      download-config: configuration
-      env: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: stage-product-mysql
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/stage-product.yml
-    input_mapping:
-      product: mysql-product
-      env: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: upload-mysql-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-stemcell.yml
-    input_mapping:
-      env: interpolated-creds
-      stemcell: mysql-stemcell
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
+# - name: upgrade-mysql
+#   serial: true
+#   plan:
+#   - aggregate:
+#     - get: mysql-product
+#     - get: mysql-stemcell
+#     - get: configuration
+#       trigger: true
+#     - get: platform-automation-image
+#       params:
+#         unpack: true
+#         globs: ["*image*"]
+#     - get: platform-automation-tasks
+#       passed: [ upgrade-opsman ]
+#       params:
+#         unpack: true
+#         globs: ["*tasks*"]
+#
+#   - task: interpolate-creds
+#     <<: *interpolate-creds
+#
+#   - task: upload-product-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/upload-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       config: configuration
+#       download-config: configuration
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: stage-product-mysql
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/stage-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: upload-mysql-stemcell
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/upload-stemcell.yml
+#     input_mapping:
+#       env: interpolated-creds
+#       stemcell: mysql-stemcell
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
 
 
 - name: apply-changes
@@ -423,7 +423,7 @@ jobs:
   - aggregate:
     - get: configuration
       trigger: true
-      passed: [ upgrade-pas, upgrade-healthwatch,  upgrade-nsx, upgrade-mysql]
+      passed: [ upgrade-pas, upgrade-nsx, upgrade-healthwatch ] # ,  upgrade-mysql]
     - get: platform-automation-image
       params:
         unpack: true

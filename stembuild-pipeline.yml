@@ -34,6 +34,7 @@ resources:
     api_token: ((pivnet_token))
     product_slug: stemcells-windows-server
     product_version: ((OS_VERSION)).(.*)
+    #product_version: 2019.7
     sort_by: semver
 
 #- name: stembuild-release

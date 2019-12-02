@@ -77,11 +77,11 @@ resources:
     <<: *s3_credentials_binaries
     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
-- name: pks-windows-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: pks-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+# - name: pks-windows-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: pks-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: pks-product
   type: s3
@@ -161,10 +161,10 @@ resources:
 groups:
 - name: deploy
   jobs:
-  # - create-nsx-objects
+  - create-nsx-objects
   - install-opsman
   - pks
-  # - harbor
+  #- harbor
   - apply-changes
 - name: post-deploy
   jobs:
@@ -174,42 +174,42 @@ groups:
   - export-installation
   - staged-director-config-backup
   - staged-config-pks-backup
-  # - staged-config-harbor-backup
+  #- staged-config-harbor-backup
 - name: teardown
   jobs:
   - destroy-installation
-  #- delete-nsx-objects
+  - delete-nsx-objects
 
 
 jobs:
-# - name: create-nsx-objects
-#   serial: true
-#   serial_groups: [ install ]
-#   build_log_retention:
-#     builds: 2
-#   plan:
-#   - get: configuration
-#   - get: custom-tasks
-#   - get: custom-task-image
-#   - get: platform-automation-image
-#     params:
-#       unpack: true
-#   - get: platform-automation-tasks
-#     params:
-#       unpack: true
-#
-#   - task: interpolate-creds
-#     <<: *interpolate-creds
-#
-#   - task: create-objects
-#     image: custom-task-image
-#     file: custom-tasks/tasks/configure-nsxt-infra.yml
-#     input_mapping:
-#       config: configuration
-#       vars: interpolated-creds
-#       custom-tasks: custom-tasks
-#     params:
-#       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+- name: create-nsx-objects
+  serial: true
+  serial_groups: [ install ]
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: configuration
+  - get: custom-tasks
+  - get: custom-task-image
+  - get: platform-automation-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: create-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/configure-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
 
 - name: install-opsman
   serial: true
@@ -225,6 +225,7 @@ jobs:
       params:
         unpack: true
     - get: platform-automation-tasks
+      passed: [create-nsx-objects]
       trigger: true
       params:
         unpack: true
@@ -277,16 +278,6 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
       AUTH_CONFIG_FILE: ((foundation))/vars/auth.yml
-  # - task: configure-ldap-authentication
-  #   image: platform-automation-image
-  #   file: platform-automation-tasks/tasks/configure-ldap-authentication.yml
-  #   attempts: 10
-  #   input_mapping:
-  #     env: interpolated-creds
-  #     config: interpolated-creds
-  #   params:
-  #     ENV_FILE: ((foundation))/env/env.yml
-  #     AUTH_CONFIG_FILE: ((foundation))/vars/auth-ldap.yml
   - task: configure-director
     image: platform-automation-image
     file: platform-automation-tasks/tasks/configure-director.yml
@@ -317,7 +308,7 @@ jobs:
       trigger: true
     - get: pks-product
     - get: pks-stemcell
-    - get: pks-windows-stemcell
+    # - get: pks-windows-stemcell
     - get: custom-tasks
     - get: custom-task-image
     - get: platform-automation-image
@@ -360,14 +351,14 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: upload-pks-windows-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/upload-stemcell.yml
-    input_mapping:
-      env: interpolated-creds
-      stemcell: pks-windows-stemcell
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
+  # - task: upload-pks-windows-stemcell
+  #   image: platform-automation-image
+  #   file: platform-automation-tasks/tasks/upload-stemcell.yml
+  #   input_mapping:
+  #     env: interpolated-creds
+  #     stemcell: pks-windows-stemcell
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
 
   - task: get_nsx_vars
     image: custom-task-image
@@ -398,7 +389,7 @@ jobs:
         vars/((foundation))/vars/pks-nsx-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: assign-pks-stemcells
+  - task: assign-pks-stecmcells
     image: platform-automation-image
     file: platform-automation-tasks/tasks/assign-multi-stemcell.yml
     input_mapping:
@@ -483,7 +474,7 @@ jobs:
   - aggregate:
     - get: configuration
       trigger: true
-      passed: [ pks ] #, harbor]
+      passed: [ pks ] #, harbor ]
     - get: platform-automation-image
       params:
         unpack: true
@@ -686,35 +677,35 @@ jobs:
         vars/((foundation))/vars/opsman-defaults.yml
         vars/((foundation))/vars/opsman-vars.yml
 
-# - name: delete-nsx-objects
-#   serial: true
-#   build_log_retention:
-#     builds: 2
-#   plan:
-#   - aggregate:
-#     - get: configuration
-#     - get: custom-tasks
-#     - get: custom-task-image
-#     - get: platform-automation-image
-#       passed: [destroy-installation]
-#       trigger: true
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#
-#   - task: interpolate-creds
-#     <<: *interpolate-creds
-#
-#   - task: delete-objects
-#     image: custom-task-image
-#     file: custom-tasks/tasks/delete-nsxt-infra.yml
-#     input_mapping:
-#       config: configuration
-#       vars: interpolated-creds
-#       custom-tasks: custom-tasks
-#     params:
-#       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
-#       ACTUALLY_DELETE_NAT_RULES: false #when not set to "DELETE", rule is simply disabled
+- name: delete-nsx-objects
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: custom-tasks
+    - get: custom-task-image
+    - get: platform-automation-image
+      passed: [destroy-installation]
+      trigger: true
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: delete-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/delete-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+      ACTUALLY_DELETE_NAT_RULES: false #when not set to "DELETE", rule is simply disabled
