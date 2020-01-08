@@ -1074,7 +1074,7 @@ Delete_NSX_LogicalSwitch(){
 Delete_NSX_LB_Monitor() {
  # $1 - monitor Name ex:  pas-web-monitor
  ###################################################
- ###  Deletes the Virtual Server if it existst   ###
+ ###  Deletes the Monitor if it existst   ###
  ###################################################
  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
@@ -1088,7 +1088,7 @@ Delete_NSX_LB_Monitor() {
      $NSXHOSTNAME/api/v1/loadbalancer/monitors/$chk \
      -X DELETE
  else
-   echo Virtual Server $1 Does not exist
+   echo Monitor $1 Does not exist
  fi
 }
 
