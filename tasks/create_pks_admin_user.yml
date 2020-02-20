@@ -1,0 +1,88 @@
+# The inputs, outputs, params, filename, and filepath
+# of this task file are part of its semantically versioned API.
+# See our documentation for a detailed discussion of our semver API.
+# See www.semver.org for an explanation of semantic versioning.
+
+# code_snippet apply-director-changes start yaml
+---
+platform: linux
+
+
+inputs:
+- name: config # contains the base configuration file
+- name: env # contains the env file with target OpsMan Information
+- name: secrets
+  # secret files to be made available
+  # separate from vars, so they can be store securely
+  optional: true
+
+params:
+  VARS_FILES:
+  # - Optional
+  # - Filepath to the vars yaml file
+  # - The path is relative to root of the task build,
+  #   so `vars` and `secrets` can be used.
+
+  CONFIG_FILE: base.yml
+  # - Required
+  # - Filepath to the base yaml file to interpolate from
+  # - The path is relative to root of the task build
+
+  ENV_FILE: env.yml
+  # - Required
+  # - Filepath of the env config YAML
+  # - The path is relative to root of the `env` input
+  SKIP_MISSING: true
+  # - Optional
+  # - Change to false to have strict interpolation
+  #   and fail if params are missing from vars
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    # cat /var/version && echo ""
+    set -eux
+
+    # add dependencies to platform automation image
+    curl https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | apt-key add -
+    echo "deb https://packages.cloudfoundry.org/debian stable main" | tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+
+
+    if [ "$SKIP_MISSING" ]; then
+      export SKIP_MISSING="--skip-missing"
+    else
+      export SKIP_MISSING=""
+    fi
+
+    # ${vars_files_args[@] needs to be globbed to pass through properly
+    # shellcheck disable=SC2068
+    # om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" ${vars_files_args[@]} --path /properties_pks_api_hostname
+
+    PKSADMIN_USERNAME=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /pks_admin_username)
+    PKSADMIN_PASSWORD=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /pks_admin_password)
+
+    UAA_URL=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /properties_pks_api_hostname)
+
+    PKS_GUID=$(om --env env/"${ENV_FILE}" curl --silent --path \
+      "/api/v0/deployed/products" | \
+      jq -r '.[] | .installation_name' | grep pivotal-container-service | tail -1)
+
+    ADMIN_CLIENT_SECRET=$(om --env env/"${ENV_FILE}" curl --silent --path \
+      "/api/v0/deployed/products/${PKS_GUID}/credentials/.properties.pks_uaa_management_admin_client" | \
+      jq -rc '.credential.value.secret')
+
+    echo "Connecting to PKS UAA server [$UAA_URL]..."
+    # login to PKS UAA
+    uaac target https://$UAA_URL:8443 --skip-ssl-validation
+    uaac token client get admin --secret $ADMIN_CLIENT_SECRET
+
+    # set +eu
+    uaac user add "$PKSADMIN_USERNAME" --emails "$PKSADMIN_USERNAME" -p "$PKSADMIN_PASSWORD"
+    uaac member add pks.clusters.manage admin
+    uaac member add pks.clusters.admin admin
+    uaac member add pks.clusters.manage "$PKSADMIN_USERNAME"
+    uaac member add pks.clusters.admin "$PKSADMIN_USERNAME"
+ 
+    # set -eu
