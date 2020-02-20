@@ -78,11 +78,10 @@ run:
     uaac target https://$UAA_URL:8443 --skip-ssl-validation
     uaac token client get admin --secret $ADMIN_CLIENT_SECRET
 
-    # set +eu
+    set +eu
     uaac user add "$PKSADMIN_USERNAME" --emails "$PKSADMIN_USERNAME" -p "$PKSADMIN_PASSWORD"
     uaac member add pks.clusters.manage admin
     uaac member add pks.clusters.admin admin
     uaac member add pks.clusters.manage "$PKSADMIN_USERNAME"
     uaac member add pks.clusters.admin "$PKSADMIN_USERNAME"
- 
-    # set -eu
+    set -eu
