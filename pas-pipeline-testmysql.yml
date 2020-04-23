@@ -1,0 +1,901 @@
+---
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+interpolate-creds: &interpolate-creds
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/foundation/((foundation))'
+    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
+    SKIP_MISSING: true
+  input_mapping:
+    files: configuration
+  output_mapping:
+    interpolated-files: interpolated-creds
+
+make-state-commit: &make-state-commit
+  do:
+    - task: make-commit
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/make-git-commit.yml
+      input_mapping:
+        repository: state
+        file-source: generated-state
+      output_mapping:
+        repository-commit: state-commit
+      params:
+        FILE_SOURCE_PATH: state.yml
+        FILE_DESTINATION_PATH: ((foundation))/state/state.yml
+        GIT_AUTHOR_EMAIL: ((github_author_email))
+        GIT_AUTHOR_NAME: "Platform Automation"
+        COMMIT_MESSAGE: 'Update state file'
+    - put: state
+      params:
+        repository: state-commit
+        merge: true
+
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((access_key_id))
+  secret_access_key: ((secret_access_key))
+  endpoint: ((s3.endpoint))
+  bucket: ((s3.buckets_pivnet_products))
+  region_name: ((s3.region_name))
+  skip_ssl_verification: true
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tags: latest-final
+
+resources:
+# - name: platform-automation
+#   type: pivnet
+#   source:
+#     api_token: ((pivnet_token))
+#     product_slug: platform-automation
+
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-image-(.*).tgz
+
+- name: custom-task-image
+  type: docker-image
+  source:
+    repository: ((registry.endpoint))/((registry.repo))
+    tag: 3.0.5
+    username: ((registry.username))
+    password: ((registry.password))
+
+- name: opsman-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
+
+- name: pas-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pas-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: pas-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
+
+- name: healthwatch-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: healthwatch-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: healthwatch-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[p-healthwatch,(.*)\]p-healthwatch-.*.pivotal
+
+- name: nsx-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
+
+- name: mysql-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: mysql-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+
+- name: pas-windows-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pas-windows,(.*)\]pas-windows-.*.pivotal
+
+- name: pas-windows-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pas-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+
+- name: installation
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_backup_bucket)) #Different Bucket
+    skip_ssl_verification: true
+    regexp: ((foundation))/installation-(.*).zip
+
+- name: config-backup
+  type: s3
+  source:
+    access_key_id: ((access_key_id))
+    secret_access_key: ((secret_access_key))
+    endpoint: ((s3.endpoint))
+    bucket: ((s3.buckets_backup_bucket)) #Different Bucket
+    skip_ssl_verification: true
+    regexp: ((foundation))/(.*).yml
+
+- name: configuration
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["((foundation))"]
+
+- name: state
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+- name: custom-tasks
+  type: git
+  source:
+    uri: ((PlatformAutomation_github_repo))
+    branch: ((PlatformAutomation_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["tasks"]
+
+# triggers used to have jobs do something in a timely manner
+- name: one-time-trigger
+  type: time
+  source:
+    interval: 999999h
+
+- name: daily-trigger
+  type: time
+  source:
+    interval: 24h
+
+
+
+groups:
+- name: deploy
+  jobs:
+  - create-nsx-objects
+  - install-opsman
+  - pas
+  - pas-windows
+  - nsx
+  - healthwatch
+  - mysql
+  - apply-changes
+- name: post-deploy
+  jobs:
+  - create-org-admin
+- name: save-state
+  jobs:
+  - export-installation
+  - staged-director-config-backup
+  - staged-config-pas-backup
+  - staged-config-pasw-backup
+  - staged-config-healthwatch-backup
+  - staged-config-nsxt-backup
+- name: teardown
+  jobs:
+  - destroy-installation
+  - delete-nsx-objects
+
+
+jobs:
+- name: create-nsx-objects
+  serial: true
+  serial_groups: [ install ]
+  plan:
+  - get: one-time-trigger
+    trigger: true
+  - get: configuration
+  - get: custom-tasks
+  - get: custom-task-image
+  - get: platform-automation-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: create-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/configure-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+
+- name: install-opsman
+  serial: true
+  serial_groups: [ install ]
+  plan:
+  - aggregate:
+    - get: opsman-image
+    - get: configuration
+    - get: state
+    - get: platform-automation-image
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      passed: [create-nsx-objects]
+      trigger: true
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: create-vm
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/create-vm.yml
+    input_mapping:
+      state: state
+      config: configuration
+      vars: interpolated-creds
+      image: opsman-image
+    params:
+      STATE_FILE: ((foundation))/state/state.yml
+      OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml #prepends config/
+      VARS_FILES: |
+        vars/((foundation))/vars/opsman-defaults.yml
+        vars/((foundation))/vars/opsman-vars.yml
+    ensure: *make-state-commit
+
+  - task: configure-authentication
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-authentication.yml
+    attempts: 10
+    input_mapping:
+      env: interpolated-creds
+      config: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      AUTH_CONFIG_FILE: ((foundation))/vars/auth.yml
+
+  - task: configure-director
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-director.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      DIRECTOR_CONFIG_FILE: ((foundation))/config/director.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/director-defaults.yml
+        vars/((foundation))/vars/director-vars.yml
+
+  - task: apply-director-changes
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/apply-director-changes.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: pas
+  serial: false  # try  false 052219
+  plan:
+  - aggregate:
+    - get: configuration
+      trigger: true
+    - get: pas-product
+    - get: pas-stemcell
+    - get: healthwatch-stemcell
+    - get: platform-automation-image
+      passed: [ install-opsman ]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: upload-product-pas
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: pas-product
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-pas
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: pas-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-pas-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: pas-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-healthwatch-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: healthwatch-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-pas
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/cf.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/cf-defaults.yml
+        vars/((foundation))/vars/cf-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: pas-windows
+  serial: true
+  plan:
+    - aggregate:
+        - get: platform-automation-image
+          params:
+            unpack: true
+          passed:
+            - pas
+          trigger: true
+        - get: platform-automation-tasks
+          params:
+            unpack: true
+        - get: pas-windows-product
+        - get: pas-windows-stemcell
+        - get: configuration
+    - task: interpolate-creds
+      <<: *interpolate-creds
+    - task: upload-product
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/upload-product.yml
+      input_mapping:
+        product: pas-windows-product
+        env: interpolated-creds
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+    - task: upload-pas-windows-stemcell
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/upload-stemcell.yml
+      input_mapping:
+        env: interpolated-creds
+        stemcell: pas-windows-stemcell
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+    - task: stage-product
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/stage-product.yml
+      input_mapping:
+        product: pas-windows-product
+        env: interpolated-creds
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+    - task: configure-pas
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/configure-product.yml
+      input_mapping:
+        config: configuration
+        env: interpolated-creds
+        vars: interpolated-creds
+      params:
+        CONFIG_FILE: ((foundation))/config/pas-windows.yml
+        VARS_FILES: |
+          vars/((foundation))/vars/pas-windows-defaults.yml
+          vars/((foundation))/vars/pas-windows-vars.yml
+        ENV_FILE: ((foundation))/env/env.yml
+
+- name: nsx
+  serial: true
+  plan:
+  - aggregate:
+    - get: nsx-product
+    - get: configuration
+      trigger: true
+    - get: platform-automation-image
+      passed: [ pas ]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: upload-product-nsx
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: nsx-product
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-nsx
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: nsx-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-nsx
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/nsx.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/nsx-defaults.yml
+        vars/((foundation))/vars/nsx-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: healthwatch
+  serial: true
+  plan:
+  - aggregate:
+    - get: healthwatch-product
+    - get: configuration
+      trigger: true
+    - get: platform-automation-image
+      passed: [ pas ]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: upload-product-healthwatch
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: healthwatch-product
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-healthwatch
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: healthwatch-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-healthwatch
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/p-healthwatch-defaults.yml
+        vars/((foundation))/vars/p-healthwatch-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: mysql
+  serial: true
+  plan:
+  - aggregate:
+    - get: mysql-product
+    - get: mysql-stemcell
+    - get: configuration
+      trigger: true
+    - get: platform-automation-image
+      passed: [ pas ]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: upload-product-mysql
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: mysql-product
+      config: configuration
+      download-config: configuration
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-mysql
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: mysql-product
+      config: configuration
+      download-config: configuration
+      env: interpolated-creds
+      secrets: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-mysql-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: mysql-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-mysql
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/mysql.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/mysql-defaults.yml
+        vars/((foundation))/vars/mysql-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: apply-changes
+  serial: true
+  plan:
+  - aggregate:
+    - get: configuration
+      trigger: true
+      passed: [ nsx, healthwatch, mysql, pas-windows]
+    - get: platform-automation-image
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: apply-product-changes
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: create-org-admin
+  serial: true
+  serial_groups: [ post-deploy ]
+  plan:
+  - aggregate:
+    - get: configuration
+      trigger: false
+    - get: custom-tasks
+    - get: platform-automation-image
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: config-pas-admin-user
+    image: platform-automation-image
+    file: custom-tasks/tasks/create_pas_org_admin.yml
+    input_mapping:
+      vars: interpolated-creds
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      PAS_ADMIN_USERNAME: ((pas_admin_username))
+      PAS_ADMIN_PASSWORD: ((pas_admin_password))
+      PAS_ADMIN_ORG: ((pas_admin_org))
+
+- name: export-installation
+  serial: true
+  plan:
+    - aggregate:
+        - get: one-time-trigger
+        - get: daily-trigger
+          trigger: true
+        - get: platform-automation-image
+          params:
+            unpack: true
+        - get: platform-automation-tasks
+          params:
+            unpack: true
+        - get: configuration
+    - task: interpolate-creds
+      <<: *interpolate-creds
+    - task: export-installation
+      image: platform-automation-image
+      file: platform-automation-tasks/tasks/export-installation.yml
+      input_mapping:
+        env: interpolated-creds
+      params:
+        ENV_FILE: ((foundation))/env/env.yml
+        INSTALLATION_FILE: installation-$timestamp.zip
+    - put: installation
+      params:
+        file: installation/installation*.zip
+
+- name: staged-director-config-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-director-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-director-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-pas-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: cf
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-pasw-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: pas-windows
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-healthwatch-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: p-healthwatch
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-nsxt-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-image
+    params: {unpack: true}
+  - get: configuration
+  - task: interpolate-creds
+    <<: *interpolate-creds
+  - task: staged-pas-config
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: VMware-NSX-T
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: destroy-installation
+  serial: true
+  serial_groups: [ teardown ]
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: state
+    - get: platform-automation-image
+      trigger: false
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: delete-installation
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/delete-installation.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: delete-opsman-vm
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/delete-vm.yml
+    input_mapping:
+      state: state
+      config: configuration
+      vars: interpolated-creds
+      env: interpolated-creds
+    params:
+      STATE_FILE: ((foundation))/state/state.yml
+      OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/opsman-defaults.yml
+        vars/((foundation))/vars/opsman-vars.yml
+
+- name: delete-nsx-objects
+  serial: true
+  plan:
+  - aggregate:
+    - get: configuration
+    - get: custom-tasks
+    - get: custom-task-image
+    - get: platform-automation-image
+      passed: [destroy-installation]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: delete-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/delete-nsxt-infra.yml
+    input_mapping:
+      config: configuration
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+      ACTUALLY_DELETE_NAT_RULES: false #when not set to "DELETE", rule is simply disabled

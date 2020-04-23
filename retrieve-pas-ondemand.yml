@@ -47,38 +47,11 @@ resources:
     <<: *s3_credentials_binaries
     regexp: healthwatch-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
-- name: harbor-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[harbor-container-registry,(.*)\]harbor-container-registry-.*.pivotal
-     # harbor-container-registry-1.7.5-build.11.pivotal
-
-- name: harbor-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: harbor-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
 - name: mysql-product
   type: s3
   source:
     <<: *s3_credentials_binaries
     regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
-     # harbor-container-registry-1.7.5-build.11.pivotal
-
-# - name: pas-for-kubernetes-stemcell
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: pas-for-kubernetes-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-#
-# - name: pas-for-kubernetes-product
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[pas-for-kubernetes-,(.*)\]pas-for-kubernetes-.*.pivotal
-
 
 - name: mysql-stemcell
   type: s3
@@ -99,17 +72,17 @@ resources:
     <<: *s3_credentials_binaries
     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
-- name: compliance-scanner-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[p-compliance-scanner,(.*)\]p-compliance-scanner-.*.pivotal
-
-- name: compliance-scanner-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: compliance-scanner-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+# - name: compliance-scanner-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[p-compliance-scanner,(.*)\]p-compliance-scanner-.*.pivotal
+#
+# - name: compliance-scanner-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: compliance-scanner-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 - name: pas-product
   type: s3
@@ -123,24 +96,6 @@ resources:
   source:
     <<: *s3_credentials_binaries
     regexp: pas-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
-- name: pks-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
-
-- name: pks-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
-- name: pks-windows-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: pks-windows-stemcell/\[stemcells-windows-server-internal,(.*)\]bosh-stemcell-.*-vsphere-esxi-windows2019-go_agent\.tgz
 
 
 # - name: pae-product
@@ -313,88 +268,6 @@ jobs:
       file: downloaded-product/*.pivotal
 
 
-- name: fetch-pks
-  serial: true
-
-  build_log_retention:
-    builds: 1
-  plan:
-  - get: platform-automation-image
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-  - get: config
-  - task: credhub-interpolate
-    <<: *credhub-interpolate
-  - task: download-pks-product-and-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/download-product.yml
-    params:
-      CONFIG_FILE: download-product-configs/pks.yml
-    output_mapping: {downloaded-stemcell: pks-stemcell}
-  - put: pks-product
-    params:
-      file: downloaded-product/*.pivotal
-
-  - put: pks-stemcell
-    params:
-      file: pks-stemcell/*.tgz
-
-- name: fetch-windows-stemcell
-  serial: true
-
-  build_log_retention:
-    builds: 1
-  plan:
-  - get: platform-automation-image
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-  - get: config
-  - task: credhub-interpolate
-    <<: *credhub-interpolate
-  - task: download-windows-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/download-product.yml
-    params:
-      CONFIG_FILE: download-product-configs/windows-stemcell.yml
-  - put: pks-windows-stemcell
-    params:
-      file: downloaded-product/*.tgz
-
-
-- name: fetch-harbor
-  serial: true
-
-  build_log_retention:
-    builds: 1
-  plan:
-  - get: platform-automation-image
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-  - get: config
-  - task: credhub-interpolate
-    <<: *credhub-interpolate
-  - task: download-harbor-product-and-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/download-product.yml
-    params:
-      CONFIG_FILE: download-product-configs/harbor.yml
-    output_mapping: {downloaded-stemcell: harbor-stemcell}
-  - put: harbor-product
-    params:
-      file: downloaded-product/*.pivotal
-  - put: harbor-stemcell
-    params:
-      file: harbor-stemcell/*.tgz
-
 
 - name: fetch-nsx
   serial: true
@@ -421,34 +294,34 @@ jobs:
       file: downloaded-product/*.pivotal
 
 
-- name: fetch-compliance-scanner
-  serial: true
-
-  build_log_retention:
-    builds: 1
-  plan:
-  - get: platform-automation-image
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-  - get: config
-  - task: credhub-interpolate
-    <<: *credhub-interpolate
-  - task: download-compliance-scanner-product-and-stemcell
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/download-product.yml
-    params:
-      CONFIG_FILE: download-product-configs/compliance-scanner.yml
-    output_mapping: {downloaded-stemcell: compliance-scanner-stemcell}
-  - put: compliance-scanner-product
-    params:
-      file: downloaded-product/*.pivotal
-
-  - put: compliance-scanner-stemcell
-    params:
-      file: compliance-scanner-stemcell/*.tgz
+# - name: fetch-compliance-scanner
+#   serial: true
+#
+#   build_log_retention:
+#     builds: 1
+#   plan:
+#   - get: platform-automation-image
+#     params:
+#       unpack: true
+#   - get: platform-automation-tasks
+#     params:
+#       unpack: true
+#   - get: config
+#   - task: credhub-interpolate
+#     <<: *credhub-interpolate
+#   - task: download-compliance-scanner-product-and-stemcell
+#     image: platform-automation-image
+#     file: platform-automation-tasks/tasks/download-product.yml
+#     params:
+#       CONFIG_FILE: download-product-configs/compliance-scanner.yml
+#     output_mapping: {downloaded-stemcell: compliance-scanner-stemcell}
+#   - put: compliance-scanner-product
+#     params:
+#       file: downloaded-product/*.pivotal
+#
+#   - put: compliance-scanner-stemcell
+#     params:
+#       file: compliance-scanner-stemcell/*.tgz
 
 
 - name: fetch-bbr
@@ -501,67 +374,6 @@ jobs:
   - put: mysql-stemcell
     params:
       file: mysql-stemcell/*.tgz
-
-
-# - name: fetch-pas-for-kubernetes
-#   serial: true
-#
-#   build_log_retention:
-#     builds: 1
-#   plan:
-#   - aggregate:
-#       # - get: daily
-#       #   trigger: true
-#       - get: platform-automation-image
-#         params:
-#           unpack: true
-#       - get: platform-automation-tasks
-#         params:
-#           unpack: true
-#       - get: config
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#   - task: download-pas-for-kubernetes-product-and-stemcell
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/download-product.yml
-#     params:
-#       CONFIG_FILE: download-product-configs/pas-for-kubernetes.yml
-#     output_mapping: {downloaded-stemcell: pas-for-kubernetes-stemcell}
-#   - aggregate:
-#       - put: pas-for-kubernetes-product
-#         params:
-#           file: downloaded-product/*.pivotal
-#       - put: pas-for-kubernetes-stemcell
-#         params:
-#           file: pas-for-kubernetes-stemcell/*.tgz
-
-# - name: fetch-pae
-#   serial: true
-#
-#   build_log_retention:
-#     builds: 1
-#   plan:
-#   - get: platform-automation-image
-#     params:
-#       unpack: true
-#   - get: platform-automation-tasks
-#     params:
-#       unpack: true
-#   - get: config
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#   - task: download-pae-product-and-stemcell
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/download-product.yml
-#     params:
-#       CONFIG_FILE: download-product-configs/pae.yml
-#     output_mapping: {downloaded-stemcell: pae-stemcell}
-#   - put: pae-product
-#     params:
-#       file: downloaded-product/*.pivotal
-#   - put: pae-stemcell
-#     params:
-#       file: pae-stemcell/*.tgz
 
 
 - name: fetch-platform-automation
