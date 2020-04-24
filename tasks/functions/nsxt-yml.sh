@@ -125,33 +125,43 @@ Create_IP_Pools() {
  # $4 - Gateway address
  # $5 - Allocation Range ex: 192.168.1.20-192.168.1.40
  # $6 - DNS Servers (Comma separated, optional)
- ipps=$(yq -t r $1 'ip_pools[*].name' -j | jq -r '.[]')
- for ipp_name in $ipps
-   do
-    cidr=$(yq -t r $1 'ip_pools[*]' -j | \
-    jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .cidr')
-    desc=$(yq -t r $1 'ip_pools[*]' -j | \
-    jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .description')
-    gateway=$(yq -t r $1 'ip_pools[*]' -j | \
-    jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .gateway')
-    range=$(yq -t r $1 'ip_pools[*]' -j | \
-    jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .range')
-    dns=$(yq -t r $1 'ip_pools[*]' -j | \
-    jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .dns_servers')
-    #echo "Creating IP Pool named $ipp_name for $cidr, $desc"
-    Create_NSX_IP_Pool "$ipp_name" "$cidr" "$desc" "$gateway" "$range" "$dns"
-   done
+ ippchk=$(yq -t r $1 'ip_blocks[*].name')
+ if [ $ippchk == "null" ]; then
+   echo "No IP Blocks to create"
+ else
+  ipps=$(yq -t r $1 'ip_pools[*].name' -j | jq -r '.[]')
+  for ipp_name in $ipps
+    do
+     cidr=$(yq -t r $1 'ip_pools[*]' -j | \
+     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .cidr')
+     desc=$(yq -t r $1 'ip_pools[*]' -j | \
+     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .description')
+     gateway=$(yq -t r $1 'ip_pools[*]' -j | \
+     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .gateway')
+     range=$(yq -t r $1 'ip_pools[*]' -j | \
+     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .range')
+     dns=$(yq -t r $1 'ip_pools[*]' -j | \
+     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .dns_servers')
+     #echo "Creating IP Pool named $ipp_name for $cidr, $desc"
+     Create_NSX_IP_Pool "$ipp_name" "$cidr" "$desc" "$gateway" "$range" "$dns"
+    done
+ fi
 }
 
 Delete_IP_Pools() {
  # $1 - Config File
  # Params of Delete_NSX_IP_Pool
  # $1 - Name
- ipps=$(yq -t r $1 'ip_pools[*].name' -j | jq -r '.[]')
- for ipp_name in $ipps
-   do
-    Delete_NSX_IP_Pool "$ipp_name"
-   done
+ ippchk=$(yq -t r $1 'ip_blocks[*].name')
+ if [ $ippchk == "null" ]; then
+   echo "No IP Blocks to create"
+ else
+  ipps=$(yq -t r $1 'ip_pools[*].name' -j | jq -r '.[]')
+  for ipp_name in $ipps
+    do
+     Delete_NSX_IP_Pool "$ipp_name"
+    done
+ fi
 }
 
 Create_IP_Blocks() {
