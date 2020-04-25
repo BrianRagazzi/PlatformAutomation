@@ -29,8 +29,8 @@ Group_Members_Maps() {
        for member in $groupmembers
         do
           if [ $member != "null" ]; then
-            echo uaac member add $groupname  "$member"
-            #uaac member add $groupname $member
+            #echo uaac member add $groupname  "$member"
+            uaac member add $groupname $member
           fi
         done
       fi
@@ -44,8 +44,8 @@ Group_Members_Maps() {
         for dn in $groupmaps
          do
            if [ $dn != "null" ]; then
-             echo uaac group map $groupname  "$dn"
-             #uaac group map $groupname "$dn"
+             #echo uaac group map $groupname  "$dn"
+             uaac group map $groupname "$dn"
            fi
          done
 
