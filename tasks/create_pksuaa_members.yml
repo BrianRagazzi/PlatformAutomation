@@ -1,0 +1,52 @@
+---
+platform: linux
+
+
+inputs:
+- name: config # contains the base configuration file
+- name: env # contains the env file with target OpsMan Information
+- name: secrets
+
+  optional: true
+
+params:
+  VARS_FILES:
+  CONFIG_FILE: base.yml
+  ENV_FILE: env.yml
+  PKSUAA_CONFIG_FILE: pksuaa.yml
+  SKIP_MISSING: true
+
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    set -eux
+
+    source custom-tasks/tasks/functions/uaac.sh
+
+
+    if [ "$SKIP_MISSING" ]; then
+      export SKIP_MISSING="--skip-missing"
+    else
+      export SKIP_MISSING=""
+    fi
+
+    UAA_URL=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /properties_pks_api_hostname)
+
+    PKS_GUID=$(om --env env/"${ENV_FILE}" curl --silent --path \
+      "/api/v0/deployed/products" | \
+      jq -r '.[] | .installation_name' | grep pivotal-container-service | tail -1)
+
+    ADMIN_CLIENT_SECRET=$(om --env env/"${ENV_FILE}" curl --silent --path \
+      "/api/v0/deployed/products/${PKS_GUID}/credentials/.properties.pks_uaa_management_admin_client" | \
+      jq -rc '.credential.value.secret')
+
+    echo "Connecting to PKS UAA server [$UAA_URL]..."
+    # login to PKS UAA
+    uaac target https://$UAA_URL:8443 --skip-ssl-validation
+    uaac token client get admin --secret $ADMIN_CLIENT_SECRET
+
+    Create_Local_users $PKSUAA_CONFIG_FILE
+    Create_Members_Maps $PKSUAA_CONFIG_FILE
