@@ -6,6 +6,9 @@ Create_Local_users() {
      # username=$(echo $user | jq -r '.name')
      useremail=$(yq -t r $1 'local_users[*]' -j | \
      jq -r --arg name "$username" '.[] | select(.name == $name) | .emails')
+     if [ $useremail == "null" ]; then
+       useremail = $username
+     fi
      userpass=$(yq -t r $1 'local_users[*]' -j | \
      jq -r --arg name "$username" '.[] | select(.name == $name) | .password')
 
