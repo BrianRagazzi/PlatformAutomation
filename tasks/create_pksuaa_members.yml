@@ -49,5 +49,7 @@ run:
     uaac target https://$UAA_URL:8443 --skip-ssl-validation
     uaac token client get admin --secret $ADMIN_CLIENT_SECRET
 
+    echo "Creating New Local Users"
     Create_Local_users $PKSUAA_CONFIG_FILE
+    echo "Mapping LDAP groups to UAA"
     Group_Members_Maps $PKSUAA_CONFIG_FILE
