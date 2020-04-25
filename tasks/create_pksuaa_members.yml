@@ -6,8 +6,8 @@ inputs:
 - name: config # contains the base configuration file
 - name: env # contains the env file with target OpsMan Information
 - name: secrets
-
   optional: true
+- name: custom-tasks
 
 params:
   VARS_FILES:
