@@ -23,6 +23,7 @@ Create_Local_users() {
 
 Group_Members_Maps() {
  # $1 - Config File
+ set +eu
  groups=$(yq -t r $1 'groups[*].name' -j | jq -r '.[]')
  for groupname in $groups
    do
@@ -59,4 +60,5 @@ Group_Members_Maps() {
 
       fi
    done
+ set -eu
 }
