@@ -23,7 +23,7 @@ run:
   args:
   - "-c"
   - |
-    set -eu
+    set -eux
 
     source custom-tasks/tasks/functions/uaac.sh
 
