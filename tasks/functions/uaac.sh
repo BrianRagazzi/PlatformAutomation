@@ -5,7 +5,7 @@ Create_Local_users() {
    do
      # username=$(echo $user | jq -r '.name')
      userchk=$(uaac user get $username -a username)
-     if [ $userchk == "username: $username" ]; then
+     if [ "$userchk" == " username: $username" ]; then
        echo "User $username already exists"
      else
        useremail=$(yq -t r $1 'local_users[*]' -j | \
