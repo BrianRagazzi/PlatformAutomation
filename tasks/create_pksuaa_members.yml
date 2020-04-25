@@ -50,4 +50,4 @@ run:
     uaac token client get admin --secret $ADMIN_CLIENT_SECRET
 
     Create_Local_users $PKSUAA_CONFIG_FILE
-    Create_Members_Maps $PKSUAA_CONFIG_FILE
+    Group_Members_Maps $PKSUAA_CONFIG_FILE
