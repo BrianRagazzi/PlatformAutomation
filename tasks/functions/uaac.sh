@@ -5,7 +5,7 @@ Create_Local_users() {
    do
      # username=$(echo $user | jq -r '.name')
      userchk=$(uaac user get $username -a username)
-     if [ "$userchk" == " username: $username" ]; then
+     if [ "$userchk" == "  username: $username" ]; then
        echo "User $username already exists"
      else
        useremail=$(yq -t r $1 'local_users[*]' -j | \
@@ -50,9 +50,9 @@ Group_Members_Maps() {
         jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .group_maps[].dn')
         for dn in $groupmaps
          do
-           if [ $dn != "null" ]; then
+           if [ "$dn" != "null" ]; then
              #echo uaac group map $groupname  "$dn"
-             uaac group map $groupname "$dn"
+             uaac group map --name $groupname "$dn"
            fi
          done
 
