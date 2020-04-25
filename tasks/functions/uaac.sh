@@ -1,6 +1,6 @@
 Create_Local_users() {
  # $1 - Config File
- set +eu
+
  users=$(yq -t r $1 'local_users[*].name' -j | jq -r '.[]')
  for username in $users
    do
@@ -19,13 +19,15 @@ Create_Local_users() {
        uaac user add "$username" --emails "$useremail" -p "$userpass"
      fi
    done
- set -eu
+
 }
 
 
 Group_Members_Maps() {
  # $1 - Config File
- set +eu
+
+ SAVEIFS=$IFS
+ IFS=$(echo -en "\n\b")
  groups=$(yq -t r $1 'groups[*].name' -j | jq -r '.[]')
  for groupname in $groups
    do
@@ -58,9 +60,7 @@ Group_Members_Maps() {
              uaac group map --name $groupname "$dn"
            fi
          done
-
-
       fi
    done
- set -eu
+ IFS=$SAVEIFS
 }
