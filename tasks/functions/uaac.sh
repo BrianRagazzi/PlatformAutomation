@@ -25,7 +25,7 @@ Create_Local_users() {
 
 Group_Members_Maps() {
  # $1 - Config File
- +eu
+ set +eu
  SAVEIFS=$IFS
  IFS=$(echo -en "\n\b")
  groups=$(yq -t r $1 'groups[*].name' -j | jq -r '.[]')
@@ -63,5 +63,5 @@ Group_Members_Maps() {
       fi
    done
  IFS=$SAVEIFS
- -eu
+ set -eu
 }
