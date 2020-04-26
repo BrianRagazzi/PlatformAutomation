@@ -27,14 +27,7 @@ run:
 
     source custom-tasks/tasks/functions/uaac.sh
 
-
-    if [ "$SKIP_MISSING" ]; then
-      export SKIP_MISSING="--skip-missing"
-    else
-      export SKIP_MISSING=""
-    fi
-
-    UAA_URL=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /properties_pks_api_hostname)
+    UAA_URL=$(om interpolate --config "config/$CONFIG_FILE" --skip-missing  --path /properties_pks_api_hostname)
 
     PKS_GUID=$(om --env env/"${ENV_FILE}" curl --silent --path \
       "/api/v0/deployed/products" | \
