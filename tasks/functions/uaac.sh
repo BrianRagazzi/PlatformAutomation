@@ -29,6 +29,7 @@ Create_Local_clients() {
    clients=$(yq -t r $1 'local_clients[*].client_name' -j | jq -r '.[]')
    for clientname in $clients
      do
+       set +eu
        clientchk=$(uaac client get $clientname)
        if [[ "$clientchk" == *"NotFound"* ]]; then
          echo "Creating client $clientname"
@@ -40,6 +41,7 @@ Create_Local_clients() {
        else
          echo "client $clientname already exists"
        fi
+       set -eu
      done
    fi
 }
