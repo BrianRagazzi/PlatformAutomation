@@ -22,16 +22,15 @@ Create_Local_users() {
 
 Create_Local_clients() {
  # $1 - Config File
- clientct=$(yq -t r $1 'local_clients[*]' -j | \
- jq -r '.[] | length')
- if [ $clientct == "0" ]; then
+ clientct=$(yq -t r $1 'local_clients[*]' -j)
+ if [ $clientct == "null" ]; then
    echo "no clients to add"
  else
-   clients=$(yq -t r $1 'local_clients[*].clientname' -j | jq -r '.[]')
+   clients=$(yq -t r $1 'local_clients[*].client_name' -j | jq -r '.[]')
    for clientname in $clients
      do
-       clientchk=$(uaac client get $clientname -a username)
-       if [ "$clientchk" == "  username: $username" ]; then
+       clientchk=$(uaac client get $clientname -a clientname)
+       if [ "$clientchk" == "  clientname: $clientname" ]; then
          echo "Client $clientname already exists"
        else
          authorities=$(yq -t r $1 'local_clients[*]' -j | \
