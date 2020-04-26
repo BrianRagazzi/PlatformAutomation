@@ -29,15 +29,16 @@ Create_Local_clients() {
    clients=$(yq -t r $1 'local_clients[*].client_name' -j | jq -r '.[]')
    for clientname in $clients
      do
-       clientchk=$(uaac client get $clientname -a clientname)
-       if [ "$clientchk" == "  clientname: $clientname" ]; then
-         echo "Client $clientname already exists"
-       else
+       clientchk=$(uaac client get $clientname)
+       if [[ "$clientchk" == *"NotFound"* ]]; then
+         echo "Creating client $clientname"
          authorities=$(yq -t r $1 'local_clients[*]' -j | \
-         jq -r --arg name "$clientname" '.[] | select(.name == $name) | .authorities')
+         jq -r --arg name "$clientname" '.[] | select(.client_name == $name) | .authorities')
          clientsecret=$(yq -t r $1 'local_clients[*]' -j | \
-         jq -r --arg name "$clientname" '.[] | select(.name == $name) | .client_secret')
-         uaac client add $clientname -s $client_secret --authorized_grant_types client_credentials --authorities $authorities
+         jq -r --arg name "$clientname" '.[] | select(.client_name == $name) | .client_secret')
+         uaac client add $clientname -s $clientsecret --authorized_grant_types client_credentials --authorities $authorities
+       else
+         echo "client $clientname already exists"
        fi
      done
    fi
