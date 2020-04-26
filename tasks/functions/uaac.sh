@@ -1,6 +1,5 @@
 Create_Local_users() {
  # $1 - Config File
-
  users=$(yq -t r $1 'local_users[*].name' -j | jq -r '.[]')
  for username in $users
    do
@@ -19,7 +18,29 @@ Create_Local_users() {
        uaac user add "$username" --emails "$useremail" -p "$userpass"
      fi
    done
+}
 
+Create_Local_clients() {
+ # $1 - Config File
+ clientct=$(yq -t r $1 'local_clients[*]' -j | \
+ jq -r '.[] | length')
+ if [ $clientct == "0" ]; then
+   echo "no clients to add"
+ else
+ clients=$(yq -t r $1 'local_clients[*].clientname' -j | jq -r '.[]')
+ for clientname in $clients
+   do
+     clientchk=$(uaac client get $clientname -a username)
+     if [ "$clientchk" == "  username: $username" ]; then
+       echo "Client $clientname already exists"
+     else
+       authorities=$(yq -t r $1 'local_clients[*]' -j | \
+       jq -r --arg name "$clientname" '.[] | select(.name == $name) | .authorities')
+       clientsecret=$(yq -t r $1 'local_clients[*]' -j | \
+       jq -r --arg name "$clientname" '.[] | select(.name == $name) | .client_secret')
+       uaac client add $clientname -s $client_secret --authorized_grant_types client_credentials --authorities $authorities
+     fi
+   done
 }
 
 
