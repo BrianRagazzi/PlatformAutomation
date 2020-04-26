@@ -27,20 +27,21 @@ Create_Local_clients() {
  if [ $clientct == "0" ]; then
    echo "no clients to add"
  else
- clients=$(yq -t r $1 'local_clients[*].clientname' -j | jq -r '.[]')
- for clientname in $clients
-   do
-     clientchk=$(uaac client get $clientname -a username)
-     if [ "$clientchk" == "  username: $username" ]; then
-       echo "Client $clientname already exists"
-     else
-       authorities=$(yq -t r $1 'local_clients[*]' -j | \
-       jq -r --arg name "$clientname" '.[] | select(.name == $name) | .authorities')
-       clientsecret=$(yq -t r $1 'local_clients[*]' -j | \
-       jq -r --arg name "$clientname" '.[] | select(.name == $name) | .client_secret')
-       uaac client add $clientname -s $client_secret --authorized_grant_types client_credentials --authorities $authorities
-     fi
-   done
+   clients=$(yq -t r $1 'local_clients[*].clientname' -j | jq -r '.[]')
+   for clientname in $clients
+     do
+       clientchk=$(uaac client get $clientname -a username)
+       if [ "$clientchk" == "  username: $username" ]; then
+         echo "Client $clientname already exists"
+       else
+         authorities=$(yq -t r $1 'local_clients[*]' -j | \
+         jq -r --arg name "$clientname" '.[] | select(.name == $name) | .authorities')
+         clientsecret=$(yq -t r $1 'local_clients[*]' -j | \
+         jq -r --arg name "$clientname" '.[] | select(.name == $name) | .client_secret')
+         uaac client add $clientname -s $client_secret --authorized_grant_types client_credentials --authorities $authorities
+       fi
+     done
+   fi
 }
 
 
