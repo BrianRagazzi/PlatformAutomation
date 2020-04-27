@@ -28,8 +28,8 @@ run:
 
     PKS_URL=$(om interpolate --config "vars/$PKS_VARS_FILE" --skip-missing  --path /properties_pks_api_hostname)
 
-    PKS_CLIENT=$(om interpolate --config "vars/$PKSCLUSTER_CONFIG_FILE" --skip-missing -path /client_name)
-    PKS_SECRET=$(om interpolate --config "vars/$PKSCLUSTER_CONFIG_FILE" --skip-missing -path /client_secret)
+    PKS_CLIENT=$(om interpolate --config "vars/$PKSCLUSTER_CONFIG_FILE" --skip-missing --path /client_name)
+    PKS_SECRET=$(om interpolate --config "vars/$PKSCLUSTER_CONFIG_FILE" --skip-missing --path /client_secret)
 
     PKSCLI="$(find pks-cli/*pks-linux-amd64* 2>/dev/null | head -n1)"
     chmod +x $PKSCLI
