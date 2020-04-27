@@ -13,16 +13,16 @@ compare_clusters() {
 pks_clusters_json=$(yq -t r $1 -j)
 
 # Remove extra clusters
- clusterct=$($2 clusters --json | jq '.[] | length')
+ clusterct=$($2 clusters --json | jq -r '. | length')
  if [ $clusterct == "0" ]; then
    echo "No existing clusters"
  else
-   currclusters=$($2 clusters --json | jq '.[] | .name')
+   currclusters=$($2 clusters --json | jq -r '.[] | .name')
    for clustername in $currclusters
      do
-       namechk=$(echo pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | .name')
+       namechk=$(echo $pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | .name')
        if [ $namechk == $clustername ]; then
-         echo "Cluster $clustername alreeady exists"
+         echo "Cluster $clustername already exists"
        else
          echo "Cluster $clustername will be deleted"
          echo "$2 delete-cluster $clustername --non-interactive"
@@ -31,18 +31,18 @@ pks_clusters_json=$(yq -t r $1 -j)
  fi
 
 #Create Missing Clusters, resize current clusters
- reclusterct=$(echo pks_clusters_json | jq -r '.clusters[] | length')
+ reqclusterct=$(echo $pks_clusters_json | jq -r '.clusters[] | length')
  if [ reqclusterct == "0" ]; then
    echo "No requested clusters!!?"
  else
-  reqclusters=$(echo pks_clusters_json | jq -r '.clusters[] | .name')
+  reqclusters=$(echo $pks_clusters_json | jq -r '.clusters[] | .name')
   for reqclustername in $reqclusters
     do
-      reqnodes=$(echo pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .num_nodes')
+      reqnodes=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .num_nodes')
       clusterchk=$($2 cluster $reqclustername)
       if [[ "$clusterchk" == *"not found"* ]]; then
-        reqext=$(echo pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .exthostname')
-        reqplan=$(echo pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .plan')
+        reqext=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .exthostname')
+        reqplan=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .plan')
         echo "cluster $reqclustername does not exist, create it"
         echo "$2 create-cluster $reqclustername -e $reqext -p $reqplan -n $reqnodes --non-interactive"
       else
