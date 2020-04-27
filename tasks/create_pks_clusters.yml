@@ -32,4 +32,4 @@ run:
     chmod +x $PKSCLI
     $PKSCLI login -a $PKS_URL --client-name $PKS_CLIENT --client-secret $PKS_SECRET --skip-ssl-validation
 
-    compare_clusters "vars/$PKS_VARS_FILE" "$PKSCLI"
+    compare_clusters "vars/$PKSCLUSTER_CONFIG_FILE" "$PKSCLI"
