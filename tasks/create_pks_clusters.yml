@@ -1,0 +1,33 @@
+---
+platform: linux
+
+
+inputs:
+- name: vars
+- name: custom-tasks
+- name: pks-cli
+
+params:
+  PKSCLUSTER_CONFIG_FILE: pks-clusters.yml
+  SKIP_MISSING: true
+
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    set -eux
+
+    #source custom-tasks/tasks/functions/uaac.sh
+
+    # get client name/secret from
+    # run pks get clusters
+
+    PKS_CLIENT=$(om interpolate --config "$PKSCLUSTER_CONFIG_FILE" --skip-missing -path /client_name)
+    PKS_SECRET=$(om interpolate --config "$PKSCLUSTER_CONFIG_FILE" --skip-missing -path /client_secret)
+
+    export PKSCLI
+    PKSCLI="$(find pks-cli/*pks-linux-amd64* 2>/dev/null | head -n1)"
+    chmod +x $PKSCLI
+    $PKSCLI login --client_name $PKS_CLIENT --client_secret $PKS_SECRET --skip-ssl-validation
