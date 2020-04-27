@@ -21,10 +21,7 @@ run:
   - |
     set -eux
 
-    #source custom-tasks/tasks/functions/uaac.sh
-
-    # get client name/secret from
-    # run pks get clusters
+    source custom-tasks/tasks/functions/pks.sh
 
     PKS_URL=$(om interpolate --config "vars/$PKS_VARS_FILE" --skip-missing  --path /properties_pks_api_hostname)
 
@@ -35,6 +32,4 @@ run:
     chmod +x $PKSCLI
     $PKSCLI login -a $PKS_URL --client-name $PKS_CLIENT --client-secret $PKS_SECRET --skip-ssl-validation
 
-    $PKSCLI clusters
-
-    
+    compare_clusters "vars/$PKS_VARS_FILE" "$PKSCLI"
