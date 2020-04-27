@@ -34,3 +34,7 @@ run:
     PKSCLI="$(find pks-cli/*pks-linux-amd64* 2>/dev/null | head -n1)"
     chmod +x $PKSCLI
     $PKSCLI login -a $PKS_URL --client-name $PKS_CLIENT --client-secret $PKS_SECRET --skip-ssl-validation
+
+    $PKSCLI clusters
+
+    
