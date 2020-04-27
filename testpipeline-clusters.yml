@@ -105,10 +105,11 @@ jobs:
     <<: *interpolate-creds
 
   - task: create_pks_clusters
-    image: custom-task-image
+    image: platform-automation-image
     file: custom-tasks/tasks/create_pks_clusters.yml
     input_mapping:
       vars: interpolated-creds
       custom-tasks: custom-tasks
     params:
-      PKSCLUSTER_CONFIG_FILE: vars/((foundation))/vars/pks-clusters.yml
+      PKSCLUSTER_CONFIG_FILE: ((foundation))/vars/pks-clusters.yml
+      PKS_VARS_FILE: ((foundation))/vars/pks-vars.yml
