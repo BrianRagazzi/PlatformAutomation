@@ -44,13 +44,21 @@ pks_clusters_json=$(yq -t r $1 -j)
       if [[ "$clusterchk" != *"$reqclustername"* ]]; then
         reqext=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .exthostname')
         reqplan=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .plan')
-        echo "cluster $reqclustername does not exist, create it"
-        echo "$2 create-cluster $reqclustername -e $reqext -p $reqplan -n $reqnodes --non-interactive"
+        if [ -n $reqplan ]; then
+          echo "Cluster $reqclustername missing Plan"
+        else
+          if [ -n $reqext ]; then
+            echo "Cluster $reqclustername missing External FQDN"
+          else
+            echo "cluster $reqclustername does not exist, create it"
+            echo "$2 create-cluster $reqclustername -e $reqext -p $reqplan -n $reqnodes --non-interactive"
+          fi
+        fi
       else
         echo "cluster $reqclustername already exists, check size"
         currnodes=$($2 cluster $reqclustername --json | jq '.parameters.kubernetes_worker_instances')
         if [ $currnodes == $reqnodes ]; then
-          echo "num_nodes already correct"
+          echo "$reqclustername already has $currnodes"
         else
           echo "Need to scale cluster from $currnodes to $reqnodes"
           echo "$2 resize $clustername --num-nodes $reqnodes --non-interactive"
