@@ -19,7 +19,7 @@ run:
   args:
   - "-c"
   - |
-    set -eu #x
+    set -eux
 
     source custom-tasks/tasks/functions/pks.sh
 
