@@ -21,7 +21,7 @@ pks_clusters_json=$(yq -t r $1 -j)
    for clustername in $currclusters
      do
        namechk=$(echo $pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | .name')
-       if [ -n $namechk ]; then
+       if [ -z $namechk ]; then
          echo "Cluster $clustername will be deleted"
          echo "$2 delete-cluster $clustername --non-interactive"
        else
