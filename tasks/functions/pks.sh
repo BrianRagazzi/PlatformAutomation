@@ -40,8 +40,8 @@ pks_clusters_json=$(yq -t r $1 -j)
     do
       # set +eu
       reqnodes=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .num_nodes')
-      clusterchk=$($2 cluster $reqclustername)
-      if [[ "$clusterchk" == *"not found"* ]]; then
+      clusterchk=$($PKSCLI clusters --json | jq '.[] | .name')
+      if [[ "$clusterchk" != *"$reqclustername"* ]]; then
         reqext=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .exthostname')
         reqplan=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .plan')
         echo "cluster $reqclustername does not exist, create it"
