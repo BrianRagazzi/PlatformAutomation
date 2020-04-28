@@ -50,8 +50,13 @@ pks_clusters_json=$(yq -t r $1 -j)
           if [ -n $reqext ]; then
             echo "Cluster $reqclustername missing External FQDN"
           else
-            echo "cluster $reqclustername does not exist, create it"
-            echo "$2 create-cluster $reqclustername -e $reqext -p $reqplan -n $reqnodes --non-interactive"
+            plannamechk=$(PKSCLI plans --json | jq '.[] | .name')
+            if [["$plannamechk" == *"$reqplan"* ]]; then
+              echo "$2 create-cluster $reqclustername -e $reqext -p $reqplan -n $reqnodes --non-interactive"
+              echo "cluster $reqclustername does not exist, create it"
+            else
+              echo "Cannot create requested cluster; $reqplan is not a valid plan name"
+            fi
           fi
         fi
       else
