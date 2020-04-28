@@ -20,12 +20,12 @@ pks_clusters_json=$(yq -t r $1 -j)
    currclusters=$($2 clusters --json | jq -r '.[] | .name')
    for clustername in $currclusters
      do
-       namechk=$(echo $pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | .name')
-       if [ $namechk == $clustername ]; then
-         echo "Cluster $clustername already exists"
-       else
+       namechk=$(echo $pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | length')
+       if [ $namechk == "0" ]; then
          echo "Cluster $clustername will be deleted"
          echo "$2 delete-cluster $clustername --non-interactive"
+       else
+         echo "Cluster $clustername already exists"
        fi
      done
  fi
