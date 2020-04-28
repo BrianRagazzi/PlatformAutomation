@@ -44,10 +44,10 @@ pks_clusters_json=$(yq -t r $1 -j)
       if [[ "$clusterchk" != *"$reqclustername"* ]]; then
         reqext=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .exthostname')
         reqplan=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .plan')
-        if [ -n $reqplan ]; then
+        if [ -z $reqplan ]; then
           echo "Cluster $reqclustername missing Plan"
         else
-          if [ -n $reqext ]; then
+          if [ -z $reqext ]; then
             echo "Cluster $reqclustername missing External FQDN"
           else
             plannamechk=$(PKSCLI plans --json | jq '.[] | .name')
