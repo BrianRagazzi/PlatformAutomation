@@ -38,7 +38,7 @@ pks_clusters_json=$(yq -t r $1 -j)
   reqclusters=$(echo $pks_clusters_json | jq -r '.clusters[] | .name')
   for reqclustername in $reqclusters
     do
-      set +eu
+      # set +eu
       reqnodes=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .num_nodes')
       clusterchk=$($2 cluster $reqclustername)
       if [[ "$clusterchk" == *"not found"* ]]; then
@@ -56,7 +56,7 @@ pks_clusters_json=$(yq -t r $1 -j)
           echo "$2 resize $clustername --num-nodes $reqnodes --non-interactive"
         fi
       fi
-      set -eu
+      # set -eu
     done
   fi
 
