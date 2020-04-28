@@ -58,7 +58,7 @@ pks_clusters_json=$(yq -t r $1 -j)
         echo "cluster $reqclustername already exists, check size"
         currnodes=$($2 cluster $reqclustername --json | jq '.parameters.kubernetes_worker_instances')
         if [ $currnodes == $reqnodes ]; then
-          echo "$reqclustername already has $currnodes"
+          echo "$reqclustername already has $currnodes nodes"
         else
           echo "Need to scale cluster from $currnodes to $reqnodes"
           echo "$2 resize $clustername --num-nodes $reqnodes --non-interactive"
