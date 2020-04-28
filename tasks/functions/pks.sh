@@ -20,8 +20,8 @@ pks_clusters_json=$(yq -t r $1 -j)
    currclusters=$($2 clusters --json | jq -r '.[] | .name')
    for clustername in $currclusters
      do
-       namechk=$(echo $pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | length')
-       if [ $namechk == "0" ]; then
+       namechk=$(echo $pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | .name')
+       if [ -n $namechk ]; then
          echo "Cluster $clustername will be deleted"
          echo "$2 delete-cluster $clustername --non-interactive"
        else
@@ -38,6 +38,7 @@ pks_clusters_json=$(yq -t r $1 -j)
   reqclusters=$(echo $pks_clusters_json | jq -r '.clusters[] | .name')
   for reqclustername in $reqclusters
     do
+      set +eu
       reqnodes=$(echo $pks_clusters_json | jq -r --arg name "$reqclustername" '.clusters[] | select(.name == $name) | .num_nodes')
       clusterchk=$($2 cluster $reqclustername)
       if [[ "$clusterchk" == *"not found"* ]]; then
@@ -55,6 +56,7 @@ pks_clusters_json=$(yq -t r $1 -j)
           echo "$2 resize $clustername --num-nodes $reqnodes --non-interactive"
         fi
       fi
+      set -eu
     done
   fi
 
