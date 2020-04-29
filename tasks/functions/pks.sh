@@ -24,8 +24,8 @@ pks_clusters_json=$(yq -t r $1 -j)
        if [ -z $namechk ]; then
          echo "Cluster $clustername will be deleted"
          echo "$2 delete-cluster $clustername --non-interactive"
-       else
-         echo "Cluster $clustername already exists"
+       # else
+       #   echo "Cluster $clustername already exists"
        fi
      done
  fi
