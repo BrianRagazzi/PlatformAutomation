@@ -23,7 +23,7 @@ pks_clusters_json=$(yq -t r $1 -j)
        namechk=$(echo $pks_clusters_json | jq -r --arg name "$clustername" '.clusters[] | select(.name == $name) | .name')
        if [ -z $namechk ]; then
          echo "Cluster $clustername will be deleted"
-         echo "$2 delete-cluster $clustername --non-interactive"
+         $2 delete-cluster $clustername --non-interactive
        # else
        #   echo "Cluster $clustername already exists"
        fi
@@ -53,7 +53,7 @@ pks_clusters_json=$(yq -t r $1 -j)
             plannamechk=$($PKSCLI plans --json | jq '.[] | .name')
             if [[ "$plannamechk" == *"$reqplan"* ]]; then
               echo "cluster $reqclustername does not exist, create it"
-              echo "$2 create-cluster $reqclustername -e $reqext -p $reqplan -n $reqnodes --non-interactive"
+              $2 create-cluster $reqclustername -e $reqext -p $reqplan -n $reqnodes --non-interactive
             else
               echo "Cannot create requested cluster; $reqplan is not a valid plan name"
             fi
@@ -66,7 +66,7 @@ pks_clusters_json=$(yq -t r $1 -j)
           echo "$reqclustername already has $currnodes nodes"
         else
           echo "Need to scale cluster from $currnodes to $reqnodes"
-          echo "$2 resize $clustername --num-nodes $reqnodes --non-interactive"
+          $2 resize $clustername --num-nodes $reqnodes --non-interactive
         fi
       fi
       # set -eu
