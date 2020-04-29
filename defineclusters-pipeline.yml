@@ -51,17 +51,17 @@ resources:
 #     <<: *s3_credentials_binaries
 #     regexp: \[pivotal-container-service,(.*)\]kubectl-linux-amd64.*
 
-# - name: custom-task-image
-#   type: docker-image
-#   source:
-#     repository: ((registry.endpoint))/((registry.repo))
-#     tag: latest
-#     username: ((registry.username))
-#     password: ((registry.password))
-#     insecure-registries: [((registry.endpoint))]
-#     ca_certs:
-#       - domain: ((registry.endpoint))
-#         cert: ((registry.ca_cert))
+- name: custom-task-image
+  type: docker-image
+  source:
+    repository: ((registry.endpoint))/((registry.repo))
+    tag: latest
+    username: ((registry.username))
+    password: ((registry.password))
+    insecure-registries: [((registry.endpoint))]
+    ca_certs:
+      - domain: ((registry.endpoint))
+        cert: ((registry.ca_cert))
 
 
 - name: configuration
@@ -93,6 +93,7 @@ jobs:
   - get: configuration
   - get: custom-tasks
   - get: pks-cli
+  - get: custom-task-image
   - get: platform-automation-image
     trigger: false
     params:
@@ -105,7 +106,7 @@ jobs:
     <<: *interpolate-creds
 
   - task: create_pks_clusters
-    image: platform-automation-image
+    image: custom-task-image
     file: custom-tasks/tasks/create_pks_clusters.yml
     input_mapping:
       vars: interpolated-creds
