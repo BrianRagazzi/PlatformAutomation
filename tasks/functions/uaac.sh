@@ -39,6 +39,7 @@ Create_Local_clients() {
          jq -r --arg name "$clientname" '.[] | select(.client_name == $name) | .client_secret')
          uaac client add $clientname -s $clientsecret --authorized_grant_types client_credentials --authorities $authorities
        else
+         uaac client delete $clientname
          echo "client $clientname already exists"
        fi
        set -eu
