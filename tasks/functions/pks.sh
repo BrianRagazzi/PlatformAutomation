@@ -10,7 +10,7 @@ compare_clusters() {
  #    if the num_nodes does not match, resize it
  # if a listed cluster does not exist, create it with the num_nodes
 
-pks_clusters_json=$(yq -t r $1 -j)
+pks_clusters_json=$(yq r $1 -j)  
 
 # Remove extra clusters
  clusterct=$($2 clusters --json | jq -r '. | length')
