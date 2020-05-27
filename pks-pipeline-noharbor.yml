@@ -563,7 +563,7 @@ jobs:
   - get: configuration
   - task: interpolate-creds
     <<: *interpolate-creds
-  - task: staged-pas-config
+  - task: staged-pks-config
     image: platform-automation-image
     file: platform-automation-tasks/tasks/staged-config.yml
     input_mapping:
