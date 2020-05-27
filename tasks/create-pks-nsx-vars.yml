@@ -25,22 +25,22 @@ run:
   - |
     set -eu
 
-    export NSXUSERNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
-    export NSXPASSWORD=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
-    export NSXHOSTNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_manager')
+    export NSXUSERNAME=$(yq r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
+    export NSXPASSWORD=$(yq r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
+    export NSXHOSTNAME=$(yq r $NSXT_INFRA_CONFIG_FILE 'nsxt_manager')
 
     set -eux
 
     source custom-tasks/tasks/functions/nsxt.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
 
-    poolname=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_floating-ip-pool-name')
+    poolname=$(yq r $PKS_VARS_FILE 'properties_network_selector_nsx_floating-ip-pool-name')
     poolid=$(Get_NSX_IP_Pool_ID $poolname)
-    podsblockname=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_ip-block-name')
+    podsblockname=$(yq r $PKS_VARS_FILE 'properties_network_selector_nsx_ip-block-name')
     podsblockid=$(Get_NSX_IP_Block_ID $podsblockname)
-    nodesblockname=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_nodes-ip-block-name')
+    nodesblockname=$(yq r $PKS_VARS_FILE 'properties_network_selector_nsx_nodes-ip-block-name')
     nodesblockid=$(Get_NSX_IP_Block_ID $nodesblockname)
-    t0name=$(yq -t r $PKS_VARS_FILE 'properties_network_selector_nsx_t0-router-name')
+    t0name=$(yq r $PKS_VARS_FILE 'properties_network_selector_nsx_t0-router-name')
     t0id=$(Get_NSX_T0Router_ID $t0name)
     echo "properties_network_selector_nsx_floating-ip-pool-ids: $poolid" >> $NSX_VARS_FILE
     echo "properties_network_selector_nsx_nodes-ip-block-id: $nodesblockid" >> $NSX_VARS_FILE
