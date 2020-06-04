@@ -43,8 +43,8 @@ run:
     uaac token client get admin --secret $ADMIN_CLIENT_SECRET
 
     echo "Creating New Local Users"
-    Create_Local_users $PKSUAA_CONFIG_FILE
+    Create_Local_users config/$PKSUAA_CONFIG_FILE
     echo "Creating UAA Clients"
-    Create_Local_clients $PKSUAA_CONFIG_FILE
+    Create_Local_clients config/$PKSUAA_CONFIG_FILE
     echo "Mapping LDAP groups to UAA"
-    Group_Members_Maps $PKSUAA_CONFIG_FILE
+    Group_Members_Maps config/$PKSUAA_CONFIG_FILE
