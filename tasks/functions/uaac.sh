@@ -1,6 +1,6 @@
 Create_Local_users() {
  # $1 - Config File
- users=$(yq -t r $1 'local_users[*].name' -j | jq -r '.[]')
+ users=$(yq r $1 'local_users[*].name' -j | jq -r '.[]')
  for username in $users
    do
      # username=$(echo $user | jq -r '.name')
@@ -8,12 +8,12 @@ Create_Local_users() {
      if [ "$userchk" == "  username: $username" ]; then
        echo "User $username already exists"
      else
-       useremail=$(yq -t r $1 'local_users[*]' -j | \
+       useremail=$(yq r $1 'local_users[*]' -j | \
        jq -r --arg name "$username" '.[] | select(.name == $name) | .emails')
        if [ $useremail == "null" ]; then
          useremail = $username
        fi
-       userpass=$(yq -t r $1 'local_users[*]' -j | \
+       userpass=$(yq r $1 'local_users[*]' -j | \
        jq -r --arg name "$username" '.[] | select(.name == $name) | .password')
        uaac user add "$username" --emails "$useremail" -p "$userpass"
      fi
@@ -22,20 +22,20 @@ Create_Local_users() {
 
 Create_Local_clients() {
  # $1 - Config File
- clientct=$(yq -t r $1 'local_clients[*]' -j)
+ clientct=$(yq r $1 'local_clients[*]' -j)
  if [ $clientct == "null" ]; then
    echo "no clients to add"
  else
-   clients=$(yq -t r $1 'local_clients[*].client_name' -j | jq -r '.[]')
+   clients=$(yq r $1 'local_clients[*].client_name' -j | jq -r '.[]')
    for clientname in $clients
      do
        set +eu
        clientchk=$(uaac client get $clientname)
        if [[ "$clientchk" == *"NotFound"* ]]; then
          echo "Creating client $clientname"
-         authorities=$(yq -t r $1 'local_clients[*]' -j | \
+         authorities=$(yq r $1 'local_clients[*]' -j | \
          jq -r --arg name "$clientname" '.[] | select(.client_name == $name) | .authorities')
-         clientsecret=$(yq -t r $1 'local_clients[*]' -j | \
+         clientsecret=$(yq r $1 'local_clients[*]' -j | \
          jq -r --arg name "$clientname" '.[] | select(.client_name == $name) | .client_secret')
          uaac client add $clientname -s $clientsecret --authorized_grant_types client_credentials --authorities $authorities
        else
@@ -52,15 +52,15 @@ Group_Members_Maps() {
  set +eu
  SAVEIFS=$IFS
  IFS=$(echo -en "\n\b")
- groups=$(yq -t r $1 'groups[*].name' -j | jq -r '.[]')
+ groups=$(yq r $1 'groups[*].name' -j | jq -r '.[]')
  for groupname in $groups
    do
-     memberct=$(yq -t r $1 'groups[*]' -j | \
+     memberct=$(yq r $1 'groups[*]' -j | \
      jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .members | length')
      if [ $memberct == "0" ]; then
        echo "group $groupname has no members"
      else
-       groupmembers=$(yq -t r $1 'groups[*]' -j | \
+       groupmembers=$(yq r $1 'groups[*]' -j | \
        jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .members[].name')
        for member in $groupmembers
         do
@@ -70,12 +70,12 @@ Group_Members_Maps() {
           fi
         done
       fi
-      mapct=$(yq -t r $1 'groups[*]' -j | \
+      mapct=$(yq r $1 'groups[*]' -j | \
       jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .group_maps | length')
       if [ $mapct == "0" ]; then
         echo "group $groupname has no group_maps"
       else
-        groupmaps=$(yq -t r $1 'groups[*]' -j | \
+        groupmaps=$(yq r $1 'groups[*]' -j | \
         jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .group_maps[].dn')
         for dn in $groupmaps
          do
