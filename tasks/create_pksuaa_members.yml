@@ -7,11 +7,11 @@ inputs:
 - name: env # contains the env file with target OpsMan Information
 - name: secrets
   optional: true
-- name: vars
+#- name: vars
 - name: custom-tasks
 
 params:
-  VARS_FILES:
+  #VARS_FILES:
   CONFIG_FILE: base.yml
   ENV_FILE: env.yml
   PKSUAA_CONFIG_FILE: pksuaa.yml
