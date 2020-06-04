@@ -4,14 +4,16 @@ Create_Local_users() {
  for username in $users
    do
      # username=$(echo $user | jq -r '.name')
+     set +eu
      userchk=$(uaac user get $username -a username)
+     set -eu
      if [ "$userchk" == "  username: $username" ]; then
        echo "User $username already exists"
      else
        useremail=$(yq r $1 'local_users[*]' -j | \
        jq -r --arg name "$username" 'select(.name == $name) | .emails')
        if [ $useremail == "null" ]; then
-         useremail = $username
+         useremail=$username
        fi
        userpass=$(yq r $1 'local_users[*]' -j | \
        jq -r --arg name "$username" 'select(.name == $name) | .password')
