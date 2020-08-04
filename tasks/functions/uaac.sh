@@ -1,6 +1,6 @@
 Create_Local_users() {
  # $1 - Config File
- users=$(yq r $1 'local_users[*].name') # -j | jq -r '.[]')
+ users=$(yq r $1 'local_users[*].name' -j | jq -r '.[]')
  for username in $users
    do
      # username=$(echo $user | jq -r '.name')
