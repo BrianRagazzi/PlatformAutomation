@@ -36,9 +36,9 @@ Create_Local_clients() {
        if [[ "$clientchk" == *"NotFound"* ]]; then
          echo "Creating client $clientname"
          authorities=$(yq r $1 'local_clients[*]' -j | \
-         jq -r --arg name "$clientname" 'select(.client_name == $name) | .authorities')
+         jq -r --arg name "$clientname" '.[] | select(.client_name == $name) | .authorities')
          clientsecret=$(yq r $1 'local_clients[*]' -j | \
-         jq -r --arg name "$clientname" 'select(.client_name == $name) | .client_secret')
+         jq -r --arg name "$clientname" '.[] | select(.client_name == $name) | .client_secret')
          uaac client add $clientname -s $clientsecret --authorized_grant_types client_credentials --authorities $authorities
        else
          echo "client $clientname already exists"
@@ -58,12 +58,12 @@ Group_Members_Maps() {
  for groupname in $groups
    do
      memberct=$(yq r $1 'groups[*]' -j | \
-     jq -r --arg groupname $groupname 'select(.name == $groupname) | .members | length')
+     jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .members | length')
      if [ $memberct == "0" ]; then
        echo "group $groupname has no members"
      else
        groupmembers=$(yq r $1 'groups[*]' -j | \
-       jq -r --arg groupname $groupname 'select(.name == $groupname) | .members[].name')
+       jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .members[].name')
        for member in $groupmembers
         do
           if [ $member != "null" ]; then
@@ -73,12 +73,12 @@ Group_Members_Maps() {
         done
       fi
       mapct=$(yq r $1 'groups[*]' -j | \
-      jq -r --arg groupname $groupname 'select(.name == $groupname) | .group_maps | length')
+      jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .group_maps | length')
       if [ $mapct == "0" ]; then
         echo "group $groupname has no group_maps"
       else
         groupmaps=$(yq r $1 'groups[*]' -j | \
-        jq -r --arg groupname $groupname 'select(.name == $groupname) | .group_maps[].dn')
+        jq -r --arg groupname $groupname '.[] | select(.name == $groupname) | .group_maps[].dn')
         for dn in $groupmaps
          do
            if [ "$dn" != "null" ]; then
