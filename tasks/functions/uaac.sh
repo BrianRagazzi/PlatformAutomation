@@ -24,11 +24,11 @@ Create_Local_users() {
 
 Create_Local_clients() {
  # $1 - Config File
- clientct=$(yq r $1 'local_clients[*]' -j)
+ clientct=$(yq r $1 'local_clients[*]' -j )
  if [ $clientct == "null" ]; then
    echo "no clients to add"
  else
-   clients=$(yq r $1 'local_clients[*].client_name') # -j | jq -r '.[]')
+   clients=$(yq r $1 'local_clients[*].client_name' -j | jq -r '.[]')
    for clientname in $clients
      do
        set +eu
@@ -54,7 +54,7 @@ Group_Members_Maps() {
  set +eu
  SAVEIFS=$IFS
  IFS=$(echo -en "\n\b")
- groups=$(yq r $1 'groups[*].name') # -j | jq -r '.[]')
+ groups=$(yq r $1 'groups[*].name' -j | jq -r '.[]')
  for groupname in $groups
    do
      memberct=$(yq r $1 'groups[*]' -j | \
