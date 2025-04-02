@@ -3,3 +3,4 @@ refresh*.bat
 refresh*.sh
 private*.*
 **.DS_Store
+.DS_Store
