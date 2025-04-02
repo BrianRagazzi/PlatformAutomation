@@ -1,5 +1,10 @@
 # PlatformAutomation
 
+## Login to fly
+```
+fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"   -u "admin"   -p PASSWORD
+```
+
 
 # Pipelines
 
