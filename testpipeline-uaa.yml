@@ -27,35 +27,19 @@ s3_credentials_binaries: &s3_credentials_binaries
 
 
 resources:
-- icon: package-variant-closed
-  name: platform-automation-tasks
+- name: platform-automation-tasks
   type: s3
   source:
     <<: *s3_credentials_binaries
     regexp: platform-automation-tasks-(.*).zip
 
-- icon: package-variant-closed
-  name: platform-automation-image
+- name: platform-automation-image
   type: s3
   source:
     <<: *s3_credentials_binaries
     regexp: platform-automation-image-(.*).tgz
 
-- icon: package-variant-closed
-  name: pks-cli
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[pivotal-container-service,(.*)\]pks-linux-amd64.*
-
-# - name: kubectl
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[pivotal-container-service,(.*)\]kubectl-linux-amd64.*
-
-- icon: docker
-  name: custom-task-image
+- name: custom-task-image
   type: docker-image
   source:
     repository: ((registry.endpoint))/((registry.repo))
@@ -68,8 +52,7 @@ resources:
         cert: ((registry.ca_cert))
 
 
-- icon: github-circle
-  name: configuration
+- name: configuration
   type: git
   source:
     uri: ((config_github_repo))
@@ -79,8 +62,7 @@ resources:
     paths: ["((foundation))"]
 
 
-- icon: github-circle
-  name: custom-tasks
+- name: custom-tasks
   type: git
   source:
     uri: ((PlatformAutomation_github_repo))
@@ -89,28 +71,15 @@ resources:
     password: ((github_token))
     paths: ["tasks"]
 
-- icon: alarm
-  name: weekly-trigger
-  type: time
-  source:
-    days: [Wednesday, Friday, Saturday]
-    start: 11AM
-    stop: 11PM
-
-
 
 jobs:
-
-- name: crud-clusters
+- name: add-pks-admin-group
   serial: true
   build_log_retention:
     builds: 2
   plan:
-  - get: weekly-trigger
-    trigger: true
   - get: configuration
   - get: custom-tasks
-  - get: pks-cli
   - get: custom-task-image
   - get: platform-automation-image
     trigger: false
@@ -123,12 +92,15 @@ jobs:
   - task: interpolate-creds
     <<: *interpolate-creds
 
-  - task: create_pks_clusters
+  - task: config-pks-admin-group
     image: custom-task-image
-    file: custom-tasks/tasks/create_pks_clusters.yml
+    file: custom-tasks/tasks/create_pksuaa_members.yml
     input_mapping:
+      config: configuration #Note this is different
+      env: interpolated-creds
       vars: interpolated-creds
       custom-tasks: custom-tasks
     params:
-      PKSCLUSTER_CONFIG_FILE: ((foundation))/vars/pks-clusters.yml
-      PKS_VARS_FILE: ((foundation))/vars/pks-vars.yml
+      CONFIG_FILE: ((foundation))/vars/pks-vars.yml  #Note this is different
+      ENV_FILE: ((foundation))/env/env.yml
+      PKSUAA_CONFIG_FILE: vars/((foundation))/vars/pksuaa.yml

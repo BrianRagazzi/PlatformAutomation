@@ -1,0 +1,87 @@
+# The inputs, outputs, params, filename, and filepath
+# of this task file are part of its semantically versioned API.
+# See our documentation for a detailed discussion of our semver API.
+# See www.semver.org for an explanation of semantic versioning.
+
+# code_snippet apply-director-changes start yaml
+---
+platform: linux
+
+
+inputs:
+- name: config # contains the base configuration file
+- name: env # contains the env file with target OpsMan Information
+- name: secrets
+  # secret files to be made available
+  # separate from vars, so they can be store securely
+  optional: true
+
+params:
+  VARS_FILES:
+  # - Optional
+  # - Filepath to the vars yaml file
+  # - The path is relative to root of the task build,
+  #   so `vars` and `secrets` can be used.
+
+  CONFIG_FILE: base.yml
+  # - Required
+  # - Filepath to the base yaml file to interpolate from
+  # - The path is relative to root of the task build
+
+  ENV_FILE: env.yml
+  # - Required
+  # - Filepath of the env config YAML
+  # - The path is relative to root of the `env` input
+  SKIP_MISSING: true
+  # - Optional
+  # - Change to false to have strict interpolation
+  #   and fail if params are missing from vars
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    # cat /var/version && echo ""
+    set -eux
+
+
+    if [ "$SKIP_MISSING" ]; then
+      export SKIP_MISSING="--skip-missing"
+    else
+      export SKIP_MISSING=""
+    fi
+
+    # VARS:
+    # OPSMAN_URL, get from env
+    $ ADMIN_PASSWORD, get from env
+    $ NEW_VM_TYPE, get from pks config
+
+    # STEPS:
+    #  Connect to UAA on OpsMgr
+    #  Retrieve vm_types via api:  /api/v0/vm_types -k
+    #  Use jq to check for the new custom types, if they do not exist,
+    #    Use jq to append new custom vm_types
+    #    PUT the new json to the api: /api/v0/vm_types -k
+
+    # UAA_URL=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /properties_pks_api_hostname)
+
+    OPSMAN_URL=$(om interpolate --config env/"${ENV_FILE}" "$SKIP_MISSING" --path /target)
+    ADMIN_PASSWORD=$(om interpolate --config env/"${ENV_FILE}" "$SKIP_MISSING" --path /password)
+    NEW_VM_TYPE=$(om interpolate --config "config/$CONFIG_FILE" "$SKIP_MISSING" --path /new_vm_type)
+
+    uaac target https://$OPSMAN_URL/uaa --skip-ssl-validation
+    uaac token owner get opsman admin --password $ADMIN_PASSWORD --secret ""
+
+    VM_TYPES=$(om --env env/"${ENV_FILE}" curl --silent --path "/api/v0/vm_types")
+
+    new_name=$(echo $new_vm_type | jq -r '.name')
+
+    check=$(echo $VM_TYPES | jq -r --arg new_name "$new_name" '.vm_types[] | select(.name == $new_name)')
+
+    if [ -n "$check" ]; then
+     echo "type already exists"
+    else
+      VM_TYPES=$(echo $VM_TYPES | jq -r --argjson new_type "$new_vm_type" '.vm_types += [$new_type]')
+      uaac curl https://$OPSMAN_URL/api/v0/vm_types -k -X PUT -H "Content-Type: application/json" -d "$VM_TYPES"
+    fi
