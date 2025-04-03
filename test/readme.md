@@ -16,6 +16,9 @@ Add pivnet token to credhub:
 ```
 credhub set --name /concourse/main/pivnet-refresh-token --type value --value your-credhub-refresh-token
 ```
+```
+credhub set --name /pipeline/vsphere/pivnet-refresh-token --type value --value your-credhub-refresh-token
+```
 
 fly -t ci set-pipeline \
   -n \
