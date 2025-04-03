@@ -58,6 +58,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: vsphere-platform-automation-image-(.*).tgz
 
+- name: opsman-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[ops-manager,(.*)\].*.ova
+
 - name: config
   type: git
   source:
@@ -91,7 +97,7 @@ jobs:
   build_log_retention:
     builds: 1
   plan:
-  - get: platform-automation-image
+  - get: platform-automation-vsphere-image
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -101,7 +107,7 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
   - task: download-opsman-image
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/opsman.yml
