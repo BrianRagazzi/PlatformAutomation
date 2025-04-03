@@ -3,7 +3,7 @@
 # This task is used in multiple jobs
 # The yaml anchor "*interpolate-creds" is used in its place
 credhub-interpolate: &credhub-interpolate
-  image: platform-automation-image
+  image: platform-automation-vsphere-image
   file: platform-automation-tasks/tasks/credhub-interpolate.yml
   params:
     CREDHUB_CLIENT: ((credhub_client))
@@ -56,7 +56,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: vsphere-platform-automation-image-(.*).tgz
+    regexp: vsphere-platform-automation-image-(.*).tar.gz
 
 - name: opsman-product
   type: s3
@@ -86,14 +86,16 @@ jobs:
     params:
       file: platform-automation-pivnet/*tasks*.zip
   - put: platform-automation-image
+    no_get: true
     params:
       file: platform-automation-pivnet/*image*.tgz
   - put: platform-automation-vsphere-image
     params:
-      file: platform-automation-pivnet/vsphere-platform-automation-image*.tar.gz
+      file: platform-automation-pivnet/vsphere-platform-automation-image-*.tar.gz
 
 - name: fetch-opsman
   serial: true
+  serial_groups: [ fetch ]
   build_log_retention:
     builds: 1
   plan:
@@ -112,5 +114,6 @@ jobs:
     params:
       CONFIG_FILE: download-product-configs/opsman.yml
   - put: opsman-product
+    no_get: true
     params:
       file: downloaded-product/*
