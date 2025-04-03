@@ -5,6 +5,15 @@
 fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"   -u "admin"   -p PASSWORD
 ```
 
+## Login on OpsMgr to BOSH UAA:
+```
+uaac target https://192.168.102.11:8443 --ca-cert /var/tempest/workspaces/default/root_ca_certificate
+uaac token owner get login -s FuPYjy4ti3K__4XGX2mr2P3jzE0PwzFh
+  admin
+  MKrtEtZL_b_TDMQicBJbWuS7nBd4G5Ql
+```
+
+
 ## Login on OpsMgr to BOSH Credhub
 ```
 credhub api  https://192.168.102.11:8844 --ca-cert=/var/tempest/workspaces/default/root_ca_certificate

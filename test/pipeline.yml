@@ -1,16 +1,64 @@
 ---
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+credhub-interpolate: &credhub-interpolate
+  image: platform-automation-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/pipeline/vsphere/'
+    INTERPOLATION_PATHS: "download-product-configs"
+    SKIP_MISSING: true
+  input_mapping:
+    files: config
+  output_mapping:
+    interpolated-files: config
+
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((s3.access_key_id))
+  secret_access_key: ((s3.secret_access_key))
+  endpoint: ((s3.endpoint))
+  bucket: ((s3.buckets_pivnet_products))
+  region_name: ((s3.region_name))
+  skip_ssl_verification: true
+  
 resource_types:
 - name: pivnet
   type: docker-image
   source:
     repository: pivotalcf/pivnet-resource
     tag: latest-final
+
 resources:
 - name: platform-automation
   type: pivnet
   source:
     product_slug: platform-automation
     api_token: ((pivnet-refresh-token))
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-image-(.*).tgz
+
+- name: config
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["download-product-configs"]
 
 jobs:
 - name: test
@@ -28,3 +76,17 @@ jobs:
     - task: test
       image: platform-automation-image
       file: platform-automation-tasks/tasks/test.yml
+- name: fetch-platform-automation
+  build_log_retention:
+    builds: 1
+  # We use the pivnet resource to bootstrap the pipeline,
+  # and because this product is part of the pipeline, not the foundation
+  plan:
+  - get: platform-automation-pivnet
+    # trigger: true
+  - put: platform-automation-tasks
+    params:
+      file: platform-automation-pivnet/*tasks*.zip
+  - put: platform-automation-image
+    params:
+      file: platform-automation-pivnet/*image*.tgz
