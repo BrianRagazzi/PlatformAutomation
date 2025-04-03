@@ -5,6 +5,41 @@
 fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"   -u "admin"   -p PASSWORD
 ```
 
+## Login on OpsMgr to BOSH Credhub
+```
+credhub api  https://192.168.102.11:8844 --ca-cert=/var/tempest/workspaces/default/root_ca_certificate
+credhub login --client-name=$BOSH_CLIENT --client-secret=$BOSH_CLIENT_SECRET
+
+```
+### set user for concourse basic Auth:
+```
+export ADMIN_USERNAME=admin
+export ADMIN_PASSWORD=PASSWORD
+
+credhub set \
+   -n /p-bosh/concourse/local_user \
+   -t user \
+   -z "${ADMIN_USERNAME}" \
+   -w "${ADMIN_PASSWORD}"
+```
+
+## Obtain concourse credhub credentials from BOSH credhub:
+```
+export CONCOURSE_CREDHUB_SECRET="$(credhub get -n /p-bosh/concourse/credhub_admin_secret -q)"
+export CONCOURSE_CA_CERT="$(credhub get -n /p-bosh/concourse/atc_tls -k ca)"
+```
+### login to concourse credhub:
+```
+credhub login \
+  --server "https://192.168.102.12:8844" \
+  --client-name=credhub_admin \
+  --client-secret="${CONCOURSE_CREDHUB_SECRET}" \
+  --ca-cert "${CONCOURSE_CA_CERT}"
+```
+
+
+
+
 
 # Pipelines
 
