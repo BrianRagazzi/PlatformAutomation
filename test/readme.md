@@ -23,7 +23,9 @@ fly -t ci set-pipeline \
   -c credtest.yml \
   --check-creds
 
-fly -t ci set-pipeline -p fetch-platauto -c private-params-homelab-fetch.yml --check-creds
+fly -t ci set-pipeline -p fetch-platauto -c fetch-pipeline.yml -l private-params-homelab-fetch.yml --check-creds -n
+
+fly -t ci up -p fetch-platauto
 
 
 

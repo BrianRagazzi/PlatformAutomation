@@ -25,7 +25,7 @@ s3_credentials_binaries: &s3_credentials_binaries
   bucket: ((s3.buckets_pivnet_products))
   region_name: ((s3.region_name))
   skip_ssl_verification: true
-  
+
 resource_types:
 - name: pivnet
   type: docker-image
@@ -34,11 +34,12 @@ resource_types:
     tag: latest-final
 
 resources:
-- name: platform-automation
+- name: platform-automation-pivnet
   type: pivnet
   source:
     product_slug: platform-automation
     api_token: ((pivnet-refresh-token))
+
 - name: platform-automation-tasks
   type: s3
   source:
@@ -51,6 +52,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: platform-automation-image-(.*).tgz
 
+- name: platform-automation-vsphere-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: vsphere-platform-automation-image-(.*).tgz
+
 - name: config
   type: git
   source:
@@ -61,21 +68,6 @@ resources:
     paths: ["download-product-configs"]
 
 jobs:
-- name: test
-  plan:
-    - get: platform-automation-image
-      resource: platform-automation
-      params:
-        globs: ["vsphere-platform-automation-image*.tar.gz"] #["*image*.tgz"]
-        unpack: true
-    - get: platform-automation-tasks
-      resource: platform-automation
-      params:
-        globs: ["*tasks*.zip"]
-        unpack: true
-    - task: test
-      image: platform-automation-image
-      file: platform-automation-tasks/tasks/test.yml
 - name: fetch-platform-automation
   build_log_retention:
     builds: 1
@@ -90,3 +82,29 @@ jobs:
   - put: platform-automation-image
     params:
       file: platform-automation-pivnet/*image*.tgz
+  - put: platform-automation-vsphere-image
+    params:
+      file: platform-automation-pivnet/vsphere-platform-automation-image*.tar.gz
+
+- name: fetch-opsman
+  serial: true
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-opsman-image
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/opsman.yml
+  - put: opsman-product
+    params:
+      file: downloaded-product/*
