@@ -18,6 +18,7 @@ credhub set --name /concourse/main/pivnet-refresh-token --type value --value you
 ```
 ```
 credhub set --name /pipeline/vsphere/pivnet-refresh-token --type value --value your-credhub-refresh-token
+credhub set --name /pipeline/vsphere/credhub_client --type value --value ops_manager
 ```
 
 fly -t ci set-pipeline \
