@@ -2,7 +2,8 @@
 
 ## Login to fly
 ```
-fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"   -u "admin"   -p PASSWORD
+fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"  -n main -u "admin"   -p PASSWORD
+fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"  -n homelab -u "admin" -p PASSWORD
 ```
 
 ## Login on OpsMgr to BOSH UAA:
