@@ -1,0 +1,473 @@
+---
+# code_snippet multiple-product-interpolate-creds start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*interpolate-creds" is used in its place
+credhub-interpolate: &credhub-interpolate
+  image: platform-automation-vsphere-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/pipeline/vsphere/'
+    INTERPOLATION_PATHS: "download-product-configs"
+    SKIP_MISSING: true
+  input_mapping:
+    files: config
+  output_mapping:
+    interpolated-files: config
+
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((s3.access_key_id))
+  secret_access_key: ((s3.secret_access_key))
+  endpoint: ((s3.endpoint))
+  bucket: ((s3.buckets_pivnet_products))
+  region_name: ((s3.region_name))
+  skip_ssl_verification: true
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: platform-automation-pivnet
+  type: pivnet
+  source:
+    product_slug: platform-automation
+    api_token: ((pivnet-refresh-token))
+
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-image-(.*).tgz
+
+- name: platform-automation-vsphere-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: vsphere-platform-automation-image-(.*).tar.gz
+
+- name: opsman-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[ops-manager,(.*)\].*.ova
+
+- name: mysql-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+     # harbor-container-registry-1.7.5-build.11.pivotal
+
+- name: mysql-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: mysql-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: postgres-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[postgres,(.*)\]postgres-.*.pivotal
+     # harbor-container-registry-1.7.5-build.11.pivotal
+
+- name: postgres-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: postgres-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: genai-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[genai,(.*)\]genai-.*.pivotal
+
+- name: genai-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: genai-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: rabbitmq-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[p-rabbitmq,(.*)\]p-rabbitmq-.*.pivotal
+
+- name: rabbitmq-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: rabbitmq-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+
+- name: nsx-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
+
+- name: pks-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
+
+- name: pks-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pks-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: srt-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    #regexp: \[elastic-runtime,(.*)\].*.pivotal
+    regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
+
+- name: pas-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pas-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+
+- name: bbr-linux-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[p-bosh-backup-and-restore,(.*)\]bbr-.*-linux-amd64
+
+- name: config
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["download-product-configs"]
+
+jobs:
+- name: fetch-platform-automation
+  build_log_retention:
+    builds: 1
+  # We use the pivnet resource to bootstrap the pipeline,
+  # and because this product is part of the pipeline, not the foundation
+  plan:
+  - get: platform-automation-pivnet
+    # trigger: true
+  - put: platform-automation-tasks
+    params:
+      file: platform-automation-pivnet/*tasks*.zip
+  - put: platform-automation-image
+    no_get: true
+    params:
+      file: platform-automation-pivnet/*image*.tgz
+  - put: platform-automation-vsphere-image
+    params:
+      file: platform-automation-pivnet/vsphere-platform-automation-image-*.tar.gz
+
+- name: fetch-opsman
+  serial: true
+  serial_groups: [ fetch-common ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-opsman-image
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/opsman.yml
+  - put: opsman-product
+    no_get: true
+    params:
+      file: downloaded-product/*
+
+- name: fetch-srt
+  serial: true
+  serial_groups: [ fetch-cf ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product-and-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/srt.yml
+    output_mapping: {downloaded-stemcell: pas-stemcell}
+  - put: srt-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - put: pas-stemcell
+    params:
+      file: pas-stemcell/*.tgz
+
+- name: fetch-tkgi
+  serial: true
+  serial_groups: [ fetch-tkgi ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product-and-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/pks.yml
+    output_mapping: {downloaded-stemcell: pks-stemcell}
+  - put: pks-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - put: pks-stemcell
+    no_get: true
+    params:
+      file: pks-stemcell/*.tgz
+
+- name: fetch-nsx
+  serial: true
+  serial_groups: [ fetch-cf ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/nsx-t.yml
+  - put: nsx-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+
+- name: fetch-bbr
+  serial: true
+  serial_groups: [ fetch-common ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/bbr.yml
+  - put: bbr-linux-product
+    no_get: true
+    params:
+      file: downloaded-product/*
+
+- name: fetch-mysql
+  serial: true
+  serial_groups: [ fetch-cf ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product-and-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/mysql.yml
+    output_mapping: {downloaded-stemcell: mysql-stemcell}
+  - put: mysql-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - put: mysql-stemcell
+    no_get: true
+    params:
+      file: mysql-stemcell/*.tgz
+
+
+- name: fetch-postgres
+  serial: true
+  serial_groups: [ fetch-cf ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product-and-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/postgres.yml
+    output_mapping: {downloaded-stemcell: postgres-stemcell}
+  - put: postgres-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - put: postgres-stemcell
+    no_get: true
+    params:
+      file: postgres-stemcell/*.tgz
+
+- name: fetch-genai
+  serial: true
+  serial_groups: [ fetch-cf ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product-and-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/genai.yml
+    output_mapping: {downloaded-stemcell: genai-stemcell}
+  - put: genai-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - put: genai-stemcell
+    no_get: true
+    params:
+      file: genai-stemcell/*.tgz
+
+- name: fetch-rabbitmq
+  serial: true
+  serial_groups: [ fetch-cf ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product-and-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/rabbitmq.yml
+    output_mapping: {downloaded-stemcell: rabbitmq-stemcell}
+  - put: rabbitmq-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - put: rabbitmq-stemcell
+    no_get: true
+    params:
+      file: rabbitmq-stemcell/*.tgz
