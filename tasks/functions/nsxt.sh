@@ -249,9 +249,11 @@ Create_NSX_LoadBalancer() {
 Create_NSX_LogicalSwitch() {
  # $1 - Logical Switch name
  # $2 - Transport Zone Name
+ # Note: Assumes default SiteID and EnforcementPointID
+ # Refactored April 2025
  local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
    -u $NSXUSERNAME:$NSXPASSWORD \
-   $NSXHOSTNAME/api/v1/logical-switches | \
+   $NSXHOSTNAME/policy/api/v1/infra/segments| \
    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
  if [ -n "$chk" ]; then
    echo Logical Switch $1 already exists, skipping
@@ -260,7 +262,7 @@ Create_NSX_LogicalSwitch() {
 
    local tzid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/api/v1/transport-zones | \
+     $NSXHOSTNAME/policy/apiv1/infra/sites/default/enforcement-points/default/transport-zones | \
      jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
 
 
@@ -278,12 +280,54 @@ Create_NSX_LogicalSwitch() {
        '
    )
 
-   curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   echo 'curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
      $NSXHOSTNAME/api/v1/logical-switches \
-     -X POST -d "$switch_config"
+     -X POST -d "$switch_config"'
  fi
 }
+
+Create_NSX_Segment() {
+ # $1 - Logical Switch name
+ # $2 - Transport Zone Name
+ # Note: Assumes default SiteID and EnforementPointID
+ # Refactored April 2025
+ local chk=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+   -u $NSXUSERNAME:$NSXPASSWORD \
+   $NSXHOSTNAME/policy/api/v1/infra/segments| \
+   jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+ if [ -n "$chk" ]; then
+   echo Logical Switch $1 already exists, skipping
+ else
+   echo "Creating $1"
+
+   local tzid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/policy/apiv1/infra/sites/default/enforcement-points/default/transport-zones | \
+     jq -r --arg name "$2" '.results[] | select(.display_name == $name) | .id')
+
+
+   switch_config=$(
+     jq -n \
+       --arg switch_name "$1" \
+       --arg transport_zone_id "$tzid" \
+       '
+       {
+        "transport_zone_id": $transport_zone_id,
+        "replication_mode": "MTEP",
+        "admin_state":"UP",
+        "display_name": $switch_name
+       }
+       '
+   )
+
+   echo 'curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+     -u $NSXUSERNAME:$NSXPASSWORD \
+     $NSXHOSTNAME/api/v1/logical-switches \
+     -X POST -d "$switch_config"'
+ fi
+}
+
 
 Create_NSX_LogicalSwitchPortforT1() {
  # $1 Logical Switch Name

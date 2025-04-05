@@ -1,26 +1,51 @@
 # Collection of functions to parse YML file and call downstream NSX functions
 
+# Refactored - 2025
 Create_Logical_Switches() {
  # $1 - Config File
- lss=$(yq r $1 'logical_switches[*].name' -j | jq -r '.[]')
+ lss=$(yq '.logical_switches[].name' $1 ) #-o=json)#  | jq -r '.[]')
  for ls_name in $lss
    do
-    tz_name=$(yq r $1 'logical_switches[*]' -j | \
-    jq -r --arg name "$ls_name" '.[] | select(.name == $name) | .transport_zone_name')
+    #tz_name=$(yq '.logical_switches[]' $1 -o=json | jq -r --arg name "$ls_name" '.[] | select(.name == $name) | .transport_zone_name')
+    tz_name=$(lsname=$ls_name yq '.logical_switches[] | select(.name == strenv(lsname)) .transport_zone_name' $1)
     echo $ls_name in $tz_name
-    Create_NSX_LogicalSwitch "$ls_name" "$tz_name"
+    Create_NSX_Segment "$ls_name" "$tz_name"
    done
 }
 
 Delete_Logical_Switches() {
  # $1 - Config File
- lss=$(yq r $1 'logical_switches[*].name' -j | jq -r '.[]')
+ lss=$(yq '.logical_switches[].name' $1 )
  for ls_name in $lss
    do
      Delete_NSX_LogicalSwitch "$ls_name"
    done
 }
 
+Create_T1_Gateways() {
+  # $1 Config File
+  local yaml_file=$1
+  # Iterate through the t1_gateways array using yq
+  yq eval '.t1_gateways[] | .gateway_name' "$yaml_file" | while read -r gw_name; do
+        #echo $gw_name
+        # Extract each value from the YAML for the gateway
+        gateway_name=$gw_name
+        t0_name=$(gw_name=$gw_name yq eval '.t1_gateways[] | select(.gateway_name == strenv(gw_name)) .t0_name' $yaml_file)
+        edgecluster_name=$(gw_name=$gw_name yq eval ".t1_gateways[] | select(.gateway_name == strenv(gw_name)) .edgecluster_name" "$yaml_file")
+        route_adv_types=$(gw_name=$gw_name yq eval ".t1_gateways[] | select(.gateway_name == strenv(gw_name)) .route_adv_types" "$yaml_file")
+        description=$(gw_name=$gw_name yq eval ".t1_gateways[] | select(.gateway_name == strenv(gw_name)) .description" "$yaml_file")
+        ha_mode=$(gw_name=$gw_name yq eval ".t1_gateways[] | select(.gateway_name == strenv(gw_name)) .ha_mode" "$yaml_file")
+        pool_alloc=$(gw_name=$gw_name yq eval ".t1_gateways[] | select(.gateway_name == strenv(gw_name)) .pool_allocation" "$yaml_file")
+
+
+        # Call the Create_NSX_T1_Gateway function with extracted values
+        #Create_NSX_T1_Gateway "$gateway_name" "$t0_name" "$edgecluster_name" "$route_adv_types" "$description" "$ha_mode" "$pool_alloc"
+        Create_NSX_T1_Gateway "$gateway_name" "$t0_name" "$edgecluster_name" "$route_adv_types" "$description" "$ha_mode"
+    done
+}
+
+
+# NOT YET Refactored - 2025
 Create_T1_Routers() {
  # $1 - Config File
  # Params of Create_NSX_T1Router
