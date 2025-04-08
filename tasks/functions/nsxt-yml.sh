@@ -1,26 +1,10 @@
 # Collection of functions to parse YML file and call downstream NSX functions
 
 # Refactored - 2025
-Create_Logical_Switches() {
- # $1 - Config File
- lss=$(yq '.logical_switches[].name' $1 ) #-o=json)#  | jq -r '.[]')
- for ls_name in $lss
-   do
-    #tz_name=$(yq '.logical_switches[]' $1 -o=json | jq -r --arg name "$ls_name" '.[] | select(.name == $name) | .transport_zone_name')
-    tz_name=$(lsname=$ls_name yq '.logical_switches[] | select(.name == strenv(lsname)) .transport_zone_name' $1)
-    echo $ls_name in $tz_name
-    Create_NSX_Segment "$ls_name" "$tz_name"
-   done
-}
 
-Delete_Logical_Switches() {
- # $1 - Config File
- lss=$(yq '.logical_switches[].name' $1 )
- for ls_name in $lss
-   do
-     Delete_NSX_LogicalSwitch "$ls_name"
-   done
-}
+
+
+
 
 Create_T1_Gateways() {
   # $1 Config File
@@ -44,190 +28,171 @@ Create_T1_Gateways() {
     done
 }
 
+Delete_T1_Gateways() {
+  # $1 Config File
+  local yaml_file=$1
+  # Iterate through the t1_gateways array using yq
+  #yq eval '.segments[] | .segment_name' "$yaml_file" | while read -r seg_name; do
+  local gateway_count=$(yq eval '.t1_gateways | length' "$yaml_file")
+  for ((i=0; i<gateway_count; i++)); do
+        #echo $gw_name
+        # Extract each value from the YAML for the gateway
+        local gw_name=$(yq eval ".t1_gateways[$i].gateway_name" "$yaml_file")
 
-# NOT YET Refactored - 2025
-Create_T1_Routers() {
- # $1 - Config File
- # Params of Create_NSX_T1Router
- # $1 - T1 Router name
- # $2 - T0 to attach to
- # $3 - Edge Cluster Name
- lrs=$(yq r $1 't1_logical_routers[*].name' -j | jq -r '.[]')
- for lr_name in $lrs
-   do
-     t0_name=$(yq r $1 't1_logical_routers[*]' -j | \
-     jq -r --arg name "$lr_name" '.[] | select(.name == $name) | .t0_name')
-     ec_name=$(yq r $1 't1_logical_routers[*]' -j | \
-     jq -r --arg name "$lr_name" '.[] | select(.name == $name) | .edgecluster_name')
-     echo "Create T1 named $lr_name attached to T0 $t0_name and using ec $ec_name"
-     Create_NSX_T1Router "$lr_name" "$t0_name" "$ec_name"
-
-     lss=$(yq r $1 't1_logical_routers[*]' -j | \
-     jq -r --arg name "$lr_name" '.[] | select(.name == $name) | .downlinks[].logical_switch_name')
-     for ls_name in $lss
-       do
-        rp_cidr=$(yq r $1 't1_logical_routers[*]' -j | \
-        jq -r --arg router_name "$lr_name" --arg switch_name "$ls_name" \
-        '.[] | select(.name == $router_name) | .downlinks[] | select(.logical_switch_name == $switch_name) | .router_port_cidr')
-        echo "Adding downlink to $lr_name for $ls_name with IP: $rp_cidr"
-        Create_NSX_T1DownlinkPort "$lr_name" "$ls_name" "$rp_cidr"
-       done
-     Enable_Route_Advertisement_T1 $lr_name
-   done
+        Delete_NSX_T1_Gateway "$gw_name"
+  done
 }
 
-Delete_T1_Routers() {
- # $1 - Config File
- lrs=$(yq r $1 't1_logical_routers[*].name' -j | jq -r '.[]')
- for lr_name in $lrs
-   do
-     Delete_NSX_T1Router "$lr_name"
-   done
+Create_Segments() {
+  # $1 Config File
+  local yaml_file=$1
+  # Iterate through the t1_gateways array using yq
+  #yq eval '.segments[] | .segment_name' "$yaml_file" | while read -r seg_name; do
+  local segment_count=$(yq eval '.segments | length' "$yaml_file")
+  for ((i=0; i<segment_count; i++)); do
+        #echo $gw_name
+        # Extract each value from the YAML for the gateway
+        local segment_name=$(yq eval ".segments[$i].segment_name" "$yaml_file")
+        local transport_zone=$(yq eval ".segments[$i].transport_zone" "$yaml_file")
+        local gateway=$(yq eval ".segments[$i].gateway" "$yaml_file")
+        local subnet_gateway_address=$(yq eval ".segments[$i].subnet.gateway_address" "$yaml_file")
+        local subnet_cidr=$(yq eval ".segments[$i].subnet.cidr" "$yaml_file")
+
+        Create_NSX_Segment \
+            "$segment_name" \
+            "$transport_zone" \
+            "$gateway" \
+            "$subnet_gateway_address" \
+            "$subnet_cidr"
+  done
 }
 
-Create_T0_NAT_Rules() {
- # $1 - Config File
- # Params of Create_NSX_NAT_rule
- # $1 T0 Router Name
- # $2 Type/Action
- # $3 Source
- # $4 Destination
- # $5 Translated
- # $6 Priority
- # $7 Description
- nrs=$(yq r $1 't0_nat_rules[*].name' -j | jq -r '.[]')
- for nr_name in $nrs
-   do
-     t0_name=$(yq r $1 't0_nat_rules[*]' -j | \
-     jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .t0_name')
-     action=$(yq r $1 't0_nat_rules[*]' -j | \
-     jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .action')
-     source=$(yq r $1 't0_nat_rules[*]' -j | \
-     jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .source')
-     dest=$(yq r $1 't0_nat_rules[*]' -j | \
-     jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .dest')
-     trans=$(yq r $1 't0_nat_rules[*]' -j | \
-     jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .trans')
-     priority=$(yq r $1 't0_nat_rules[*]' -j | \
-     jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .priority')
-     Create_NSX_NAT_rule "$t0_name" "$action" "$source" "$dest" "$trans" "$priority" "$nr_name"
-   done
-}
+Delete_Segments() {
+  # $1 Config File
+  local yaml_file=$1
+  # Iterate through the t1_gateways array using yq
+  #yq eval '.segments[] | .segment_name' "$yaml_file" | while read -r seg_name; do
+  local segment_count=$(yq eval '.segments | length' "$yaml_file")
+  for ((i=0; i<segment_count; i++)); do
+        #echo $gw_name
+        # Extract each value from the YAML for the gateway
+        local segment_name=$(yq eval ".segments[$i].segment_name" "$yaml_file")
 
-Delete_T0_NAT_Rules() {
- # $1 - Config File
- # $2 - Actually Delete
- # Params of Delete_NSX_NAT_rule
- # $1 T0 Router Name
- # $2 Type/Action
- # $3 Source
- # $4 Destination
- # $5 Translated
- # $6 Actually Delete "DELETE"
- nrs=$(yq r $1 't0_nat_rules[*].name' -j | jq -r '.[]')
- for nr_name in $nrs
-   do
-    t0_name=$(yq r $1 't0_nat_rules[*]' -j | \
-    jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .t0_name')
-    action=$(yq r $1 't0_nat_rules[*]' -j | \
-    jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .action')
-    source=$(yq r $1 't0_nat_rules[*]' -j | \
-    jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .source')
-    dest=$(yq r $1 't0_nat_rules[*]' -j | \
-    jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .dest')
-    trans=$(yq r $1 't0_nat_rules[*]' -j | \
-    jq -r --arg name "$nr_name" '.[] | select(.name == $name) | .trans')
-    Delete_NSX_NAT_rule "$t0_name" "$action" "$source" "$dest" "$trans" "$2"
-   done
+        Delete_NSX_Segment "$segment_name"
+    done
 }
 
 Create_IP_Pools() {
- # $1 - Config File
- # Params of Create_NSX_IP_Pool
- # $1 - Name
- # $2 - CIDR
- # $3 - Description
- # $4 - Gateway address
- # $5 - Allocation Range ex: 192.168.1.20-192.168.1.40
- # $6 - DNS Servers (Comma separated, optional)
- ippchk=$(yq r $1 'ip_blocks[*].name')
- if [ $ippchk == "null" ]; then
-   echo "No IP Blocks to create"
- else
-  ipps=$(yq r $1 'ip_pools[*].name' -j | jq -r '.[]')
-  for ipp_name in $ipps
-    do
-     cidr=$(yq r $1 'ip_pools[*]' -j | \
-     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .cidr')
-     desc=$(yq r $1 'ip_pools[*]' -j | \
-     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .description')
-     gateway=$(yq r $1 'ip_pools[*]' -j | \
-     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .gateway')
-     range=$(yq r $1 'ip_pools[*]' -j | \
-     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .range')
-     dns=$(yq r $1 'ip_pools[*]' -j | \
-     jq -r --arg name "$ipp_name" '.[] | select(.name == $name) | .dns_servers')
-     #echo "Creating IP Pool named $ipp_name for $cidr, $desc"
-     Create_NSX_IP_Pool "$ipp_name" "$cidr" "$desc" "$gateway" "$range" "$dns"
-    done
- fi
+  # $1 Config File
+  local yaml_file=$1
+  # Iterate through the t1_gateways array using yq
+  #yq eval '.segments[] | .segment_name' "$yaml_file" | while read -r seg_name; do
+  local item_count=$(yq eval '.ip_pools | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    #echo $gw_name
+    # Extract each value from the YAML for the gateway
+    local pool_name=$(yq eval ".ip_pools[$i].name" "$yaml_file")
+    local cidr=$(yq eval ".ip_pools[$i].cidr" "$yaml_file")
+    local desc=$(yq eval ".ip_pools[$i].description" "$yaml_file")
+    local gateway=$(yq eval ".ip_pools[$i].gateway" "$yaml_file")
+    local ip_range=$(yq eval ".ip_pools[$i].range" "$yaml_file")
+    local dns_servers=$(yq eval ".ip_pools[$i].dns_servers" "$yaml_file")
+
+    Create_NSX_IP_Pool \
+      "$pool_name" \
+      "$cidr" \
+      "$gateway" \
+      "$ip_range" \
+      "$dns_servers" \
+      "$desc"
+  done
 }
 
 Delete_IP_Pools() {
- # $1 - Config File
- # Params of Delete_NSX_IP_Pool
- # $1 - Name
- ippchk=$(yq r $1 'ip_blocks[*].name')
- if [ $ippchk == "null" ]; then
-   echo "No IP Blocks to create"
- else
-  ipps=$(yq r $1 'ip_pools[*].name' -j | jq -r '.[]')
-  for ipp_name in $ipps
-    do
-     Delete_NSX_IP_Pool "$ipp_name"
-    done
- fi
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.ip_pools | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    local pool_name=$(yq eval ".ip_pools[$i].name" "$yaml_file")
+
+    Delete_NSX_IP_Pool "$pool_name"
+  done
 }
 
 Create_IP_Blocks() {
- # $1 - Config File
- # Params of Create_NSX_IP_Pool
- # $1 - Name
- # $2 - CIDR
- # $3 - Description
- ipbchk=$(yq r $1 'ip_blocks[*].name')
- if [ $ipbchk == "null" ]; then
-   echo "No IP Blocks to create"
- else
-  ipbs=$(yq r $1 'ip_blocks[*].name' -j | jq -r '.[]')
-  for ipb_name in $ipbs
-    do
-     cidr=$(yq r $1 'ip_blocks[*]' -j | \
-     jq -r --arg name "$ipb_name" '.[] | select(.name == $name) | .cidr')
-     desc=$(yq r $1 'ip_blocks[*]' -j | \
-     jq -r --arg name "$ipb_name" '.[] | select(.name == $name) | .description')
-     #echo "Creating IP Pool named $ipp_name for $cidr, $desc"
-     Create_NSX_IP_Block "$ipb_name" "$cidr" "$desc"
-    done
- fi
+  # $1 Config File
+  local yaml_file=$1
+  # Iterate through the t1_gateways array using yq
+  #yq eval '.segments[] | .segment_name' "$yaml_file" | while read -r seg_name; do
+  local item_count=$(yq eval '.ip_blocks | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    #echo $gw_name
+    # Extract each value from the YAML for the gateway
+    local block_name=$(yq eval ".ip_blocks[$i].name" "$yaml_file")
+    local cidr=$(yq eval ".ip_blocks[$i].cidr" "$yaml_file")
+    local desc=$(yq eval ".ip_blocks[$i].description" "$yaml_file")
+
+    Create_NSX_IP_Block \
+      "$block_name" \
+      "$cidr" \
+      "$desc"
+  done
 }
 
 Delete_IP_Blocks() {
- # $1 - Config File
- # Params of Delete_NSX_IP_Pool
- # $1 - Name
- ipbchk=$(yq r $1 'ip_blocks[*].name')
- if [ $ipbchk == "null" ]; then
-   echo "No IP Blocks to delete"
- else
-  ipps=$(yq r $1 'ip_blocks[*].name' -j | jq -r '.[]')
-  for ipp_name in $ipps
-    do
-     Delete_NSX_IP_Block "$ipp_name"
-    done
- fi
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.ip_blocks | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    local block_name=$(yq eval ".ip_blocks[$i].name" "$yaml_file")
+
+    Delete_NSX_IP_Block "$block_name"
+  done
 }
 
+
+Create_T0_NAT_Rules() {
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.t0_nat_rules | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    #echo $gw_name
+    # Extract each value from the YAML for the gateway
+    local name=$(yq eval ".t0_nat_rules [$i].name" "$yaml_file")
+    local t0_name=$(yq eval ".t0_nat_rules [$i].t0_name" "$yaml_file")
+    local action=$(yq eval ".t0_nat_rules [$i].action" "$yaml_file")
+    local source=$(yq eval ".t0_nat_rules [$i].source" "$yaml_file")
+    local dest=$(yq eval ".t0_nat_rules [$i].dest" "$yaml_file")
+    local trans=$(yq eval ".t0_nat_rules [$i].trans" "$yaml_file")
+
+    Create_NSX_T0_NAT_Rule \
+      "$name" \
+      "$t0_name" \
+      "$action" \
+      "$source" \
+      "$trans" \
+      "$dest"
+  done
+}
+
+Delete_T0_NAT_Rules() {
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.t0_nat_rules | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    #echo $gw_name
+    # Extract each value from the YAML for the gateway
+    local name=$(yq eval ".t0_nat_rules [$i].name" "$yaml_file")
+    local t0_name=$(yq eval ".t0_nat_rules [$i].t0_name" "$yaml_file")
+
+    Delete_NSX_T0_NAT_Rule \
+      "$name" \
+      "$t0_name"
+  done
+}
+
+
+# NOT YET Refactored - 2025
 Create_Load_Balancers() {
  # $1 Config_file
  lbchk=$(yq r $1 'load_balancers[*].name')
