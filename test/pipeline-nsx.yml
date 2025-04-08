@@ -11,12 +11,13 @@ credhub-interpolate: &credhub-interpolate
     CREDHUB_SERVER: ((credhub_server))
     CREDHUB_CA_CERT: ((credhub_ca_cert))
     PREFIX: '/foundation/((foundation))'
-    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
+    #INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
+    INTERPOLATION_PATHS: "((foundation))/vars"
     SKIP_MISSING: true
   input_mapping:
-    files: configuration
+    files: config
   output_mapping:
-    interpolated-files: configuration
+    interpolated-files: config
 
 s3_credentials_binaries: &s3_credentials_binaries
   access_key_id: ((s3_access_key_id))
@@ -54,7 +55,7 @@ resources:
 
 
 
-- name: configuration
+- name: config
   type: git
   source:
     uri: ((config_github_repo))
