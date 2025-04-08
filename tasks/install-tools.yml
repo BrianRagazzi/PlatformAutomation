@@ -1,0 +1,25 @@
+---
+platform: linux
+
+
+inputs:
+- name: config # contains the env file with target OpsMan Information
+  optional: true
+- name: vars # variable files to be made available
+  optional: true
+- name: secrets
+  optional: true
+- name: custom-tasks
+  optional: true
+
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    set -eu
+
+    apt-get -y update
+    apt-get install -y jq ruby-full
+    gem install cf-uaac
