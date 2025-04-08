@@ -27,7 +27,7 @@ run:
 
     set -eux
 
-    source custom-tasks/tasks/functions/nsxt.sh
+    source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
 
   Create_T1_Gateways $NSXT_INFRA_CONFIG_FILE
