@@ -32,7 +32,7 @@ fly -t ci set-pipeline -p fetch-platauto -c pipeline-fetch.yml -l private-params
 fly -t ci up -p fetch-platauto
 
 
-
+fly -t ci set-pipeline -p nsx -c pipeline-nsx.yml -l private-params-homelab-nsx.yml --check-creds -n
 
 Add to credhub:
 - name: /pipeline/vsphere/credhub_client
