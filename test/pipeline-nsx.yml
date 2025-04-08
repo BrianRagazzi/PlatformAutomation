@@ -85,7 +85,7 @@ jobs:
     builds: 4
   serial_groups: [ install ]
   plan:
-  - get: configuration
+  - get: config
   - get: custom-tasks
   - get: platform-automation-vsphere-image
     params:
@@ -101,7 +101,7 @@ jobs:
     image: custom-task-image
     file: custom-tasks/tasks/configure-nsxt-infra.yml
     input_mapping:
-      config: configuration
+      config: config
       vars: interpolated-creds
       custom-tasks: custom-tasks
     params:
