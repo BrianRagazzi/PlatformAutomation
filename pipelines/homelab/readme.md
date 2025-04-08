@@ -4,6 +4,9 @@
 ## Preparation
 ### credhub
 #### Login - on opsmanager
+```
+ssh ubuntu@om-pa.lab.brianragazzi.com -i ~/.ssh/ops-mgr-ssh-key
+```
 * Check that env vars are set in .profile
 ```
 credhub api  https://192.168.102.11:8844 --ca-cert=/var/tempest/workspaces/default/root_ca_certificate
@@ -11,6 +14,7 @@ credhub login --client-name=$BOSH_CLIENT --client-secret=$BOSH_CLIENT_SECRET
 ```
 #### Add/Set Credentials
 ```
+export $EAMNAME=homelab
 credhub set --name /pipeline/vsphere/pivnet-refresh-token --type value --value your-credhub-refresh-token
 credhub set --name /pipeline/vsphere/credhub_client --type value --value ops_manager
 credhub set --name /concourse/main/pivnet-refresh-token --type value --value refreshtokenhere
@@ -19,7 +23,7 @@ credhub set --name /concourse/$TEAMNAME/pivnet-refresh-token --type value --valu
 credhub set --name /concourse/$TEAMNAME/credhub_client --type value --value ops_manager
 credhub set --name /concourse/$TEAMNAME/credhub_secret --type value --value clientsecrethere
 credhub set --name /concourse/$TEAMNAME/credhub_server --type value --value https://192.168.102.11:8844
-credhub set --name /concourse/$TEAMNAME/credhub_ca_cert --type certificate -c credhub.crt
+credhub set --name /concourse/$TEAMNAME/credhub_ca_cert --type certificate --certificate=/var/tempest/workspaces/default/root_ca_certificate
 # S3
 credhub set --name /concourse/$TEAMNAME/s3_endpoint --type value --value https://minio.lab.brianragazzi.com
 credhub set --name /concourse/$TEAMNAME/s3_buckets_pivnet_products --type value --value binaries
@@ -29,6 +33,11 @@ credhub set --name /concourse/$TEAMNAME/s3_secret_access_key --type value --valu
 # Github
 credhub set --name /concourse/$TEAMNAME/github_token --type value --value githubtokenhere
 ```
+#### Dump to check
+```
+credhub export
+```
+
 
 ### Login
 ```
@@ -37,5 +46,5 @@ fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"  -n homelab -u "a
 
 ## Pipelines
 ```
-fly -t ci set-pipeline -p fetch-platauto -c pipeline-fetch.yml -l private-params-homelab-fetch.yml --check-creds -n
+fly -t ci set-pipeline -p fetch-platauto -c pipeline-fetch.yml -l ../../params/homelab/params-homelab-fetch.yml --check-creds -n
 ```
