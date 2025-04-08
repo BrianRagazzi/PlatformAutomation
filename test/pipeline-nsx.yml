@@ -10,13 +10,13 @@ credhub-interpolate: &credhub-interpolate
     CREDHUB_SECRET: ((credhub_secret))
     CREDHUB_SERVER: ((credhub_server))
     CREDHUB_CA_CERT: ((credhub_ca_cert))
-    PREFIX: '/pipeline/vsphere/'
-    INTERPOLATION_PATHS: "download-product-configs"
+    PREFIX: '/foundation/((foundation))'
+    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
     SKIP_MISSING: true
   input_mapping:
-    files: config
+    files: configuration
   output_mapping:
-    interpolated-files: config
+    interpolated-files: configuration
 
 s3_credentials_binaries: &s3_credentials_binaries
   access_key_id: ((s3_access_key_id))
@@ -26,7 +26,6 @@ s3_credentials_binaries: &s3_credentials_binaries
   region_name: ((s3_region_name))
   skip_ssl_verification: true
 
-
 resource_types:
 - name: pivnet
   type: docker-image
@@ -35,7 +34,6 @@ resource_types:
     tag: latest-final
 
 resources:
-
 - name: platform-automation-tasks
   type: s3
   source:
@@ -54,15 +52,7 @@ resources:
 #     <<: *s3_credentials_binaries
 #     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
-- name: installation
-  type: s3
-  source:
-    access_key_id: ((s3.access_key_id))
-    secret_access_key: ((s3.secret_access_key))
-    endpoint: ((s3.endpoint))
-    bucket: ((s3.buckets_backup_bucket)) #Different Bucket
-    skip_ssl_verification: true
-    regexp: ((foundation))/installation-(.*).zip
+
 
 - name: configuration
   type: git
@@ -73,13 +63,7 @@ resources:
     password: ((github_token))
     paths: ["((foundation))"]
 
-- name: state
-  type: git
-  source:
-    uri: ((config_github_repo))
-    branch: ((config_github_branch))
-    username: ((github_username))
-    password: ((github_token))
+
 
 - name: custom-tasks
   type: git
@@ -90,15 +74,7 @@ resources:
     password: ((github_token))
     paths: ["tasks"]
 
-- name: one-time-trigger
-  type: time
-  source:
-    interval: 999999h
 
-- name: daily-trigger
-  type: time
-  source:
-    interval: 24h
 
 
 jobs:
@@ -110,7 +86,6 @@ jobs:
   plan:
   - get: configuration
   - get: custom-tasks
-  - get: custom-task-image
   - get: platform-automation-vsphere-image
     params:
       unpack: true
@@ -118,8 +93,8 @@ jobs:
     params:
       unpack: true
 
-  - task: interpolate-creds
-    <<: *interpolate-creds
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
 
   - task: create-objects
     image: custom-task-image
