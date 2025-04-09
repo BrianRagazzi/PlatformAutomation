@@ -527,7 +527,7 @@ Delete_NSX_T0_NAT_Rule(){
   local t0id="$2"
   local chk=$(Get_NSX_Tier0_NAT_Rule_ID $name $t0id)
   if [ -z "$chk" ]; then
-   echo "NAT Rule $1 not found"
+   echo "Error: T0 NAT Rule $1 not found"
   else
     local response=$(curl -s -k -X DELETE \
     -H "Content-Type: application/json" \
