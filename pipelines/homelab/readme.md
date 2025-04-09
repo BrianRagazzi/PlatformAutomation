@@ -58,6 +58,6 @@ fly -t ci set-pipeline -p fetch-binaries -c pipeline-fetch.yml -l ../../params/h
 fly -t ci up -p fetch-binaries
 ```
 ```
-fly -t ci set-pipeline -p nsx-configure -c ../../test/pipeline-nsx.yml -l ../../params/homelab/params-homelab-nsx.yml --check-creds -n
+fly -t ci set-pipeline -p nsx-configure -c pipeline-nsx.yml -l ../../params/homelab/params-homelab-nsx.yml --check-creds -n
 fly -t ci up -p nsx-configure
 ```
