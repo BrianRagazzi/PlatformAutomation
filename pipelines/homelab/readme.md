@@ -39,7 +39,13 @@ credhub set --name /concourse/$TEAMNAME/github_token --type value --value github
 
 # NSX
 credhub set --name /concourse/$TEAMNAME/nsx_admin_password --type value --value nsxadminpassword
-VMware1!VMware1!
+
+# vCenter
+credhub set --name /concourse/$TEAMNAME/vcenter_admin_password --type value --value password
+
+# OpsMgr ssh pub key
+credhub set --name /concourse/$TEAMNAME/opsman_ssh_public_key --type value --value "$(cat /home/ubuntu/.ssh/authorized_keys)"
+
 ```
 #### Dump to check
 ```
@@ -63,5 +69,5 @@ fly -t ci up -p nsx-configure
 ```
 ```
 fly -t ci set-pipeline -p tkgi-configure -c pipeline-tkgi.yml -l ../../params/homelab/params-homelab.yml --check-creds -n
-fly -t ci up -p nsx-configure
+fly -t ci up -p tkgi-configure
 ```
