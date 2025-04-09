@@ -26,7 +26,6 @@ run:
     export NSXPASSWORD=$(yq eval '.nsxt_admin_password' $NSXT_INFRA_CONFIG_FILE )
     export NSXHOSTNAME=$(yq eval '.nsxt_manager' $NSXT_INFRA_CONFIG_FILE )
 
-    set -eux
 
     source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
