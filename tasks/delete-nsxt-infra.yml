@@ -21,19 +21,15 @@ run:
   - "-c"
   - |
     set -eu
+    yq --version
 
-    export NSXUSERNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
-    export NSXPASSWORD=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
-    export NSXHOSTNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_manager')
+    export NSXUSERNAME=$(yq eval '.nsxt_admin_username' $NSXT_INFRA_CONFIG_FILE )
+    export NSXPASSWORD=$(yq eval '.nsxt_admin_password' $NSXT_INFRA_CONFIG_FILE )
+    export NSXHOSTNAME=$(yq eval '.nsxt_manager' $NSXT_INFRA_CONFIG_FILE )
 
     set -eux
 
-    source custom-tasks/tasks/functions/nsxt.sh
+    source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
 
-    Delete_Logical_Switches $NSXT_INFRA_CONFIG_FILE
-    Delete_T1_Routers $NSXT_INFRA_CONFIG_FILE
-    Delete_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE $ACTUALLY_DELETE_NAT_RULES
-    Delete_IP_Pools $NSXT_INFRA_CONFIG_FILE
-    Delete_IP_Blocks $NSXT_INFRA_CONFIG_FILE
-    Delete_Load_Balancers $NSXT_INFRA_CONFIG_FILE
+    Delete_T1_Gateways $NSXT_INFRA_CONFIG_FILE
