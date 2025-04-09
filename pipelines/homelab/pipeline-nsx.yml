@@ -57,16 +57,16 @@ resources:
 
 
 - name: custom-task-image
-  type: docker-image
+  type: registry-image
   source:
     repository: ((registry.endpoint))/((registry.repo))
-    tag: latest
-    username: ((registry.username))
-    password: ((registry.password))
-    insecure-registries: [((registry.endpoint))]
+    username: ((registry_user))
+    password: ((registry_pass))
+    tag: '2025'
+    insecure: 'true'
     ca_certs:
-      - domain: ((registry.endpoint))
-        cert: ((registry.ca_cert))
+    - ((registry.ca_cert))
+
 
 # - name: nsx-product
 #   type: s3
