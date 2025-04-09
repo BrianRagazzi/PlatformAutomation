@@ -111,7 +111,7 @@ Create_NSX_T1_Gateway() {
    echo "Creating $1"
    local t0path=$(Get_NSX_T0_Gateway_Path $2)
    #local routeadv='["TIER1_NAT","TIER1_LB_VIP","TIER1_CONNECTED","TIER1_IPSEC_LOCAL_ENDPOINT"]'
-   gateway_config=$(jq -n \
+   gateway_config=$(jq -c \
      --arg display_name "$1" \
      --arg t0path "$t0path" \
      --argjson route_advertisement_types $routeadv \
