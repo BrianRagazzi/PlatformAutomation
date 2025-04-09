@@ -9,8 +9,8 @@ credhub-interpolate: &credhub-interpolate
     CREDHUB_CLIENT: ((credhub_client))
     CREDHUB_SECRET: ((credhub_secret))
     CREDHUB_SERVER: ((credhub_server))
-    CREDHUB_CA_CERT: ((credhub_ca_cert))
-    PREFIX: '/pipeline/vsphere/'
+    #CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/concourse/((foundation))'
     INTERPOLATION_PATHS: "download-product-configs"
     SKIP_MISSING: true
   input_mapping:

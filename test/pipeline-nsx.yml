@@ -10,14 +10,16 @@ credhub-interpolate: &credhub-interpolate
     CREDHUB_SECRET: ((credhub_secret))
     CREDHUB_SERVER: ((credhub_server))
     CREDHUB_CA_CERT: ((credhub_ca_cert))
-    PREFIX: '/foundation/((foundation))'
+    PREFIX: '/concourse/((foundation))'
     #INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
     INTERPOLATION_PATHS: "((foundation))/vars"
     SKIP_MISSING: true
   input_mapping:
     files: config
+  # output_mapping:
+  #   interpolated-files: config
   output_mapping:
-    interpolated-files: config
+    interpolated-files: interpolated-creds
 
 s3_credentials_binaries: &s3_credentials_binaries
   access_key_id: ((s3_access_key_id))
@@ -46,6 +48,25 @@ resources:
   source:
     <<: *s3_credentials_binaries
     regexp: vsphere-platform-automation-image-(.*).tar.gz
+
+# - name: custom-task-image
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: platautouaac_(.*).tar.gz
+
+
+- name: custom-task-image
+  type: docker-image
+  source:
+    repository: ((registry.endpoint))/((registry.repo))
+    tag: latest
+    username: ((registry.username))
+    password: ((registry.password))
+    insecure-registries: [((registry.endpoint))]
+    ca_certs:
+      - domain: ((registry.endpoint))
+        cert: ((registry.ca_cert))
 
 # - name: nsx-product
 #   type: s3
@@ -87,6 +108,7 @@ jobs:
   plan:
   - get: config
   - get: custom-tasks
+  - get: custom-task-image
   - get: platform-automation-vsphere-image
     params:
       unpack: true
@@ -96,6 +118,7 @@ jobs:
 
   - task: credhub-interpolate
     <<: *credhub-interpolate
+
 
   - task: create-objects
     image: custom-task-image
