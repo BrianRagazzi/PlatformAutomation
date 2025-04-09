@@ -32,6 +32,8 @@ run:
     source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
 
+    echo "Deleteing objects on NSX Manager: $NSXHOSTNAME"
+
     Delete_T1_Gateways $NSXT_INFRA_CONFIG_FILE
     Delete_Segments $NSXT_INFRA_CONFIG_FILE
     Delete_IP_Pools $NSXT_INFRA_CONFIG_FILE

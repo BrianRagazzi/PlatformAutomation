@@ -31,6 +31,8 @@ run:
     source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
 
+    echo "Creating objects on NSX Manager: $NSXHOSTNAME"
+
     Create_T1_Gateways $NSXT_INFRA_CONFIG_FILE
     Create_Segments $NSXT_INFRA_CONFIG_FILE
     Create_IP_Pools $NSXT_INFRA_CONFIG_FILE
