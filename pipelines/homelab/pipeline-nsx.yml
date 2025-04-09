@@ -129,3 +129,33 @@ jobs:
       custom-tasks: custom-tasks
     params:
       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+
+- name: delete-nsx-objects
+  serial: true
+  build_log_retention:
+    builds: 4
+  serial_groups: [ install ]
+  plan:
+  - get: config
+  - get: custom-tasks
+  - get: custom-task-image
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+
+  - task: create-objects
+    image: custom-task-image
+    file: custom-tasks/tasks/delete-nsxt-infra.yml
+    input_mapping:
+      config: config
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
