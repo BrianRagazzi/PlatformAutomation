@@ -60,15 +60,6 @@ resources:
     # ca_certs:
     # - ((registry_ca_cert))
 
-
-# - name: nsx-product
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
-
-
-
 - name: config
   type: git
   source:
@@ -78,8 +69,6 @@ resources:
     password: ((github_token))
     paths: ["((foundation))"]
 
-
-
 - name: custom-tasks
   type: git
   source:
@@ -88,8 +77,6 @@ resources:
     username: ((github_username))
     password: ((github_token))
     paths: ["tasks"]
-
-
 
 
 jobs:
@@ -111,7 +98,6 @@ jobs:
 
   - task: credhub-interpolate
     <<: *credhub-interpolate
-
 
   - task: create-objects
     image: custom-task-image
@@ -141,7 +127,6 @@ jobs:
 
   - task: credhub-interpolate
     <<: *credhub-interpolate
-
 
   - task: delete-objects
     image: custom-task-image
