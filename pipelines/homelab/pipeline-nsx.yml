@@ -62,7 +62,7 @@ resources:
     repository: ((registry_endpoint))/((registry_repo))
     #username: ((registry_username))
     #password: ((registry_password))
-    tag: '2025'
+    tag: 'latest'
     insecure: true
     # ca_certs:
     # - ((registry_ca_cert))
