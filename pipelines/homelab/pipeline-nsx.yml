@@ -59,13 +59,13 @@ resources:
 - name: custom-task-image
   type: registry-image
   source:
-    repository: ((registry.endpoint))/((registry.repo))
-    username: ((registry_user))
-    password: ((registry_pass))
+    repository: ((registry_endpoint))/((registry_repo))
+    #username: ((registry_username))
+    #password: ((registry_password))
     tag: '2025'
-    insecure: 'true'
-    ca_certs:
-    - ((registry.ca_cert))
+    insecure: true
+    # ca_certs:
+    # - ((registry_ca_cert))
 
 
 # - name: nsx-product
