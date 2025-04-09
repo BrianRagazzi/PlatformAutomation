@@ -49,13 +49,6 @@ resources:
     <<: *s3_credentials_binaries
     regexp: vsphere-platform-automation-image-(.*).tar.gz
 
-# - name: custom-task-image
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: platautouaac_(.*).tar.gz
-
-
 - name: custom-task-image
   type: registry-image
   source:
