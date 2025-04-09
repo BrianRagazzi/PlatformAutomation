@@ -20,10 +20,11 @@ run:
   - "-c"
   - |
     set -eu
+    yq --version
 
-    export NSXUSERNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_username')
-    export NSXPASSWORD=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_admin_password')
-    export NSXHOSTNAME=$(yq -t r $NSXT_INFRA_CONFIG_FILE 'nsxt_manager')
+    export NSXUSERNAME=$(yq eval '.nsxt_admin_username' $NSXT_INFRA_CONFIG_FILE )
+    export NSXPASSWORD=$(yq eval '.nsxt_admin_password' $NSXT_INFRA_CONFIG_FILE )
+    export NSXHOSTNAME=$(yq eval '.nsxt_manager' $NSXT_INFRA_CONFIG_FILE )
 
     set -eux
 
