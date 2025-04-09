@@ -132,9 +132,9 @@ Create_NSX_T1_Gateway() {
      '
      )
     # Create Gateway
-    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    response=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
      -u $NSXUSERNAME:$NSXPASSWORD \
-     $NSXHOSTNAME/policy/api/v1/infra/tier-1s/$1 -X PATCH -d "$gateway_config"
+     $NSXHOSTNAME/policy/api/v1/infra/tier-1s/$1 -X PATCH -d "$gateway_config")
 
      # Attach to edge cluster
     # https://developer.broadcom.com/xapis/nsx-t-data-center-rest-api/latest/method_PatchTier1LocaleServices.html
