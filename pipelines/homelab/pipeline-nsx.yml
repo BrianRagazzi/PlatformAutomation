@@ -150,7 +150,7 @@ jobs:
     <<: *credhub-interpolate
 
 
-  - task: create-objects
+  - task: delete-objects
     image: custom-task-image
     file: custom-tasks/tasks/delete-nsxt-infra.yml
     input_mapping:
