@@ -84,11 +84,11 @@ resources:
     #regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
     regexp: ops-manager-vsphere-(.*).ova
 
-# - name: pks-stemcell
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+- name: pks-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 # - name: pks-windows-stemcell
 #   type: s3
@@ -96,11 +96,11 @@ resources:
 #     <<: *s3_credentials_binaries
 #     regexp: pks-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
-# - name: pks-product
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
+- name: pks-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
 
 # - name: harbor-stemcell
 #   type: s3
@@ -161,7 +161,7 @@ groups:
   jobs:
   - create-nsx-objects
   - install-opsman
-#  - pks
+  - pks
   #- harbor
 #   - apply-changes
 # - name: post-deploy
@@ -287,114 +287,114 @@ jobs:
       DIRECTOR_CONFIG_FILE: ((foundation))/config/director.yml
       VARS_FILES: vars/((foundation))/vars/director-defaults.yml vars/((foundation))/vars/director-vars.yml
 
-  # - task: apply-director-changes
-  #   image: platform-automation-vsphere-image
-  #   file: platform-automation-tasks/tasks/apply-director-changes.yml
+  - task: apply-director-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-director-changes.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: pks
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - aggregate:
+    - get: config
+      trigger: true
+    - get: pks-product
+    - get: pks-stemcell
+    # - get: pks-windows-stemcell
+    - get: custom-tasks
+    - get: custom-task-image
+    - get: platform-automation-vsphere-image
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      passed: [install-opsman]
+      params:
+        unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product-pks
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: pks-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-pks
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: pks-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-pks-stemcell
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: pks-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  # - task: upload-pks-windows-stemcell
+  #   image: platform-automation-image
+  #   file: platform-automation-tasks/tasks/upload-stemcell.yml
   #   input_mapping:
   #     env: interpolated-creds
+  #     stemcell: pks-windows-stemcell
   #   params:
   #     ENV_FILE: ((foundation))/env/env.yml
 
-# - name: pks
-#   serial: true
-#   build_log_retention:
-#     builds: 2
-#   plan:
-#   - aggregate:
-#     - get: config
-#       trigger: true
-#     - get: pks-product
-#     - get: pks-stemcell
-#     # - get: pks-windows-stemcell
-#     - get: custom-tasks
-#     - get: custom-task-image
-#     - get: platform-automation-image
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       passed: [install-opsman]
-#       params:
-#         unpack: true
-#
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#
-#   - task: upload-product-pks
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/upload-product.yml
-#     input_mapping:
-#       product: pks-product
-#       config: config
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: stage-product-pks
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/stage-product.yml
-#     input_mapping:
-#       product: pks-product
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: upload-pks-stemcell
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/upload-stemcell.yml
-#     input_mapping:
-#       env: interpolated-creds
-#       stemcell: pks-stemcell
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   # - task: upload-pks-windows-stemcell
-#   #   image: platform-automation-image
-#   #   file: platform-automation-tasks/tasks/upload-stemcell.yml
-#   #   input_mapping:
-#   #     env: interpolated-creds
-#   #     stemcell: pks-windows-stemcell
-#   #   params:
-#   #     ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: get_nsx_vars
-#     image: custom-task-image
-#     file: custom-tasks/tasks/create-pks-nsx-vars.yml
-#     input_mapping:
-#       config: config
-#       vars: interpolated-creds
-#       custom-tasks: custom-tasks
-#     params:
-#       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
-#       PKS_VARS_FILE: vars/((foundation))/vars/pks-vars.yml
-#       NSX_VARS_FILE:  vars/((foundation))/vars/pks-nsx-vars.yml
-#     output_mapping:
-#       vars: interpolated-creds
-#
-#   - task: configure-pks
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/configure-product.yml
-#     input_mapping:
-#       config: config
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       CONFIG_FILE: ((foundation))/config/pks.yml
-#       VARS_FILES: |
-#         vars/((foundation))/vars/pks-defaults.yml
-#         vars/((foundation))/vars/pks-vars.yml
-#         vars/((foundation))/vars/pks-nsx-vars.yml
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: assign-pks-stecmcells
-#     image: platform-automation-image
-#     file: platform-automation-tasks/tasks/assign-multi-stemcell.yml
-#     input_mapping:
-#       config: config
-#       env: interpolated-creds
-#     params:
-#       CONFIG_FILE: ((foundation))/config/pks-stemcells.yml
-#       ENV_FILE: ((foundation))/env/env.yml
+  - task: get_nsx_vars #necessary to obtain the obectids for NSX
+    image: custom-task-image
+    file: custom-tasks/tasks/create-pks-nsx-vars.yml
+    input_mapping:
+      config: config
+      vars: interpolated-creds
+      custom-tasks: custom-tasks
+    params:
+      NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+      PKS_VARS_FILE: vars/((foundation))/vars/pks-vars.yml
+      NSX_VARS_FILE:  vars/((foundation))/vars/pks-nsx-vars.yml
+    output_mapping:
+      vars: interpolated-creds
+
+  - task: configure-pks
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/tkgi.yml #pks.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/pks-defaults.yml
+        vars/((foundation))/vars/pks-vars.yml
+      #vars/((foundation))/vars/pks-nsx-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: assign-pks-stecmcells
+    image: platform-automation-image
+    file: platform-automation-tasks/tasks/assign-multi-stemcell.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/pks-stemcells.yml
+      ENV_FILE: ((foundation))/env/env.yml
 
 # - name: harbor
 #   serial: true
