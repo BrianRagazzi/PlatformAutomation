@@ -43,8 +43,11 @@ credhub set --name /concourse/$TEAMNAME/nsx_admin_password --type value --value 
 # vCenter
 credhub set --name /concourse/$TEAMNAME/vcenter_admin_password --type value --value password
 
-# OpsMgr ssh pub key
+# OpsMgr
+credhub set --name /concourse/$TEAMNAME/opsman_host --type value --value 'https://om-tkgi.lab.brianragazzi.com'
 credhub set --name /concourse/$TEAMNAME/opsman_ssh_public_key --type value --value "$(cat /home/ubuntu/.ssh/authorized_keys)"
+credhub set --name /concourse/$TEAMNAME/opsman_password --type value --value opsmanpass
+credhub set --name /concourse/$TEAMNAME/opsman_decryption_passphrase --type value --value opsmandecrypt
 
 ```
 #### Dump to check
@@ -70,4 +73,8 @@ fly -t ci up -p nsx-configure
 ```
 fly -t ci set-pipeline -p tkgi-configure -c pipeline-tkgi.yml -l ../../params/homelab/params-homelab.yml --check-creds -n
 fly -t ci up -p tkgi-configure
+```
+```
+fly -t ci set-pipeline -p test-opsman -c opsman.yml -l ../../params/homelab/params-homelab.yml --check-creds -n
+fly -t ci up -p test-opsman
 ```
