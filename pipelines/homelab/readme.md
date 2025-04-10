@@ -50,6 +50,9 @@ credhub set --name /concourse/$TEAMNAME/opsman_ssh_public_key --type value --val
 credhub set --name /concourse/$TEAMNAME/opsman_password --type value --value opsmanpass
 credhub set --name /concourse/$TEAMNAME/opsman_decryption_passphrase --type value --value opsmandecrypt
 
+# AD Bind Service Account PW:
+credhub set --name /concourse/$TEAMNAME/properties_uaa_ldap_credentials_password --type value --value mypassword
+
 ```
 #### Dump to check
 ```
