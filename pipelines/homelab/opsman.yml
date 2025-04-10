@@ -1,0 +1,118 @@
+---
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((s3_access_key_id))
+  secret_access_key: ((s3_secret_access_key))
+  endpoint: ((s3_endpoint))
+  bucket: ((s3_buckets_pivnet_products))
+  region_name: ((s3_region_name))
+  skip_ssl_verification: true
+
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+resources:
+# - name: platform-automation
+#   type: pivnet
+#   source:
+#     product_slug: platform-automation
+#     api_token: ((pivnet-refresh-token))
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-vsphere-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: vsphere-platform-automation-image-(.*).tar.gz
+
+- name: opsman-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    #regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
+    regexp: ops-manager-vsphere-(.*).ova
+
+- name: config
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+
+jobs:
+# - name: test
+#   plan:
+#     - get: platform-automation-image
+#       resource: platform-automation
+#       params:
+#         globs: ["*image*.tgz"]
+#         unpack: true
+#     - get: platform-automation-tasks
+#       resource: platform-automation
+#       params:
+#         globs: ["*tasks*.zip"]
+#         unpack: true
+#     - task: test
+#       image: platform-automation-image
+#       file: platform-automation-tasks/tasks/test.yml
+- name: install-ops-manager
+  serial: true
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - get: opsman-product
+  - get: config
+  # - task: prepare-tasks-with-secrets
+  #   file: platform-automation-tasks/tasks/prepare-tasks-with-secrets.yml
+  #   input_mapping:
+  #     tasks: platform-automation-tasks
+  #   output_mapping:
+  #     tasks: platform-automation-tasks
+  #   params:
+  #     CONFIG_PATHS: config
+  # - task: download-product
+  #   image: platform-automation-vsphere-image
+  #   file: platform-automation-tasks/tasks/download-product.yml
+  #   params:
+  #     CONFIG_FILE: download-ops-manager.yml
+  - task: create-vm
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/create-vm.yml
+    params:
+      VARS_FILES: vars/vars.yml
+    input_mapping:
+      state: config
+      image: opsman-product
+    ensure:
+      do:
+        - task: make-commit
+          image: platform-automation-vsphere-image
+          file: platform-automation-tasks/tasks/make-git-commit.yml
+          input_mapping:
+            repository: config
+            file-source: generated-state
+          output_mapping:
+            repository-commit: config-commit
+          params:
+            FILE_SOURCE_PATH: state.yml
+            FILE_DESTINATION_PATH: ((foundation))/state/state.yml
+            GIT_AUTHOR_EMAIL: ((github_author_email))
+            GIT_AUTHOR_NAME: "Platform Automation Toolkit Bot"
+            COMMIT_MESSAGE: 'Update state file'
+        - put: config
+          params:
+            repository: config-commit
+            merge: true
