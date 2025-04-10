@@ -206,7 +206,7 @@ jobs:
     params:
       CONFIG_FILE: download-product-configs/opsman.yml
   - put: opsman-product
-    no_get: true
+    #no_get: true
     params:
       file: downloaded-product/*
 
