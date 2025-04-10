@@ -39,6 +39,7 @@ credhub set --name /concourse/$TEAMNAME/github_token --type value --value github
 
 # NSX
 credhub set --name /concourse/$TEAMNAME/nsx_admin_password --type value --value nsxadminpassword
+credhub set --name /concourse/$TEAMNAME/nsx_ca_cert --type value --value "$(cat ./test/nsx.crt)"
 
 # vCenter
 credhub set --name /concourse/$TEAMNAME/vcenter_admin_password --type value --value password
