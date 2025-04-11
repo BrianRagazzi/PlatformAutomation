@@ -50,8 +50,17 @@ credhub set --name /concourse/$TEAMNAME/opsman_ssh_public_key --type value --val
 credhub set --name /concourse/$TEAMNAME/opsman_password --type value --value opsmanpass
 credhub set --name /concourse/$TEAMNAME/opsman_decryption_passphrase --type value --value opsmandecrypt
 
-# AD Bind Service Account PW:
+# AD
+## Bind Service Account PW:
 credhub set --name /concourse/$TEAMNAME/properties_uaa_ldap_credentials_password --type value --value mypassword
+
+##
+TLS Cert
+credhub set --name /concourse/$TEAMNAME/ldap_server_ssl_cert --type value --value "$(cat ./test/rootca.crt)"
+
+# TKGI Cert
+credhub set --name /concourse/$TEAMNAME/pivotal-container-service_pks_tls_cert_pem --type value --value "$(cat ./test/wildcard.crt)"
+credhub set --name /concourse/$TEAMNAME/pivotal-container-service_pks_tls_private_key_pem --type value --value "$(cat ./test/wildcard.key)"
 
 ```
 #### Dump to check
