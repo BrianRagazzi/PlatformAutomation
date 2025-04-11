@@ -32,7 +32,7 @@ run:
     export NSX_SUPERUSER_CERT_FILE="pks-nsx-t-superuser.crt"
     export NSX_SUPERUSER_KEY_FILE="pks-nsx-t-superuser.key"
 
-    # set -eux
+    set -eux
 
     source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
