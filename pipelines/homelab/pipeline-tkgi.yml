@@ -334,14 +334,14 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: upload-pks-stemcell
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/upload-stemcell.yml
-    input_mapping:
-      env: interpolated-creds
-      stemcell: pks-stemcell
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
+  # - task: upload-pks-stemcell
+  #   image: platform-automation-vsphere-image
+  #   file: platform-automation-tasks/tasks/upload-stemcell.yml
+  #   input_mapping:
+  #     env: interpolated-creds
+  #     stemcell: pks-stemcell
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
 
   # - task: upload-pks-windows-stemcell
   #   image: platform-automation-vsphere-image
