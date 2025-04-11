@@ -47,3 +47,5 @@ run:
     echo "properties_network_selector_nsx_nodes-ip-block-id: $nodesblockid" >> $NSX_VARS_FILE
     echo "properties_network_selector_nsx_ip-block-id: $podsblockid" >> $NSX_VARS_FILE
     echo "properties_network_selector_nsx_t0-router-id: $t0id" >> $NSX_VARS_FILE
+
+    echo "folder:" $(ls -al)
