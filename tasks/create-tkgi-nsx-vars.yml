@@ -49,7 +49,7 @@ run:
     t0id=$t0name
 
     if [ ! -f "$NSX_VARS_FILE" ]; then
-      touch ""$NSX_VARS_FILE"
+      touch "$NSX_VARS_FILE"
     fi
 
     yq -i '.properties_network_selector_nsx_floating-ip-pool-ids=$poolid' $NSX_VARS_FILE
@@ -60,7 +60,7 @@ run:
     # Check whether there is already a cert set, if not create one
     currentcert=$(yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem' $NSX_VARS_FILE)
     if [ -z "$currentcert" ]; then
-      # MUst create
+      # Must create
       openssl req \
         -newkey rsa:2048 \
         -x509 \
