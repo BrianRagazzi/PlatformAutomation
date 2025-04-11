@@ -52,7 +52,7 @@ resources:
 - name: custom-task-image
   type: registry-image
   source:
-    repository: ((registry_endpoint))/((registry_repo))
+    repository: ((registry_endpoint))/((registry_repo_customtask))
     #username: ((registry_username))
     #password: ((registry_password))
     tag: 'latest'
@@ -115,16 +115,21 @@ jobs:
     builds: 2
   plan:
   - get: config
-    trigger: true
   - get: custom-tasks
   - get: custom-task-image
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
 
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
   - task: get_nsx_vars #necessary to obtain the obectids for NSX
     image: custom-task-image
-    file: custom-tasks/tasks/create-pks-nsx-vars.yml
+    file: custom-tasks/tasks/create-tkgi-nsx-vars.yml
     input_mapping:
       config: config
       vars: interpolated-creds
@@ -135,6 +140,26 @@ jobs:
       NSX_VARS_FILE:  vars/((foundation))/vars/tkgi-nsx-vars.yml
     output_mapping:
       vars: interpolated-creds
+    ensure:
+      do:
+        - task: make-config-commit
+          image: platform-automation-vsphere-image
+          file: platform-automation-tasks/tasks/make-git-commit.yml
+          input_mapping:
+            repository: config
+            file-source: interpolated-creds
+          output_mapping:
+            repository-commit: config-commit
+          params:
+            FILE_SOURCE_PATH: ((foundation))/vars/tkgi-nsx-vars.yml
+            FILE_DESTINATION_PATH: ((foundation))/vars/tkgi-nsx-vars.yml
+            GIT_AUTHOR_EMAIL: ((github_author_email))
+            GIT_AUTHOR_NAME: "Platform Automation"
+            COMMIT_MESSAGE: 'Update tkgi-nsx-vars'
+        - put: config
+          params:
+            repository: config-commit
+            merge: true
 
 
 - name: delete-nsx-objects

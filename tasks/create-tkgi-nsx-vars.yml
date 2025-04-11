@@ -31,8 +31,8 @@ run:
     export NSXHOSTNAME=$(yq eval '.nsxt_manager' $NSXT_INFRA_CONFIG_FILE )
     export NSX_SUPERUSER_CERT_FILE="pks-nsx-t-superuser.crt"
     export NSX_SUPERUSER_KEY_FILE="pks-nsx-t-superuser.key"
-    export NODE_ID=$(cat /proc/sys/kernel/random/uuid)
-    set -eux
+
+    # set -eux
 
     source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
@@ -78,8 +78,10 @@ run:
         -sha256 \
         -days 730
 
-        yq -i '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem = "'"$(cat $NSX_SUPERUSER_CERT_FILE)"'"' $NSX_VARS_FILE
+      yq -i '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem = "'"$(cat $NSX_SUPERUSER_CERT_FILE)"'"' $NSX_VARS_FILE
       yq -i '.properties_network_selector_nsx_nsx-t-superuser-certificate_private_key_pem = "'"$(cat $NSX_SUPERUSER_KEY_FILE)"'"' $NSX_VARS_FILE
+      currentcert=$(cat $NSX_SUPERUSER_CERT_FILE)
     else
       echo "nsx superuser cert already exists"
     fi
+    Get_TKGI_SuperUser_ID $PI_Name "$currentcert"

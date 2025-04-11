@@ -550,3 +550,74 @@ Delete_NSX_T0_NAT_Rule(){
   fi
 
 }
+
+
+Get_TKGI_SuperUser_ID(){
+  # $1 = superuser_name
+  # $2 = NSX_SUPERUSER_CERT_FILE
+  local pi_name="$1"
+  local cert_pem="$2"
+  local certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
+    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+  if [ -z "$certid" ]; then
+    local NODE_ID=$(cat /proc/sys/kernel/random/uuid)
+    local pi_request=$(jq -n \
+        --arg display_name "$pi_name" \
+        --arg certpem "$cert_pem" \
+        --arg nodeid "$NODE_ID" \
+      '{
+      "display_name": $display_name,
+      "name": $display_name,
+      "role": "enterprise_admin",
+      "roles_for_paths": [{"path": "/","roles": [{"role": "enterprise_admin"}]}],
+      "certificate_pem": "$cert_pem",
+      "node_id": "$nodeid"
+      }')
+      curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+        -u $NSXUSERNAME:$NSXPASSWORD \
+        $NSXHOSTNAME/api/v1/trust-management/principal-identities/with-certificate \
+        -X POST -d "$pi_request"
+      certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+        -u $NSXUSERNAME:$NSXPASSWORD \
+        $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
+        jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+  else
+    echo "Principal ID for $1 already exists in NSX, skipping creation"
+  fi
+  echo $certid
+}
+
+Delete_TKGI_SuperUser_ID() {
+  # $1 = superuser_name
+  local pi_name="$1"
+  local cert_pem="$2"
+  local certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
+    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+  if [ -z "$certid" ]; then
+    echo "Principal ID for $pi_name is not found, skipping"
+  else
+    local response=$(curl -s -k -X DELETE \
+    -H "Content-Type: application/json" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    -w "%{http_code}" \
+    "$NSXHOSTNAME/api/v1/trust-management/principal-identities/$certid")
+
+    # Extract the HTTP status code
+    local http_code=$(echo "$response" | tail -n1)
+
+    # Check the response status
+    if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 204 ]; then
+      echo "Successfully deleted PI: $pi_name"
+    else
+      echo "Failed to delete PI: $pi_name"
+      echo "HTTP Status: $http_code"
+      echo "Response: $(echo "$response" | sed '$d')"
+      return 1
+    fi
+  fi
+}
