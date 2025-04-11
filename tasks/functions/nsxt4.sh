@@ -593,7 +593,6 @@ Get_TKGI_SuperUser_ID(){
 Delete_TKGI_SuperUser_ID() {
   # $1 = superuser_name
   local pi_name="$1"
-  local cert_pem="$2"
   local certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
     -u $NSXUSERNAME:$NSXPASSWORD \
     $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
