@@ -573,8 +573,8 @@ Get_TKGI_SuperUser_ID(){
         "name": $display_name,
         "role": "enterprise_admin",
         "roles_for_paths": [{"path": "/","roles": [{"role": "enterprise_admin"}]}],
-        "certificate_pem": "$cert_pem",
-        "node_id": "$node_id"
+        "certificate_pem": $cert_pem,
+        "node_id": $node_id
         }')
       curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
         -u $NSXUSERNAME:$NSXPASSWORD \
