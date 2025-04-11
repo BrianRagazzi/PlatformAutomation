@@ -563,17 +563,17 @@ Get_TKGI_SuperUser_ID(){
     jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
 
   if [ -z "$certid" ]; then
-    #local NODE_ID=$(cat /proc/sys/kernel/random/uuid)
+    local NODE_ID=$(cat /proc/sys/kernel/random/uuid)
     local pi_request=$(jq -n \
         --arg display_name "$pi_name" \
         --arg certpem "$cert_pem" \
-        --arg nodeid "$pi_name" \
+        --arg nodeid "$NODE_ID" \
       '{
       "display_name": $display_name,
       "name": $display_name,
       "role": "enterprise_admin",
       "roles_for_paths": [{"path": "/","roles": [{"role": "enterprise_admin"}]}],
-      "certificate_pem": "$cert_pem",
+      "certificate_pem": "$certpem",
       "node_id": "$nodeid"
       }')
       curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
