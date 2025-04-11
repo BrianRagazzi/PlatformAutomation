@@ -567,7 +567,7 @@ Get_TKGI_SuperUser_ID(){
     local pi_request=$(jq -n \
         --arg display_name "$pi_name" \
         --arg certpem "$cert_pem" \
-        --arg nodeid "$(cat /proc/sys/kernel/random/uuid)" \
+        --arg nodeid ""$pi_name" \
       '{
       "display_name": $display_name,
       "name": $display_name,
