@@ -48,10 +48,11 @@ resources:
     <<: *s3_credentials_binaries
     regexp: vsphere-platform-automation-image-(.*).tar.gz
 
+
 - name: custom-task-image
   type: registry-image
   source:
-    repository: ((registry_endpoint))/((registry_repo))
+    repository: ((registry_endpoint))/((registry_repo_customtask))
     #username: ((registry_username))
     #password: ((registry_password))
     tag: 'latest'
@@ -84,24 +85,19 @@ resources:
     #regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
     regexp: ops-manager-vsphere-(.*).ova
 
-- name: pks-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: pks-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
-# - name: pks-windows-stemcell
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: pks-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
 - name: pks-product
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
+    #regexp: \[pivotal-container-service,(.*)\]pivotal-container-service-.*.pivotal
+    regexp: pivotal-container-service-(.*).pivotal
 
+- name: pks-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    #regexp: pks-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+    regexp: pks-stemcell/bosh-stemcell-(.*)-vsphere.esxi-ubuntu-jammy-go_agent.tgz
 # - name: harbor-stemcell
 #   type: s3
 #   source:
@@ -300,27 +296,26 @@ jobs:
   build_log_retention:
     builds: 2
   plan:
-  - aggregate:
-    - get: config
-      trigger: true
-    - get: pks-product
-    - get: pks-stemcell
-    # - get: pks-windows-stemcell
-    - get: custom-tasks
-    - get: custom-task-image
-    - get: platform-automation-vsphere-image
-      params:
-        unpack: true
-    - get: platform-automation-tasks
-      passed: [install-opsman]
-      params:
-        unpack: true
+  - get: config
+    trigger: true
+  - get: pks-product
+  - get: pks-stemcell
+  # - get: pks-windows-stemcell
+  - get: custom-tasks
+  - get: custom-task-image
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    passed: [install-opsman]
+    params:
+      unpack: true
 
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
   - task: upload-product-pks
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
       product: pks-product
@@ -331,7 +326,7 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
   - task: stage-product-pks
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
       product: pks-product
@@ -340,7 +335,7 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
   - task: upload-pks-stemcell
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-stemcell.yml
     input_mapping:
       env: interpolated-creds
@@ -349,7 +344,7 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
   # - task: upload-pks-windows-stemcell
-  #   image: platform-automation-image
+  #   image: platform-automation-vsphere-image
   #   file: platform-automation-tasks/tasks/upload-stemcell.yml
   #   input_mapping:
   #     env: interpolated-creds
@@ -366,13 +361,13 @@ jobs:
       custom-tasks: custom-tasks
     params:
       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
-      PKS_VARS_FILE: vars/((foundation))/vars/pks-vars.yml
-      NSX_VARS_FILE:  vars/((foundation))/vars/pks-nsx-vars.yml
+      PKS_VARS_FILE: vars/((foundation))/vars/tkgi-vars.yml
+      NSX_VARS_FILE:  vars/((foundation))/vars/tkgi-nsx-vars.yml
     output_mapping:
       vars: interpolated-creds
 
   - task: configure-pks
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
       config: config
@@ -381,13 +376,13 @@ jobs:
     params:
       CONFIG_FILE: ((foundation))/config/tkgi.yml #pks.yml
       VARS_FILES: |
-        vars/((foundation))/vars/pks-defaults.yml
-        vars/((foundation))/vars/pks-vars.yml
-      #vars/((foundation))/vars/pks-nsx-vars.yml
+        vars/((foundation))/vars/tkgi-defaults.yml
+        vars/((foundation))/vars/tkgi-vars.yml
+        vars/((foundation))/vars/tkgi-nsx-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
   - task: assign-pks-stecmcells
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/assign-multi-stemcell.yml
     input_mapping:
       config: config
@@ -406,7 +401,7 @@ jobs:
 #     - get: harbor-stemcell
 #     - get: config
 #       trigger: true
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       params:
 #         unpack: true
 #     - get: platform-automation-tasks
@@ -418,7 +413,7 @@ jobs:
 #     <<: *credhub-interpolate
 #
 #   - task: upload-product-harbor
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-product.yml
 #     input_mapping:
 #       product: harbor-product
@@ -429,7 +424,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: stage-product-harbor
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/stage-product.yml
 #     input_mapping:
 #       product: harbor-product
@@ -441,7 +436,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: upload-harbor-stemcell
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-stemcell.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -450,7 +445,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: configure-harbor
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/configure-product.yml
 #     input_mapping:
 #       config: *credhub-interpolate
@@ -473,7 +468,7 @@ jobs:
 #       trigger: true
 #       #passed: [ pks, harbor ]
 #       passed: [ pks ]
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       params:
 #         unpack: true
 #     - get: platform-automation-tasks
@@ -484,7 +479,7 @@ jobs:
 #     <<: *credhub-interpolate
 #
 #   - task: apply-product-changes
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/apply-changes.yml
 #     input_mapping:
 #       config: *credhub-interpolate
@@ -501,7 +496,7 @@ jobs:
 #         - get: one-time-trigger
 #         - get: daily-trigger
 #           trigger: true
-#         - get: platform-automation-image
+#         - get: platform-automation-vsphere-image
 #           params:
 #             unpack: true
 #         - get: platform-automation-tasks
@@ -511,7 +506,7 @@ jobs:
 #     - task: credhub-interpolate
 #       <<: *credhub-interpolate
 #     - task: export-installation
-#       image: platform-automation-image
+#       image: platform-automation-vsphere-image
 #       file: platform-automation-tasks/tasks/export-installation.yml
 #       input_mapping:
 #         env: interpolated-creds
@@ -531,13 +526,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: *credhub-interpolate
 #   - task: credhub-interpolate
 #     <<: *credhub-interpolate
 #   - task: staged-director-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-director-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -556,13 +551,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: *credhub-interpolate
 #   - task: credhub-interpolate
 #     <<: *credhub-interpolate
 #   - task: staged-pks-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -582,13 +577,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: *credhub-interpolate
 #   - task: credhub-interpolate
 #     <<: *credhub-interpolate
 #   - task: staged-pks-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -609,7 +604,7 @@ jobs:
 #     - get: *credhub-interpolate
 #     - get: custom-tasks
 #     - get: custom-task-image
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       passed: [apply-changes]
 #       trigger: true
 #       params:
@@ -640,7 +635,7 @@ jobs:
 #   - aggregate:
 #     - get: *credhub-interpolate
 #     - get: state
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       passed: [apply-changes]
 #       trigger: false
 #       params:
@@ -653,7 +648,7 @@ jobs:
 #     <<: *credhub-interpolate
 #
 #   - task: delete-installation
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/delete-installation.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -661,7 +656,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: delete-opsman-vm
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/delete-vm.yml
 #     input_mapping:
 #       state: state
