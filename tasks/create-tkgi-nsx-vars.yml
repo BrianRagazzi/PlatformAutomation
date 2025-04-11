@@ -52,10 +52,10 @@ run:
       touch "$NSX_VARS_FILE"
     fi
 
-    yq -i '.properties_network_selector_nsx_floating-ip-pool-ids=$poolid' $NSX_VARS_FILE
-    yq -i '.properties_network_selector_nsx_nodes-ip-block-id=$nodesblockid' $NSX_VARS_FILE
-    yq -i '.properties_network_selector_nsx_ip-block-id=$podsblockid' $NSX_VARS_FILE
-    yq -i '.properties_network_selector_nsx_t0-router-id=$t0id' $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_floating-ip-pool-ids="'"$poolid"'"' $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_nodes-ip-block-id="'"$nodesblockid"'"' $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_ip-block-id="'"$podsblockid"'"' $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_t0-router-id="'"$t0id"'"' $NSX_VARS_FILE
 
     # Check whether there is already a cert set, if not create one
     currentcert=$(yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem' $NSX_VARS_FILE)
