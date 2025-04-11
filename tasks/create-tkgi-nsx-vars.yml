@@ -47,11 +47,10 @@ run:
     nodesblockid=$(Get_NSX_IP_Block_ID $nodesblockname)
     t0name=$(yq eval '.properties_network_selector_nsx_t0-router-name' $PKS_VARS_FILE)
     t0id=$t0name
-    #echo "properties_network_selector_nsx_floating-ip-pool-ids: $poolid" >> $NSX_VARS_FILE
-    yq -i '.properties_network_selector_nsx_floating-ip-pool-ids'=$poolid $NSX_VARS_FILE
-    #echo "properties_network_selector_nsx_nodes-ip-block-id: $nodesblockid" >> $NSX_VARS_FILE
-    #echo "properties_network_selector_nsx_ip-block-id: $podsblockid" >> $NSX_VARS_FILE
-    #echo "properties_network_selector_nsx_t0-router-id: $t0id" >> $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_floating-ip-pool-ids=$poolid' $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_nodes-ip-block-id=$nodesblockid' $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_ip-block-id=$podsblockid' $NSX_VARS_FILE
+    yq -i '.properties_network_selector_nsx_t0-router-id=$t0id' $NSX_VARS_FILE
 
     # Check whether there is already a cert set, if not create one
     currentcert=$(yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem' $NSX_VARS_FILE)
