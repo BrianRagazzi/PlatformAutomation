@@ -84,4 +84,4 @@ run:
     else
       echo "nsx superuser cert already exists"
     fi
-    Get_TKGI_SuperUser_ID $PI_Name "$currentcert"
+    Get_TKGI_SuperUser_ID $PI_NAME "$currentcert"
