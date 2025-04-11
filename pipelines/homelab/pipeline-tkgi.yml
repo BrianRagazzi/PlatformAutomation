@@ -354,7 +354,7 @@ jobs:
 
   - task: get_nsx_vars #necessary to obtain the obectids for NSX
     image: custom-task-image
-    file: custom-tasks/tasks/create-pks-nsx-vars.yml
+    file: custom-tasks/tasks/create-tkgi-nsx-vars.yml
     input_mapping:
       config: config
       vars: interpolated-creds
