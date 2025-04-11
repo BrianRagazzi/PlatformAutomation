@@ -59,9 +59,10 @@ run:
 
     # Check whether there is already a cert set, if not create one
     currentcert=$(yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem' $NSX_VARS_FILE)
-    # if [ -z "$currentcert" ] || [ "$currentcert" = "null"]; then
-    if ! yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem | has(.)' $NSX_VARS_FILE | grep -q "true"; then
+    if [ -z "$currentcert" ] || [ "$currentcert" = "null"]; then
+    #if ! yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem | has(.)' $NSX_VARS_FILE | grep -q "true"; then
       # Must create
+      echo "Creating Certificate for PI"
       openssl req \
         -newkey rsa:2048 \
         -x509 \
@@ -77,7 +78,6 @@ run:
         ) \
         -sha256 \
         -days 730
-
       yq -i '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem = "'"$(cat $NSX_SUPERUSER_CERT_FILE)"'"' $NSX_VARS_FILE
       yq -i '.properties_network_selector_nsx_nsx-t-superuser-certificate_private_key_pem = "'"$(cat $NSX_SUPERUSER_KEY_FILE)"'"' $NSX_VARS_FILE
       currentcert=$(cat $NSX_SUPERUSER_CERT_FILE)
