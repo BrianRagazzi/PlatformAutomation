@@ -563,11 +563,11 @@ Get_TKGI_SuperUser_ID(){
     jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
 
   if [ -z "$certid" ]; then
-    local NODE_ID=$(cat /proc/sys/kernel/random/uuid)
+    #local NODE_ID=$(cat /proc/sys/kernel/random/uuid)
     local pi_request=$(jq -n \
         --arg display_name "$pi_name" \
         --arg certpem "$cert_pem" \
-        --arg nodeid "$NODE_ID" \
+        --arg nodeid "$(cat /proc/sys/kernel/random/uuid)" \
       '{
       "display_name": $display_name,
       "name": $display_name,
