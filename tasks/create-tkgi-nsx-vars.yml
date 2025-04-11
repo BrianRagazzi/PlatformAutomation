@@ -47,6 +47,11 @@ run:
     nodesblockid=$(Get_NSX_IP_Block_ID $nodesblockname)
     t0name=$(yq eval '.properties_network_selector_nsx_t0-router-name' $PKS_VARS_FILE)
     t0id=$t0name
+
+    if [ ! -f "$NSX_VARS_FILE" ]; then
+      touch ""$NSX_VARS_FILE"
+    fi
+
     yq -i '.properties_network_selector_nsx_floating-ip-pool-ids=$poolid' $NSX_VARS_FILE
     yq -i '.properties_network_selector_nsx_nodes-ip-block-id=$nodesblockid' $NSX_VARS_FILE
     yq -i '.properties_network_selector_nsx_ip-block-id=$podsblockid' $NSX_VARS_FILE
