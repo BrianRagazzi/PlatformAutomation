@@ -83,5 +83,6 @@ run:
       currentcert=$(cat $NSX_SUPERUSER_CERT_FILE)
     else
       echo "nsx superuser cert already exists"
+      echo $currentcert > $NSX_SUPERUSER_CERT_FILE
     fi
-    Get_TKGI_SuperUser_ID $PI_NAME $currentcert
+    Get_TKGI_SuperUser_ID $PI_NAME $NSX_SUPERUSER_CERT_FILE
