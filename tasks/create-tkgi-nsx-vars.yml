@@ -59,7 +59,8 @@ run:
 
     # Check whether there is already a cert set, if not create one
     currentcert=$(yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem' $NSX_VARS_FILE)
-    if [ -z "$currentcert" ]; then
+    # if [ -z "$currentcert" ] || [ "$currentcert" = "null"]; then
+    if ! yq eval '.properties_network_selector_nsx_nsx-t-superuser-certificate_cert_pem | has(.)' $NSX_VARS_FILE | grep -q "true"; then
       # Must create
       openssl req \
         -newkey rsa:2048 \
