@@ -13,6 +13,7 @@ inputs:
 params:
   NSXT_INFRA_CONFIG_FILE: nsx-infra.yml
   ACTUALLY_DELETE_NAT_RULES: false
+  PI_NAME: tkgi-nsx-superuser
 
 
 run:
@@ -39,3 +40,4 @@ run:
     Delete_IP_Pools $NSXT_INFRA_CONFIG_FILE
     Delete_IP_Blocks $NSXT_INFRA_CONFIG_FILE
     Delete_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE
+    Get_TKGI_SuperUser_ID $PI_NAME
