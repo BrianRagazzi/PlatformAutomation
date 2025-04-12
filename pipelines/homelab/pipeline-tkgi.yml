@@ -458,34 +458,33 @@ jobs:
 #         vars/((foundation))/vars/harbor-vars.yml
 #       ENV_FILE: ((foundation))/env/env.yml
 
-# - name: apply-changes
-#   serial: true
-#   build_log_retention:
-#     builds: 2
-#   plan:
-#   - aggregate:
-#     - get: *credhub-interpolate
-#       trigger: true
-#       #passed: [ pks, harbor ]
-#       passed: [ pks ]
-#     - get: platform-automation-vsphere-image
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#
-#   - task: apply-product-changes
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/apply-changes.yml
-#     input_mapping:
-#       config: *credhub-interpolate
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
+- name: apply-changes
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: *credhub-interpolate
+    trigger: true
+    #passed: [ pks, harbor ]
+    passed: [ pks ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: *credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
 #
 # - name: export-installation
 #   build_log_retention:
