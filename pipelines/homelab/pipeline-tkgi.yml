@@ -159,7 +159,7 @@ groups:
   - install-opsman
   - pks
   #- harbor
-#   - apply-changes
+  - apply-changes
 # - name: post-deploy
 #   jobs:
 #   - add-pks-admin-group
@@ -463,9 +463,8 @@ jobs:
   build_log_retention:
     builds: 2
   plan:
-  - get: *credhub-interpolate
+  - get: config #*credhub-interpolate
     trigger: true
-    #passed: [ pks, harbor ]
     passed: [ pks ]
   - get: platform-automation-vsphere-image
     params:
@@ -481,7 +480,7 @@ jobs:
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/apply-changes.yml
     input_mapping:
-      config: *credhub-interpolate
+      config: config #*credhub-interpolate
       env: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
@@ -697,3 +696,4 @@ jobs:
       custom-tasks: custom-tasks
     params:
       NSXT_INFRA_CONFIG_FILE: vars/((foundation))/vars/nsx-infra.yml
+      PI_NAME: tkgi-nsx-superuser
