@@ -283,13 +283,13 @@ jobs:
       DIRECTOR_CONFIG_FILE: ((foundation))/config/director.yml
       VARS_FILES: vars/((foundation))/vars/director-defaults.yml vars/((foundation))/vars/director-vars.yml
 
-  - task: apply-director-changes
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/apply-director-changes.yml
-    input_mapping:
-      env: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
+  # - task: apply-director-changes
+  #   image: platform-automation-vsphere-image
+  #   file: platform-automation-tasks/tasks/apply-director-changes.yml
+  #   input_mapping:
+  #     env: interpolated-creds
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
 
 - name: pks
   serial: true
@@ -297,7 +297,7 @@ jobs:
     builds: 2
   plan:
   - get: config
-    trigger: true
+    #trigger: true
   - get: pks-product
   - get: pks-stemcell
   # - get: pks-windows-stemcell
