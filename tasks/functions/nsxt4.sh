@@ -556,9 +556,9 @@ Get_TKGI_SuperUser_ID(){
   # $1 = superuser_name
   # $2 = NSX_SUPERUSER_CERT_FILE path
   local pi_name="$1"
-  #local cert_pem="$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ./"$2" )" #leaves spacs
-  #local cert_pem="$(cat ./"$2" | tr -d ' \t\r' | awk '{printf "%s\\n", $0}')" #Leaves "//n"
-  local cert_pem="$(cat ./"$2" | tr -d ' \t\r\n')"
+  local cert_pem="$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ./"$2" )" #leaves spacs
+  #local cert_pem="$(cat ./"$2" | tr -d ' \t\r' | awk '{printf "%s\\n", $0}')" #Leaves "\\n"
+  #local cert_pem="$(cat ./"$2" | tr -d ' \t\r\n')"
   local certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
     -u $NSXUSERNAME:$NSXPASSWORD \
     $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
