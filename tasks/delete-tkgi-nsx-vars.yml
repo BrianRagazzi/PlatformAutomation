@@ -1,0 +1,35 @@
+---
+platform: linux
+
+
+inputs:
+- name: config # contains the env file with target OpsMan Information
+- name: vars # variable files to be made available
+- name: secrets
+  optional: true
+- name: custom-tasks
+
+outputs:
+ - name: vars
+
+params:
+  NSXT_INFRA_CONFIG_FILE: pks-vars.yml
+  PKS_VARS_FILE: pks-vars.yml
+  NSX_VARS_FILE: pks-nsx-vars.yml
+  PI_NAME: tkgi-nsx-superuser
+
+
+run:
+  path: bash
+  args:
+  - "-c"
+  - |
+    set -eu
+
+
+    set -eux
+
+    source custom-tasks/tasks/functions/nsxt4.sh
+    source custom-tasks/tasks/functions/nsxt-yml.sh
+
+    Delete_TKGI_SuperUser_ID $PI_NAME
