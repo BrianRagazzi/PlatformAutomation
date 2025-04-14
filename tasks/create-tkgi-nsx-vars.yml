@@ -32,7 +32,7 @@ run:
     export NSX_SUPERUSER_CERT_FILE="pks-nsx-t-superuser.crt"
     export NSX_SUPERUSER_KEY_FILE="pks-nsx-t-superuser.key"
 
-    #set -eux
+    set -eux
 
     source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
@@ -82,7 +82,7 @@ run:
       yq -i '.properties_network_selector_nsx_nsx-t-superuser-certificate_private_key_pem = "'"$(cat $NSX_SUPERUSER_KEY_FILE)"'"' $NSX_VARS_FILE
       currentcert=$(cat $NSX_SUPERUSER_CERT_FILE)
     else
-      echo "nsx superuser cert already exists"
+      echo "nsx superuser cert already exists in config file"
       echo $currentcert > $NSX_SUPERUSER_CERT_FILE
     fi
     Get_TKGI_SuperUser_ID $PI_NAME $NSX_SUPERUSER_CERT_FILE
