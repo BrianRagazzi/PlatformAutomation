@@ -592,6 +592,44 @@ Get_TKGI_SuperUser_ID(){
   echo $certid
 }
 
+Create_TKGI_SuperUser_ID(){
+  # $1 = superuser_name
+  local pi_name="$1"
+  local certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
+    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+  if [ -n "$certid" ]; then
+    echo "Principal ID for $1 already exists in NSX, deleting it to create new"
+    Delete_TKGI_SuperUser_ID $pi_name
+  else
+    #local NODE_ID=$(cat /proc/sys/kernel/random/uuid | sed 's/-//g')
+    local pi_request=$(jq -n \
+        --arg display_name "$pi_name" \
+        --arg cert_pem "$cert_pem" \
+        --arg node_id $(cat /proc/sys/kernel/random/uuid | sed 's/-//g') \
+        '{
+        "display_name": $display_name,
+        "name": $display_name,
+        "role": "enterprise_admin",
+        "roles_for_paths": [{"path": "/","roles": [{"role": "enterprise_admin"}]}],
+        "certificate_pem": $cert_pem,
+        "node_id": $node_id
+        }')
+      curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+        -u $NSXUSERNAME:$NSXPASSWORD \
+        $NSXHOSTNAME/api/v1/trust-management/principal-identities/with-certificate \
+        -X POST -d "$pi_request"
+      certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+        -u $NSXUSERNAME:$NSXPASSWORD \
+        $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
+        jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+  fi
+  echo $certid
+}
+
 Delete_TKGI_SuperUser_ID() {
   # $1 = superuser_name
   local pi_name="$1"
