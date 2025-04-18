@@ -35,6 +35,9 @@ run:
 
     echo "Deleting objects on NSX Manager: $NSXHOSTNAME"
 
+    Delete_Load_Balancers $NSXT_INFRA_CONFIG_FILE
+    Delete_LB_Pools $NSXT_INFRA_CONFIG_FILE
+    Delete_LB_Monitors $NSXT_INFRA_CONFIG_FILE
     Delete_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE
     Delete_Segments $NSXT_INFRA_CONFIG_FILE
     Delete_T1_Gateways $NSXT_INFRA_CONFIG_FILE

@@ -192,112 +192,120 @@ Delete_T0_NAT_Rules() {
 }
 
 
-# NOT YET Refactored - 2025
+Create_LB_Monitors() {
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.lb_monitors | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    #echo $gw_name
+    # Extract each value from the YAML for the gateway
+    local name=$(yq eval ".lb_monitors [$i].name" "$yaml_file")
+    local type=$(yq eval ".lb_monitors [$i].type" "$yaml_file")
+    local mon_port=$(yq eval ".lb_monitors [$i].monitor_port" "$yaml_file")
+    local http_request_method=$(yq eval ".lb_monitors [$i].http_request.method" "$yaml_file")
+    local http_request_url=$(yq eval ".lb_monitors [$i].http_request.url" "$yaml_file")
+    local http_request_version=$(yq eval ".lb_monitors [$i].http_request.version" "$yaml_file")
+    local response_code=$(yq eval ".lb_monitors [$i].http_request.response_code" "$yaml_file")
+
+    Create_NSX_LB_Monitor \
+      "$name" \
+      "$type" \
+      "$mon_port" \
+      "$http_request_method" \
+      "$http_request_url" \
+      "$http_request_version" \
+      "$response_code"
+  done
+}
+
+Delete_LB_Monitors() {
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.lb_monitors | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    local name=$(yq eval ".lb_monitors [$i].name" "$yaml_file")
+    Delete_NSX_LB_Monitor "$name"
+  done
+}
+
+Create_LB_Pools() {
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.lb_server_pools | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    #echo $gw_name
+    # Extract each value from the YAML for the gateway
+    local name=$(yq eval ".lb_server_pools [$i].name" "$yaml_file")
+    local monitor=$(yq eval ".lb_server_pools [$i].active_monitor" "$yaml_file")
+    local snat_mode=$(yq eval ".lb_server_pools [$i].snat_mode" "$yaml_file")
+
+    Create_NSX_LB_ServerPool \
+      "$name" \
+      "$monitor" \
+      "$snat_mode"
+  done
+}
+
+
+Delete_LB_Pools() {
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.lb_server_pools | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    local name=$(yq eval ".lb_server_pools [$i].name" "$yaml_file")
+    Delete_NSX_LB_ServerPool "$name"
+  done
+}
+
 Create_Load_Balancers() {
- # $1 Config_file
- lbchk=$(yq r $1 'load_balancers[*].name')
- if [ $lbchk == "null" ]; then
-   echo "No Load-Balancers to create"
- else
-   lbs=$(yq r $1 'load_balancers[*].name' -j | jq -r '.[]')
-   for lb_name in $lbs
-     do
-       # monitors: yq r $1 'load_balancers[*]' -j | jq -r '.[] | .monitors[]'
-       monitors=$(yq r $1 'load_balancers[*]' -j | \
-       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .monitors[] | .name')
-       for mon_name in $monitors
-         do
-           mon_port=$(yq r $1 'load_balancers[*]' -j | \
-           jq -r --arg lb_name  "$lb_name" --arg mon_name "$mon_name" \
-           '.[] | select(.name == $lb_name)| .monitors[] | select(.name == $mon_name) | .port')
-           mon_protocol=$(yq r $1 'load_balancers[*]' -j | \
-           jq -r --arg lb_name  "$lb_name" --arg mon_name "$mon_name" \
-           '.[] | select(.name == $lb_name)| .monitors[] | select(.name == $mon_name) | .protocol')
-           mon_url=$(yq r $1 'load_balancers[*]' -j | \
-           jq -r --arg lb_name  "$lb_name" --arg mon_name "$mon_name" \
-           '.[] | select(.name == $lb_name)| .monitors[] | select(.name == $mon_name) | .url')
-           Create_NSX_LB_Monitor "$mon_name" "$mon_port" "$mon_protocol" "$mon_url"
-         done
+  # Loop through LBs, Loop through VSs for each
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.load_balancers | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    #echo $gw_name
+    # Extract each value from the YAML for the gateway
+    local name=$(yq eval ".load_balancers [$i].name" "$yaml_file")
+    local size=$(yq eval ".load_balancers [$i].size" "$yaml_file")
+    local t1_name=$(yq eval ".load_balancers [$i].attachment" "$yaml_file")
 
-       serverpools=$(yq r $1 'load_balancers[*]' -j | \
-       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .server_pools[] | .name')
-       for pool_name in $serverpools
-         do
-          pool_mon=$(yq r $1 'load_balancers[*]' -j | \
-          jq -r --arg lb_name  "$lb_name" --arg pool_name "$pool_name" \
-          '.[] | select(.name == $lb_name)| .server_pools[] | select(.name == $pool_name) | .monitor_name')
-          pool_trans=$(yq r $1 'load_balancers[*]' -j | \
-          jq -r --arg lb_name  "$lb_name" --arg pool_name "$pool_name" \
-          '.[] | select(.name == $lb_name)| .server_pools[] | select(.name == $pool_name) | .translation_mode')
-          #echo "trying $pool_name $pool_mon $pool_trans"
-          Create_NSX_LB_ServerPool "$pool_name" "$pool_mon" "$pool_trans"
-         done
+    Create_NSX_LoadBalancer \
+      "$name" \
+      "$size" \
+      "$t1_name"
+    #echo "Create Load Balancer $name $size $t1_name"
+    local vs_count=$(yq eval '.load_balancers [$i].virtual_servers | length' "$yaml_file")
+    for ((vs=0; vs<vs_count; vs++)); do
+      local vs_name=$(yq eval ".load_balancers [$i].virtual_servers [$vs].name" "$yaml_file")
+      local vs_ap_name=$(yq eval ".load_balancers [$i].virtual_servers [$vs].app_profile" "$yaml_file")
+      local vs_sp_name=$(yq eval ".load_balancers [$i].virtual_servers [$vs].server_pool" "$yaml_file")
+      local vs_ip=$(yq eval ".load_balancers [$i].virtual_servers [$vs].ip_address" "$yaml_file")
+      local vs_ports=$(yq eval ".load_balancers [$i].virtual_servers [$vs].ports" "$yaml_file")
+      #echo "Create VS $name $vs_name $vs_ap_name $vs_sp_name $vs_ip $vs_ports"
 
-       virtualservers=$(yq r $1 'load_balancers[*]' -j | \
-       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .virtual_servers[] | .name')
-       for vs_name in $virtualservers
-         do
-          vs_pool=$(yq r $1 'load_balancers[*]' -j | \
-          jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
-          '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .pool_name')
-          vs_port=$(yq r $1 'load_balancers[*]' -j | \
-          jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
-          '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .port')
-          vs_vip=$(yq r $1 'load_balancers[*]' -j | \
-          jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
-          '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .virtual_ip')
-          Create_NSX_LB_VirtualServer "$vs_name" "$vs_pool" "$vs_port" "$vs_vip"
-         done
-       #Load-Balancer comma-separated virtual server names
-       vs_names=""
-       for vs_name in $virtualservers
-         do
-           vs_names+="${vs_name},"
-         done
-       t1_name=$(yq r $1 'load_balancers[*]' -j | \
-       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .t1_name')
-       #echo "Passing $vs_names"
-       Create_NSX_LoadBalancer "$lb_name" "$t1_name" "$vs_names"
-
-     done
- fi
+      Create_NSX_LB_VirtualServer \
+        "$name" \
+        "$vs_name" \
+        "$vs_ap_name" \
+        "$vs_sp_name" \
+        "$vs_ip" \
+        "$vs_ports"
+    done
+  done
 }
 
 Delete_Load_Balancers() {
- # $1 Config file
- lbchk=$(yq r $1 'load_balancers[*].name')
- if [ $lbchk == "null" ]; then
-   echo "No Load-Balancers to create"
- else
-   lbs=$(yq r $1 'load_balancers[*].name' -j | jq -r '.[]')
-   for lb_name in $lbs
-     do
-       Delete_NSX_LoadBalancer $lb_name
-
-       virtualservers=$(yq r $1 'load_balancers[*]' -j | \
-       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .virtual_servers[] | .name')
-       for vs_name in $virtualservers
-         do
-           vs_vip=$(yq r $1 'load_balancers[*]' -j | \
-           jq -r --arg lb_name  "$lb_name" --arg vs_name "$vs_name" \
-           '.[] | select(.name == $lb_name)| .virtual_servers[] | select(.name == $vs_name) | .virtual_ip')
-           Delete_NSX_LB_VirtualServer "$vs_name" "$vs_vip"
-         done
-
-       serverpools=$(yq r $1 'load_balancers[*]' -j | \
-       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .server_pools[] | .name')
-       for pool_name in $serverpools
-         do
-          Delete_NSX_LB_ServerPool "$pool_name"
-         done
-
-       # monitors: yq r $1 'load_balancers[*]' -j | jq -r '.[] | .monitors[]'
-       monitors=$(yq r $1 'load_balancers[*]' -j | \
-       jq -r --arg lb_name "$lb_name" '.[] | select(.name = $lb_name)| .monitors[] | .name')
-       for mon_name in $monitors
-         do
-           Delete_NSX_LB_Monitor "$mon_name"
-         done
-     done
- fi
+  # Loop through LBs, Loop through VSs for each
+  # $1 Config File
+  local yaml_file=$1
+  local item_count=$(yq eval '.load_balancers | length' "$yaml_file")
+  for ((i=0; i<item_count; i++)); do
+    local name=$(yq eval ".load_balancers [$i].name" "$yaml_file")
+    local vs_count=$(yq eval '.load_balancers [$i].virtual_servers | length' "$yaml_file")
+    for ((vs=0; vs<vs_count; vs++)); do
+      local vs_name=$(yq eval ".load_balancers [$i].virtual_servers [$vs].name" "$yaml_file")
+      Delete_NSX_LB_VirtualServer "$vs_name"
+    done
+    Delete_NSX_LoadBalancer "$name"
+  done
 }

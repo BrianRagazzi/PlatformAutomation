@@ -57,14 +57,14 @@ Get_NSX_Segment_ID() {
   echo $segmentid
 }
 
-Get_NSX_IP_Pool_ID() {
+Get_NSX_IP_Pool() {
   # $1 Pool Name
   local pool_name=$1
-  local poolid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+  local poolpath=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
     -u $NSXUSERNAME:$NSXPASSWORD \
     $NSXHOSTNAME/policy/api/v1/infra/ip-pools| \
-    jq -r --arg name "$pool_name" '.results[] | select(.display_name == $name) | .id')
-  echo $poolid
+    jq -r --arg name "$pool_name" '.results[] | select(.display_name == $name) | .path')
+  echo $poolpath
 }
 
 Get_NSX_IP_Block_ID() {
@@ -90,6 +90,96 @@ Get_NSX_Tier0_NAT_Rule_ID() {
   echo $id
 }
 
+Get_TKGI_SuperUser_ID(){
+  # $1 = superuser_name
+  # $2 = NSX_SUPERUSER_CERT_FILE path
+  local pi_name="$1"
+  local cert_pem="$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ./"$2" )" #leaves spacs
+  #local cert_pem="$(cat ./"$2" | tr -d ' \t\r' | awk '{printf "%s\\n", $0}')" #Leaves "\\n"
+  #local cert_pem="$(cat ./"$2" | tr -d ' \t\r\n')"
+  local certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
+    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+
+  if [ -z "$certid" ]; then
+    #local NODE_ID=$(cat /proc/sys/kernel/random/uuid | sed 's/-//g')
+    local pi_request=$(jq -n \
+        --arg display_name "$pi_name" \
+        --arg cert_pem "$cert_pem" \
+        --arg node_id $(cat /proc/sys/kernel/random/uuid | sed 's/-//g') \
+        '{
+        "display_name": $display_name,
+        "name": $display_name,
+        "role": "enterprise_admin",
+        "roles_for_paths": [{"path": "/","roles": [{"role": "enterprise_admin"}]}],
+        "certificate_pem": $cert_pem,
+        "node_id": $node_id
+        }')
+      curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+        -u $NSXUSERNAME:$NSXPASSWORD \
+        $NSXHOSTNAME/api/v1/trust-management/principal-identities/with-certificate \
+        -X POST -d "$pi_request"
+      certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+        -u $NSXUSERNAME:$NSXPASSWORD \
+        $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
+        jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
+  else
+    echo "Principal ID for $1 already exists in NSX, skipping creation"
+  fi
+  echo $certid
+}
+
+Get_NSX_LB_Pool() {
+  # $1 Monitor Name
+  local pool_name=$1
+  local poolid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/policy/api/v1/infra/lb-pools| \
+    jq -r --arg name "$pool_name" '.results[] | select(.display_name == $name) | .id')
+  echo $poolid
+}
+
+Get_NSX_LB_Monitor() {
+  # $1 Monitor Name
+  # Technically monitor profiles  in NSX 4.2.x
+  local mon_name=$1
+  local monpath=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/policy/api/v1/infra/lb-monitor-profiles| \
+    jq -r --arg name "$mon_name" '.results[] | select(.display_name == $name) | .path')
+  echo $monpath
+}
+
+Get_NSX_LoadBalancer() {
+  # $1 Monitor Name
+  local lb_name=$1
+  local lbpath=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/policy/api/v1/infra/lb-services| \
+    jq -r --arg name "$lb_name" '.results[] | select(.display_name == $name) | .path')
+  echo $lbpath
+}
+
+Get_NSX_LB_VirtualServer() {
+  # $1 Monitor Name
+  local vs_name=$1
+  local vsid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/policy/api/v1/infra/lb-virtual-servers| \
+    jq -r --arg name "$vs_name" '.results[] | select(.display_name == $name) | .id')
+  echo $vsid
+}
+
+Get_NSX_App_Profile_Path() {
+  # $1 Monitor Name
+  local ap_name=$1
+  local appath=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    $NSXHOSTNAME/policy/api/v1/infra/lb-app-profiles| \
+    jq -r --arg name "$ap_name" '.results[] | select(.display_name == $name) | .path')
+  echo $appath
+}
 
 Create_NSX_T1_Gateway() {
   # $1 - T1 Router name
@@ -303,7 +393,7 @@ Create_NSX_IP_Pool() {
   # Create Subnet
   # /policy/api/v1/infra/ip-pools/{ip-pool-id}/ip-subnets/{ip-subnet-id} PATCH
   # /policy/api/v1/infra/ip-pools/{ip-pool-id}/ip-subnets/{ip-subnet-id} PUT
-  local chk=$(Get_NSX_IP_Pool_ID $pool_name)
+  local chk=$(Get_NSX_IP_Pool $pool_name)
   if [ -n "$chk" ]; then
    echo IP Pool $1 already exists, skipping
   else
@@ -361,7 +451,7 @@ Create_NSX_IP_Pool() {
 Delete_NSX_IP_Pool() {
   # $1 pool name
   local pool_name="$1"
-  local chk=$(Get_NSX_IP_Pool_ID $pool_name)
+  local chk=$(Get_NSX_IP_Pool $pool_name)
 
   if [ -z "$chk" ]; then
    echo "Error: IP Pool '$1' not found"
@@ -551,47 +641,6 @@ Delete_NSX_T0_NAT_Rule(){
 
 }
 
-
-Get_TKGI_SuperUser_ID(){
-  # $1 = superuser_name
-  # $2 = NSX_SUPERUSER_CERT_FILE path
-  local pi_name="$1"
-  local cert_pem="$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ./"$2" )" #leaves spacs
-  #local cert_pem="$(cat ./"$2" | tr -d ' \t\r' | awk '{printf "%s\\n", $0}')" #Leaves "\\n"
-  #local cert_pem="$(cat ./"$2" | tr -d ' \t\r\n')"
-  local certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-    -u $NSXUSERNAME:$NSXPASSWORD \
-    $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
-    jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
-
-  if [ -z "$certid" ]; then
-    #local NODE_ID=$(cat /proc/sys/kernel/random/uuid | sed 's/-//g')
-    local pi_request=$(jq -n \
-        --arg display_name "$pi_name" \
-        --arg cert_pem "$cert_pem" \
-        --arg node_id $(cat /proc/sys/kernel/random/uuid | sed 's/-//g') \
-        '{
-        "display_name": $display_name,
-        "name": $display_name,
-        "role": "enterprise_admin",
-        "roles_for_paths": [{"path": "/","roles": [{"role": "enterprise_admin"}]}],
-        "certificate_pem": $cert_pem,
-        "node_id": $node_id
-        }')
-      curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-        -u $NSXUSERNAME:$NSXPASSWORD \
-        $NSXHOSTNAME/api/v1/trust-management/principal-identities/with-certificate \
-        -X POST -d "$pi_request"
-      certid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
-        -u $NSXUSERNAME:$NSXPASSWORD \
-        $NSXHOSTNAME/api/v1/trust-management/principal-identities | \
-        jq -r --arg name "$1" '.results[] | select(.display_name == $name) | .id')
-  else
-    echo "Principal ID for $1 already exists in NSX, skipping creation"
-  fi
-  echo $certid
-}
-
 Create_TKGI_SuperUser_ID(){
   # $1 = superuser_name
   local pi_name="$1"
@@ -654,6 +703,325 @@ Delete_TKGI_SuperUser_ID() {
       echo "Successfully deleted PI: $pi_name"
     else
       echo "Failed to delete PI: $pi_name"
+      echo "HTTP Status: $http_code"
+      echo "Response: $(echo "$response" | sed '$d')"
+      return 1
+    fi
+  fi
+}
+
+Create_NSX_LB_Monitor() {
+  # $1 name: tpcf-web-monitor2
+  # $2 type: http
+  # $3 monitor_port: 8080
+  # $4 req_method: get
+  # $5 req_url: "/health"
+  # $6 req_version: 1
+  # $7 response_code: 200
+  local mon_name="$1"
+  local mon_type="$2"
+  local mon_port="$3"
+  local http_request_method="$4"
+  local http_request_url="$5"
+  local http_request_version="$6"
+  local response_code="$7"
+
+  local chk=$(Get_NSX_LB_Monitor $mon_name)
+  if [ -n "$chk" ]; then
+   echo LB Monitor $1 already exists, skipping
+  else
+    case $mon_type in
+      "http")
+        resource_type="LBHttpMonitorProfile"
+        case $http_request_version in
+          "1")
+            request_version="HTTP_VERSION_1_0"
+            ;;
+          *)
+            request_version="HTTP_VERSION_1_1"
+            ;;
+        esac
+        echo "Creating LB $mon_type Monitor: $mon_name"
+        local config=$(jq -n \
+            --arg display_name "$mon_name" \
+            --arg resource_type "$resource_type" \
+            --arg mon_port "$mon_port" \
+            --arg req_url "$http_request_url" \
+            --arg req_method "$http_request_method" \
+            --arg req_version "$request_version" \
+            --arg response_code $response_code \
+        '{
+        "resource_type": $resource_type,
+        "display_name": $display_name,
+        "monitor_port": $mon_port,
+        "request_url": $req_url,
+        "request_method": $req_method,
+        "request_version": $req_version,
+        "response_status_codes": [
+            $response_code
+         ]
+        }')
+        ;;
+      "tcp")
+        resource_type="LBTcpMonitorProfile"
+        echo "Creating LB $mon_type Monitor: $mon_name"
+        local config=$(jq -n \
+            --arg display_name "$mon_name" \
+            --arg resource_type "$resource_type" \
+            --arg mon_port "$mon_port" \
+        '{
+        "resource_type": $resource_type,
+        "display_name": $display_name,
+        "monitor_port": $mon_port
+        }')
+        ;;
+      *)
+        resource_type="LBHttpMonitorProfile"
+        echo "ERROR:  Only TCP and HTTP monitors are implemented"
+        ;;
+    esac
+
+    if [ -n "$config" ]; then
+      #echo $config
+      curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+        -u $NSXUSERNAME:$NSXPASSWORD \
+        $NSXHOSTNAME/policy/api/v1/infra/lb-monitor-profiles/$mon_name \
+        -X PATCH -d "$config"
+    else
+      echo "ERROR: unable to add Monitor"
+    fi
+  fi
+}
+
+Delete_NSX_LB_Monitor() {
+  # $1 name: tpcf-web-monitor2
+  local name="$1"
+  local chk=$(Get_NSX_LB_Monitor $name)
+  if [ -z "$chk" ]; then
+   echo "Error: LB Monitor $1 not found"
+  else
+    local response=$(curl -s -k -X DELETE \
+    -H "Content-Type: application/json" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    -w "%{http_code}" \
+    "$NSXHOSTNAME/policy/api/v1/infra/lb-monitor-profiles/$name")
+
+    # Extract the HTTP status code
+    local http_code=$(echo "$response" | tail -n1)
+
+    # Check the response status
+    if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 204 ]; then
+      echo "Successfully deleted LB Monitor: $name"
+    else
+      echo "Failed to delete LB Monitor: $name"
+      echo "HTTP Status: $http_code"
+      echo "Response: $(echo "$response" | sed '$d')"
+      return 1
+    fi
+  fi
+}
+
+Create_NSX_LB_ServerPool() {
+  # $1 Name
+  # $2 monitor_name
+  # $3 SNAT mode
+  local name="$1" #: tpcf-web-pool
+  local active_monitor="$2" #: tpcf-web-monitor2
+  local snat_mode="$3" #: Automap #Automap, Deactivated, IPPool
+  case $snat_mode in
+    "Disabled")
+      snat_trans="LBSnatDisabled"
+      ;;
+    "IPPool")
+      snat_trans="LBSnatIpPool"
+      ;;
+    *)
+      snat_trans="LBSnatAutoMap"
+      ;;
+  esac
+
+  local chk=$(Get_NSX_LB_Pool $name)
+  if [ -n "$chk" ]; then
+    echo "LB Server Pool $1 already exists, skipping"
+  else
+    local monitor_path=$(Get_NSX_LB_Monitor $active_monitor)
+    echo "Creating LB Server Pool $name"
+    local config=$(jq -n \
+        --arg display_name "$name" \
+        --arg snat_trans "$snat_trans" \
+        --arg mon_path "$monitor_path" \
+        '{
+        "resource_type": "LBPool",
+        "display_name": $display_name,
+        "snat_translation": {"type": $snat_trans},
+        "active_monitor_paths": [
+          $mon_path
+        ]
+        }')
+    #echo $config
+    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+      -u $NSXUSERNAME:$NSXPASSWORD \
+      $NSXHOSTNAME/policy/api/v1/infra/lb-pools/$name\
+      -X PATCH -d "$config"
+  fi
+}
+
+Delete_NSX_LB_ServerPool() {
+  # $1 name: tpcf-web-monitor2
+  local name="$1"
+  local chk=$(Get_NSX_LB_Pool $name)
+  if [ -z "$chk" ]; then
+   echo "Error: Server Pool $1 not found"
+  else
+    local response=$(curl -s -k -X DELETE \
+    -H "Content-Type: application/json" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    -w "%{http_code}" \
+    "$NSXHOSTNAME/policy/api/v1/infra/lb-pools/$name")
+
+    # Extract the HTTP status code
+    local http_code=$(echo "$response" | tail -n1)
+
+    # Check the response status
+    if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 204 ]; then
+      echo "Successfully deleted LB Pool: $name"
+    else
+      echo "Failed to delete LB Monitor: $name"
+      echo "HTTP Status: $http_code"
+      echo "Response: $(echo "$response" | sed '$d')"
+      return 1
+    fi
+  fi
+}
+
+Create_NSX_LoadBalancer() {
+  # First, create the LB, then create the VSs
+  # $1 Name
+  # $2 size
+  # $3 attachment
+  local name="$1" #: tpcf-web-pool
+  local size="$2" #: tpcf-web-monitor2
+  local attachment="$3" #: Automap #Automap, Deactivated, IPPool
+
+
+  local chk=$(Get_NSX_LoadBalancer $name)
+  if [ -n "$chk" ]; then
+    echo "LoadBalancer $1 already exists, skipping - come back to check VSs"
+  else
+    local t1path=$(Get_NSX_T1_Gateway_Path $attachment)
+    echo "Creating LoadBalancer $name"
+    local config=$(jq -n \
+        --arg display_name "$name" \
+        --arg size "$size" \
+        --arg conn_path "$t1path" \
+        '{
+        "resource_type": "LBService",
+        "display_name": $display_name,
+        "size": $size,
+        "connectivity_path": $conn_path
+        }')
+    #echo $config
+    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+      -u $NSXUSERNAME:$NSXPASSWORD \
+      $NSXHOSTNAME/policy/api/v1/infra/lb-services/$name\
+      -X PATCH -d "$config"
+  fi
+}
+
+Create_NSX_LB_VirtualServer() {
+  # $1 LB Name
+  # $2 VS Name
+  # $3 app_profile: default-tcp-lb-app-profile
+  # $4 server_pool: tpcf-web-pool-test
+  # $5 ip_address: 192.168.124.12
+  # $6 ports: [80,443]
+  local lb_name="$1"
+  local vs_name="$2"
+  local app_profile="$3"
+  local sp_name="$4"
+  local ip_address="$5"
+  local ports="$6"
+  local chk=$(Get_NSX_LB_VirtualServer $vs_name)
+  if [ -n "$chk" ]; then
+    echo "Virtual Server $1 already exists"
+  else
+    local ap_path=$(Get_NSX_App_Profile_Path $app_profile)
+    local lb_path=$(Get_NSX_LoadBalancer $lb_name)
+    local sp_path=$(Get_NSX_IP_Pool $sp_name)
+    echo "Creating LoadBalancer Virtual Service $vs_name"
+    local config=$(jq -n \
+        --arg display_name "$vs_name" \
+        --arg ip_address "$ip_address" \
+        --arg ap_path "$ap_path" \
+        --arg lb_path "$lb_path" \
+        --arg sp_path "$sp_path" \
+        --argjson ports "$ports" \
+        '{
+        "resource_type": "LBVirtualServer",
+        "display_name": $display_name,
+        "ip_address": $ip_address,
+        "application_profile_path": $ap_path,
+        "lb_service_path": $lb_path,
+        "pool_path": $sp_path,
+        "ports": $ports
+        }')
+    echo $config
+    curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+      -u $NSXUSERNAME:$NSXPASSWORD \
+      $NSXHOSTNAME/policy/api/v1/infra/lb-virtual-servers/$vs_name\
+      -X PATCH -d "$config"
+  fi
+}
+
+Delete_NSX_LB_VirtualServer() {
+  # $1 name: tpcf-web-monitor2
+  local name="$1"
+  local chk=$(Get_NSX_LB_VirtualServer $name)
+  if [ -z "$chk" ]; then
+   echo "Error: LB Virtual Server $1 not found"
+  else
+    local response=$(curl -s -k -X DELETE \
+    -H "Content-Type: application/json" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    -w "%{http_code}" \
+    "$NSXHOSTNAME/policy/api/v1/infra/lb-virtual-servers/$name")
+
+    # Extract the HTTP status code
+    local http_code=$(echo "$response" | tail -n1)
+
+    # Check the response status
+    if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 204 ]; then
+      echo "Successfully deleted LB Virtual Server: $name"
+    else
+      echo "Failed to delete LB irtual Server: $name"
+      echo "HTTP Status: $http_code"
+      echo "Response: $(echo "$response" | sed '$d')"
+      return 1
+    fi
+  fi
+}
+
+Delete_NSX_LoadBalancer() {
+  # $1 name: tpcf-web-monitor2
+  local name="$1"
+  local chk=$(Get_NSX_LoadBalancer $name)
+  if [ -z "$chk" ]; then
+   echo "Error: Load Balancer $1 not found"
+  else
+    local response=$(curl -s -k -X DELETE \
+    -H "Content-Type: application/json" \
+    -u $NSXUSERNAME:$NSXPASSWORD \
+    -w "%{http_code}" \
+    "$NSXHOSTNAME/policy/api/v1/infra/lb-services/$name")
+
+    # Extract the HTTP status code
+    local http_code=$(echo "$response" | tail -n1)
+
+    # Check the response status
+    if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 204 ]; then
+      echo "Successfully deleted Load Balancer: $name"
+    else
+      echo "Failed to delete Load Balancer: $name"
       echo "HTTP Status: $http_code"
       echo "Response: $(echo "$response" | sed '$d')"
       return 1

@@ -38,4 +38,7 @@ run:
     Create_IP_Pools $NSXT_INFRA_CONFIG_FILE
     Create_IP_Blocks $NSXT_INFRA_CONFIG_FILE
     Create_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE
-    # Not here yet:  LoadBalancers
+    Create_LB_Monitors $NSXT_INFRA_CONFIG_FILE
+    Create_LB_Pools  $NSXT_INFRA_CONFIG_FILE
+    Create_Load_Balancers $NSXT_INFRA_CONFIG_FILE
+    
