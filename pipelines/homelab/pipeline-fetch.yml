@@ -240,6 +240,7 @@ jobs:
     params:
       file: downloaded-product/*.pivotal
   - put: pas-stemcell
+    no_get: true
     params:
       file: pas-stemcell/*.tgz
 

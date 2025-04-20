@@ -91,3 +91,7 @@ fly -t ci up -p tkgi-configure
 fly -t ci set-pipeline -p test-opsman -c opsman.yml -l ../../params/homelab/params-homelab.yml --check-creds -n
 fly -t ci up -p test-opsman
 ```
+```
+fly -t ci set-pipeline -p tpcf-configure -c pipeline-tpcf.yml -l ../../params/homelab/params-homelab-tas.yml --check-creds -n
+fly -t ci up -p tpcf-configure
+```
