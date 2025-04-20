@@ -46,7 +46,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: vsphere-platform-automation-image-(.*).tar.gz
+    regexp: vsphere-platform-automation-vsphere-image-(.*).tar.gz
 
 
 - name: custom-task-image
@@ -85,18 +85,18 @@ resources:
     #regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
     regexp: ops-manager-vsphere-(.*).ova
 
-- name: pas-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
-    # regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
-
-- name: pas-stemcell
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: pas-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+# - name: pas-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
+#     # regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
+#
+# - name: pas-stemcell
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: pas-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 # - name: healthwatch-stemcell
 #   type: s3
@@ -110,11 +110,11 @@ resources:
 #     <<: *s3_credentials_binaries
 #     regexp: \[p-healthwatch,(.*)\]p-healthwatch-.*.pivotal
 
-- name: nsx-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
+# - name: nsx-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
 # - name: mysql-stemcell
 #   type: s3
@@ -173,15 +173,15 @@ resources:
 
 
 # triggers used to have jobs do something in a timely manner
-- name: one-time-trigger
-  type: time
-  source:
-    interval: 999999h
-
-- name: daily-trigger
-  type: time
-  source:
-    interval: 24h
+# - name: one-time-trigger
+#   type: time
+#   source:
+#     interval: 999999h
+#
+# - name: daily-trigger
+#   type: time
+#   source:
+#     interval: 24h
 
 
 
@@ -354,7 +354,7 @@ jobs:
 #     <<: *credhub-interpolate
 #
 #   - task: upload-product
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-product.yml
 #     input_mapping:
 #       product: pas-product
@@ -374,7 +374,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: upload-pas-stemcell
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-stemcell.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -383,7 +383,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: configure-pas
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/configure-product.yml
 #     input_mapping:
 #       config: configuration
@@ -400,7 +400,7 @@ jobs:
 #   serial: true
 #   plan:
 #     - aggregate:
-#         - get: platform-automation-image
+#         - get: platform-automation-vsphere-image
 #           params:
 #             unpack: true
 #           passed:
@@ -412,10 +412,10 @@ jobs:
 #         - get: pas-windows-product
 #         - get: pas-windows-stemcell
 #         - get: configuration
-#     - task: interpolate-creds
-#       <<: *interpolate-creds
+#     - task: credhub-interpolate
+#       <<: *credhub-interpolate
 #     - task: upload-product
-#       image: platform-automation-image
+#       image: platform-automation-vsphere-image
 #       file: platform-automation-tasks/tasks/upload-product.yml
 #       input_mapping:
 #         product: pas-windows-product
@@ -423,7 +423,7 @@ jobs:
 #       params:
 #         ENV_FILE: ((foundation))/env/env.yml
 #     - task: upload-pas-windows-stemcell
-#       image: platform-automation-image
+#       image: platform-automation-vsphere-image
 #       file: platform-automation-tasks/tasks/upload-stemcell.yml
 #       input_mapping:
 #         env: interpolated-creds
@@ -431,7 +431,7 @@ jobs:
 #       params:
 #         ENV_FILE: ((foundation))/env/env.yml
 #     - task: stage-product
-#       image: platform-automation-image
+#       image: platform-automation-vsphere-image
 #       file: platform-automation-tasks/tasks/stage-product.yml
 #       input_mapping:
 #         product: pas-windows-product
@@ -439,7 +439,7 @@ jobs:
 #       params:
 #         ENV_FILE: ((foundation))/env/env.yml
 #     - task: configure-pas
-#       image: platform-automation-image
+#       image: platform-automation-vsphere-image
 #       file: platform-automation-tasks/tasks/configure-product.yml
 #       input_mapping:
 #         config: configuration
@@ -461,7 +461,7 @@ jobs:
 #     - get: nsx-product
 #     - get: configuration
 #       trigger: true
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       passed: [ pas ]
 #       params:
 #         unpack: true
@@ -473,7 +473,7 @@ jobs:
 #     <<: *interpolate-creds
 #
 #   - task: upload-product-nsx
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-product.yml
 #     input_mapping:
 #       product: nsx-product
@@ -484,7 +484,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: stage-product-nsx
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/stage-product.yml
 #     input_mapping:
 #       product: nsx-product
@@ -494,7 +494,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: configure-nsx
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/configure-product.yml
 #     input_mapping:
 #       config: configuration
@@ -516,7 +516,7 @@ jobs:
 #     - get: healthwatch-product
 #     - get: configuration
 #       trigger: true
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       passed: [ pas ]
 #       params:
 #         unpack: true
@@ -528,7 +528,7 @@ jobs:
 #     <<: *interpolate-creds
 #
 #   - task: upload-product-healthwatch
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-product.yml
 #     input_mapping:
 #       product: healthwatch-product
@@ -539,7 +539,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: stage-product-healthwatch
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/stage-product.yml
 #     input_mapping:
 #       product: healthwatch-product
@@ -548,7 +548,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: configure-healthwatch
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/configure-product.yml
 #     input_mapping:
 #       config: configuration
@@ -571,7 +571,7 @@ jobs:
 #     - get: mysql-stemcell
 #     - get: configuration
 #       trigger: true
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       passed: [ pas ]
 #       params:
 #         unpack: true
@@ -583,7 +583,7 @@ jobs:
 #     <<: *interpolate-creds
 #
 #   - task: upload-product-mysql
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-product.yml
 #     input_mapping:
 #       product: mysql-product
@@ -594,7 +594,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: stage-product-mysql
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/stage-product.yml
 #     input_mapping:
 #       product: mysql-product
@@ -606,7 +606,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: upload-mysql-stemcell
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/upload-stemcell.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -615,7 +615,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: configure-mysql
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/configure-product.yml
 #     input_mapping:
 #       config: configuration
@@ -628,31 +628,30 @@ jobs:
 #         vars/((foundation))/vars/mysql-vars.yml
 #       ENV_FILE: ((foundation))/env/env.yml
 
-- name: apply-changes
-  serial: true
-  plan:
-  - aggregate:
-    - get: configuration
-      trigger: true
-      passed: [ nsx ] #, mysql ] #, healthwatch ] #, mysql, pas-windows]
-    - get: platform-automation-image
-      params:
-        unpack: true
-    - get: platform-automation-tasks
-      params:
-        unpack: true
-
-  - task: interpolate-creds
-    <<: *interpolate-creds
-
-  - task: apply-product-changes
-    image: platform-automation-image
-    file: platform-automation-tasks/tasks/apply-changes.yml
-    input_mapping:
-      config: configuration
-      env: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
+# - name: apply-changes
+#   serial: true
+#   plan:
+#     - get: config
+#       trigger: true
+#       passed: [ nsx ] #, mysql ] #, healthwatch ] #, mysql, pas-windows]
+#     - get: platform-automation-vsphere-image
+#       params:
+#         unpack: true
+#     - get: platform-automation-tasks
+#       params:
+#         unpack: true
+#
+#   - task: credhub-interpolate
+#     <<: *credhub-interpolate
+#
+#   - task: apply-product-changes
+#     image: platform-automation-vsphere-image
+#     file: platform-automation-tasks/tasks/apply-changes.yml
+#     input_mapping:
+#       config: configuration
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
 
 
 # Use this for creating a local cf admin
@@ -664,7 +663,7 @@ jobs:
 #     - get: configuration
 #       trigger: false
 #     - get: custom-tasks
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       params:
 #         unpack: true
 #     - get: platform-automation-tasks
@@ -675,7 +674,7 @@ jobs:
 #     <<: *interpolate-creds
 #
 #   - task: config-pas-admin-user
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: custom-tasks/tasks/create_pas_org_admin.yml
 #     input_mapping:
 #       vars: interpolated-creds
@@ -695,7 +694,7 @@ jobs:
 #     - get: configuration
 #     - get: custom-tasks
 #     - get: custom-task-image
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       passed: [apply-changes]
 #       trigger: true
 #       params:
@@ -723,7 +722,7 @@ jobs:
 #   plan:
 #   - aggregate:
 #     - get: configuration
-#     - get: platform-automation-image
+#     - get: platform-automation-vsphere-image
 #       trigger: true
 #       passed: [add-pas-admin-group]
 #       params:
@@ -736,7 +735,7 @@ jobs:
 #     <<: *interpolate-creds
 #
 #   - task: configure-pas
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/configure-product.yml
 #     input_mapping:
 #       config: configuration
@@ -751,7 +750,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #   # - task: configure-healthwatch
-#   #   image: platform-automation-image
+#   #   image: platform-automation-vsphere-image
 #   #   file: platform-automation-tasks/tasks/configure-product.yml
 #   #   input_mapping:
 #   #     config: configuration
@@ -766,7 +765,7 @@ jobs:
 #   #     ENV_FILE: ((foundation))/env/env.yml
 #
 #   # - task: configure-mysql
-#   #   image: platform-automation-image
+#   #   image: platform-automation-vsphere-image
 #   #   file: platform-automation-tasks/tasks/configure-product.yml
 #   #   input_mapping:
 #   #     config: configuration
@@ -781,7 +780,7 @@ jobs:
 #   #     ENV_FILE: ((foundation))/env/env.yml
 #
 #   - task: apply-product-changes
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/apply-changes.yml
 #     input_mapping:
 #       config: configuration
@@ -797,7 +796,7 @@ jobs:
 #         - get: one-time-trigger
 #         - get: daily-trigger
 #           trigger: true
-#         - get: platform-automation-image
+#         - get: platform-automation-vsphere-image
 #           params:
 #             unpack: true
 #         - get: platform-automation-tasks
@@ -807,7 +806,7 @@ jobs:
 #     - task: interpolate-creds
 #       <<: *interpolate-creds
 #     - task: export-installation
-#       image: platform-automation-image
+#       image: platform-automation-vsphere-image
 #       file: platform-automation-tasks/tasks/export-installation.yml
 #       input_mapping:
 #         env: interpolated-creds
@@ -825,13 +824,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: configuration
 #   - task: interpolate-creds
 #     <<: *interpolate-creds
 #   - task: staged-director-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-director-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -848,13 +847,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: configuration
 #   - task: interpolate-creds
 #     <<: *interpolate-creds
 #   - task: staged-pas-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -872,13 +871,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: configuration
 #   - task: interpolate-creds
 #     <<: *interpolate-creds
 #   - task: staged-pas-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -896,13 +895,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: configuration
 #   - task: interpolate-creds
 #     <<: *interpolate-creds
 #   - task: staged-pas-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -920,13 +919,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: configuration
 #   - task: interpolate-creds
 #     <<: *interpolate-creds
 #   - task: staged-pas-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -944,13 +943,13 @@ jobs:
 #     trigger: true
 #     passed:
 #       - export-installation
-#   - get: platform-automation-image
+#   - get: platform-automation-vsphere-image
 #     params: {unpack: true}
 #   - get: configuration
 #   - task: interpolate-creds
 #     <<: *interpolate-creds
 #   - task: staged-pas-config
-#     image: platform-automation-image
+#     image: platform-automation-vsphere-image
 #     file: platform-automation-tasks/tasks/staged-config.yml
 #     input_mapping:
 #       env: interpolated-creds
@@ -965,22 +964,21 @@ jobs:
   serial: true
   serial_groups: [ teardown ]
   plan:
-  - aggregate:
-    - get: configuration
-    - get: state
-    - get: platform-automation-image
-      trigger: false
-      params:
-        unpack: true
-    - get: platform-automation-tasks
-      params:
-        unpack: true
+  - get: config
+  - get: state
+  - get: platform-automation-vsphere-image
+    trigger: false
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
 
-  - task: interpolate-creds
-    <<: *interpolate-creds
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
 
   - task: delete-installation
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/delete-installation.yml
     input_mapping:
       env: interpolated-creds
@@ -988,7 +986,7 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
   - task: delete-opsman-vm
-    image: platform-automation-image
+    image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/delete-vm.yml
     input_mapping:
       state: state
@@ -1005,21 +1003,20 @@ jobs:
 - name: delete-nsx-objects
   serial: true
   plan:
-  - aggregate:
-    - get: configuration
-    - get: custom-tasks
-    - get: custom-task-image
-    - get: platform-automation-image
-      passed: [destroy-installation]
-      params:
-        unpack: true
-    - get: platform-automation-tasks
-      params:
-        unpack: true
+  - get: config
+  - get: custom-tasks
+  - get: custom-task-image
+  - get: platform-automation-vsphere-image
+    passed: [destroy-installation]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
 
 
-  - task: interpolate-creds
-    <<: *interpolate-creds
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
 
   - task: delete-objects
     image: custom-task-image
