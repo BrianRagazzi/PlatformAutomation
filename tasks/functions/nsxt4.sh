@@ -312,7 +312,7 @@ Create_NSX_Segment() {
   if [ -n "$chk" ]; then
    echo Logical Switch $1 already exists, skipping
   else
-   echo "Creating $1 Segment"
+   echo "Creating $1 Segment attached to $gateway_name T1 gateway"
 
    local tz_path=$(Get_NSX_TransportZone_Path $transport_zone)
    local t1_path=$(Get_NSX_T1_Gateway_Path "$gateway_name")
