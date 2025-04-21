@@ -45,7 +45,8 @@ credhub set --name /concourse/$TEAMNAME/nsx_ca_cert --type value --value "$(cat 
 credhub set --name /concourse/$TEAMNAME/vcenter_admin_password --type value --value password
 
 # OpsMgr
-credhub set --name /concourse/$TEAMNAME/opsman_host --type value --value 'https://om-tkgi.lab.brianragazzi.com'
+# credhub set --name /concourse/$TEAMNAME/opsman_host --type value --value 'https://om-tkgi.lab.brianragazzi.com'
+credhub set --name /concourse/$TEAMNAME/opsman_host --type value --value 'https://om-tpcf.lab.brianragazzi.com'
 credhub set --name /concourse/$TEAMNAME/opsman_ssh_public_key --type value --value "$(cat /home/ubuntu/.ssh/authorized_keys)"
 credhub set --name /concourse/$TEAMNAME/opsman_password --type value --value opsmanpass
 credhub set --name /concourse/$TEAMNAME/opsman_decryption_passphrase --type value --value opsmandecrypt
@@ -76,7 +77,7 @@ fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"  -n homelab -u "a
 
 ## Pipelines
 ```
-fly -t ci set-pipeline -p fetch-binaries -c pipeline-fetch.yml -l ../../params/homelab/params-homelab.yml --check-creds -n
+fly -t ci set-pipeline -p fetch-binaries -c pipeline-fetch.yml -l ../../params/homelab/params-homelab-fetch.yml --check-creds -n
 fly -t ci up -p fetch-binaries
 ```
 ```
