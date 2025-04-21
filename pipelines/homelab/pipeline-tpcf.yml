@@ -85,18 +85,18 @@ resources:
     #regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
     regexp: ops-manager-vsphere-(.*).ova
 
-# - name: pas-product
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
-#     # regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
-#
-# - name: pas-stemcell
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: pas-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
+- name: pas-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
+    # regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
+
+- name: pas-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pas-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 # - name: healthwatch-stemcell
 #   type: s3
@@ -110,11 +110,11 @@ resources:
 #     <<: *s3_credentials_binaries
 #     regexp: \[p-healthwatch,(.*)\]p-healthwatch-.*.pivotal
 
-# - name: nsx-product
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
+- name: nsx-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
 
 # - name: mysql-stemcell
 #   type: s3
@@ -190,9 +190,9 @@ groups:
   jobs:
   - create-nsx-objects
   - install-opsman
-  #- pas
+  - pas
   # - pas-windows
-  #- nsx
+  - nsx
   # - healthwatch
   # - mysql
   #- apply-changes
@@ -332,69 +332,69 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-# - name: pas
-#   serial: false  # try  false 052219
-#   build_log_retention:
-#     builds: 4
-#   plan:
-#   - aggregate:
-#     - get: config
-#       trigger: true
-#     - get: pas-product
-#     - get: pas-stemcell
-#     - get: platform-automation-vsphere-image
-#       passed: [ install-opsman ]
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#
-#   - task: upload-product
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/upload-product.yml
-#     input_mapping:
-#       product: pas-product
-#       config: configuration
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: stage-product
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/stage-product.yml
-#     input_mapping:
-#       product: pas-product
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: upload-pas-stemcell
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/upload-stemcell.yml
-#     input_mapping:
-#       env: interpolated-creds
-#       stemcell: pas-stemcell
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: configure-pas
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/configure-product.yml
-#     input_mapping:
-#       config: configuration
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       CONFIG_FILE: ((foundation))/config/cf.yml
-#       VARS_FILES: |
-#         vars/((foundation))/vars/cf-defaults.yml
-#         vars/((foundation))/vars/cf-vars.yml
-#       ENV_FILE: ((foundation))/env/env.yml
+- name: pas
+  serial: false  # try  false 052219
+  build_log_retention:
+    builds: 4
+  plan:
+  - aggregate:
+    - get: config
+      trigger: true
+    - get: pas-product
+    - get: pas-stemcell
+    - get: platform-automation-vsphere-image
+      passed: [ install-opsman ]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: pas-product
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: pas-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-pas-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: pas-stemcell
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-pas
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/cf.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/cf-defaults.yml
+        vars/((foundation))/vars/cf-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
 
 # - name: pas-windows
 #   serial: true
@@ -452,60 +452,60 @@ jobs:
 #           vars/((foundation))/vars/pas-windows-vars.yml
 #         ENV_FILE: ((foundation))/env/env.yml
 
-# - name: nsx
-#   serial: true
-#   build_log_retention:
-#     builds: 4
-#   plan:
-#   - aggregate:
-#     - get: nsx-product
-#     - get: configuration
-#       trigger: true
-#     - get: platform-automation-vsphere-image
-#       passed: [ pas ]
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#   - task: interpolate-creds
-#     <<: *interpolate-creds
-#
-#   - task: upload-product-nsx
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/upload-product.yml
-#     input_mapping:
-#       product: nsx-product
-#       config: configuration
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: stage-product-nsx
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/stage-product.yml
-#     input_mapping:
-#       product: nsx-product
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: configure-nsx
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/configure-product.yml
-#     input_mapping:
-#       config: configuration
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       CONFIG_FILE: ((foundation))/config/nsx.yml
-#       VARS_FILES: |
-#         vars/((foundation))/vars/nsx-defaults.yml
-#         vars/((foundation))/vars/nsx-vars.yml
-#       ENV_FILE: ((foundation))/env/env.yml
+- name: nsx
+  serial: true
+  build_log_retention:
+    builds: 4
+  plan:
+  - aggregate:
+    - get: nsx-product
+    - get: configuration
+      trigger: true
+    - get: platform-automation-vsphere-image
+      passed: [ pas ]
+      params:
+        unpack: true
+    - get: platform-automation-tasks
+      params:
+        unpack: true
+
+  - task: interpolate-creds
+    <<: *interpolate-creds
+
+  - task: upload-product-nsx
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: nsx-product
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-nsx
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: nsx-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-nsx
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: configuration
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/nsx.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/nsx-defaults.yml
+        vars/((foundation))/vars/nsx-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
 
 # - name: healthwatch
 #   serial: true
