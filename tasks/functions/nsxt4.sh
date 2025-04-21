@@ -198,7 +198,7 @@ Create_NSX_T1_Gateway() {
   if [ -n "$chk" ]; then
    echo Logical Router $1 already exists, skipping
   else
-   echo "Creating $1"
+   echo "Creating $1 T1 Gateway"
    local t0path=$(Get_NSX_T0_Gateway_Path $2)
    #local routeadv='["TIER1_NAT","TIER1_LB_VIP","TIER1_CONNECTED","TIER1_IPSEC_LOCAL_ENDPOINT"]'
    gateway_config=$(jq -n \
@@ -312,7 +312,7 @@ Create_NSX_Segment() {
   if [ -n "$chk" ]; then
    echo Logical Switch $1 already exists, skipping
   else
-   echo "Creating $1"
+   echo "Creating $1 Segment"
 
    local tz_path=$(Get_NSX_TransportZone_Path $transport_zone)
    local t1_path=$(Get_NSX_T1_Gateway_Path "$gateway_name")
@@ -397,7 +397,7 @@ Create_NSX_IP_Pool() {
   if [ -n "$chk" ]; then
    echo IP Pool $1 already exists, skipping
   else
-    echo "Creating $1"
+    echo "Creating $1 IP Pool"
     local pool_config=$(jq -n \
         --arg display_name "$pool_name" \
         --arg desc "$desc" \
@@ -965,7 +965,7 @@ Create_NSX_LB_VirtualServer() {
         "pool_path": $sp_path,
         "ports": $ports
         }')
-    echo $config
+    #echo $config
     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
       -u $NSXUSERNAME:$NSXPASSWORD \
       $NSXHOSTNAME/policy/api/v1/infra/lb-virtual-servers/$vs_name\
