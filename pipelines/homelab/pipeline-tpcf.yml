@@ -46,7 +46,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: vsphere-platform-automation-vsphere-image-(.*).tar.gz
+    regexp: vsphere-platform-automation-image-(.*).tar.gz
 
 
 - name: custom-task-image
