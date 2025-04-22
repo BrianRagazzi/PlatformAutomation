@@ -519,6 +519,7 @@ jobs:
     builds: 4
   plan:
   - get: healthwatch-product
+  - get: healthwatch-pas-exporter
   - get: config
     trigger: true
   - get: platform-automation-vsphere-image
@@ -564,6 +565,40 @@ jobs:
       VARS_FILES: |
         vars/((foundation))/vars/healthwatch-defaults.yml
         vars/((foundation))/vars/healthwatch-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-product-healthwatch-pas-exporter
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: healthwatch-pas-exporter
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-healthwatch-pas-exporter
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: healthwatch-pas-exporter
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-healthwatch-pas-exporter
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/hw-pas-exporter.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/hw-pas-exporter-defaults.yml
+        vars/((foundation))/vars/hw-pas-exporter-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
 # - name: mysql
