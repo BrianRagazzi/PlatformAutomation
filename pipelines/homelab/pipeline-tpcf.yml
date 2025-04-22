@@ -105,11 +105,11 @@ resources:
 #     <<: *s3_credentials_binaries
 #     regexp: healthwatch-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 #
-# - name: healthwatch-product
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[p-healthwatch,(.*)\]p-healthwatch-.*.pivotal
+- name: healthwatch-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p-healthwatch-(.*).pivotal
 
 - name: nsx-product
   type: s3
