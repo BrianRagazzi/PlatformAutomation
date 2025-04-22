@@ -115,7 +115,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[vmware-nsx-t,(.*)\]VMware-NSX-T-.*.pivotal
+    regexp: VMware-NSX-T-(.*).pivotal
 
 # - name: mysql-stemcell
 #   type: s3
@@ -194,7 +194,7 @@ groups:
   - pas
   # - pas-windows
   - nsx
-  # - healthwatch
+  - healthwatch
   # - mysql
   #- apply-changes
 # - name: post-deploy
@@ -221,7 +221,7 @@ jobs:
 - name: create-nsx-objects
   serial: true
   build_log_retention:
-    builds: 4
+    builds: 2
   serial_groups: [ install ]
   plan:
   - get: config
@@ -336,7 +336,7 @@ jobs:
 - name: pas
   serial: false  # try  false 052219
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - get: config
     trigger: true
@@ -455,7 +455,7 @@ jobs:
 - name: nsx
   serial: true
   build_log_retention:
-    builds: 4
+    builds: 2
   plan:
   - get: nsx-product
   - get: config
@@ -506,59 +506,58 @@ jobs:
         vars/((foundation))/vars/nsx-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-# - name: healthwatch
-#   serial: true
-#   build_log_retention:
-#     builds: 4
-#   plan:
-#   - aggregate:
-#     - get: healthwatch-product
-#     - get: config
-#       trigger: true
-#     - get: platform-automation-vsphere-image
-#       passed: [ pas ]
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#
-#   - task: upload-product-healthwatch
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/upload-product.yml
-#     input_mapping:
-#       product: healthwatch-product
-#       config: config
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: stage-product-healthwatch
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/stage-product.yml
-#     input_mapping:
-#       product: healthwatch-product
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: configure-healthwatch
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/configure-product.yml
-#     input_mapping:
-#       config: config
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
-#       VARS_FILES: |
-#         vars/((foundation))/vars/p-healthwatch-defaults.yml
-#         vars/((foundation))/vars/p-healthwatch-vars.yml
-#       ENV_FILE: ((foundation))/env/env.yml
+- name: healthwatch
+  serial: true
+  build_log_retention:
+    builds: 4
+  plan:
+  - get: healthwatch-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ pas, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product-healthwatch
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: healthwatch-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-healthwatch
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: healthwatch-product
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-healthwatch
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/healthwatch.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/healthwatch-defaults.yml
+        vars/((foundation))/vars/healthwatch-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
 
 # - name: mysql
 #   serial: true
