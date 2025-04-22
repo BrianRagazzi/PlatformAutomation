@@ -109,7 +109,14 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: p-healthwatch-(.*).pivotal
+    regexp: healthwatch-(.*).pivotal
+
+- name: healthwatch-pas-exporter
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: healthwatch-pas-exporter-(.*).pivotal
+
 
 - name: nsx-product
   type: s3
