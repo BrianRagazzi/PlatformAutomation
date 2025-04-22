@@ -125,6 +125,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: VMware-NSX-T-(.*).pivotal
 
+- name: postgres-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: postgres-.*.pivotal
+
 # - name: mysql-stemcell
 #   type: s3
 #   source:
@@ -203,6 +209,7 @@ groups:
   # - pas-windows
   - nsx
   - healthwatch
+  - postgres
   # - mysql
   - apply-changes
 # - name: post-deploy
@@ -602,6 +609,61 @@ jobs:
         vars/((foundation))/vars/hw-pas-exporter-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
+
+- name: postgres
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: postgres-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ pas, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product-postgres
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: postgres-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-postgres
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: postgres-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-postgres
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/postgres.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/postgres-defaults.yml
+        vars/((foundation))/vars/postgres-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
 # - name: mysql
 #   serial: true
 #   build_log_retention:
@@ -676,7 +738,7 @@ jobs:
   plan:
   - get: config #*credhub-interpolate
     trigger: true
-    passed: [ healthwatch ]
+    passed: [ healthwatch, postgres ]
   - get: platform-automation-vsphere-image
     params:
       unpack: true
