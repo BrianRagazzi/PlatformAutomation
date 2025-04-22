@@ -156,7 +156,19 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: p-healthwatch-(.*).pivotal
+    regexp: healthwatch-(.*).pivotal
+
+# - name: healthwatch-pas-exporter
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: healthwatch-pas-exporter-(.*).pivotal
+#
+# - name: healthwatch-pks-exporter
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: healthwatch-pks-exporter-(.*).pivotal
 
 
 - name: config
@@ -504,6 +516,24 @@ jobs:
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/healthwatch.yml
+  - put: healthwatch-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - task: download-product-pks-exporter
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/healthwatch-pks-exporter.yml
+  - put: healthwatch-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - task: download-product-pas-exporter
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/healthwatch-pas-exporter.yml
   - put: healthwatch-product
     no_get: true
     params:
