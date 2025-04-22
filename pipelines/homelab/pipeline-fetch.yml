@@ -156,7 +156,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: healthwatch-(.*).pivotal
+    regexp: healthwatch-(\d.*).pivotal
 
 # - name: healthwatch-pas-exporter
 #   type: s3

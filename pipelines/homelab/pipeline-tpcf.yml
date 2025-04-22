@@ -109,7 +109,8 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: healthwatch-(.*).pivotal
+    #regexp: healthwatch-2(.*).pivotal
+    regexp: healthwatch-(\d.*).pivotal
 
 - name: healthwatch-pas-exporter
   type: s3
@@ -203,7 +204,7 @@ groups:
   - nsx
   - healthwatch
   # - mysql
-  #- apply-changes
+  - apply-changes
 # - name: post-deploy
 #   jobs:
 #   #- create-org-admin
@@ -468,7 +469,7 @@ jobs:
   - get: config
     trigger: true
   - get: platform-automation-vsphere-image
-    passed: [ pas ]
+    passed: [ install-opsman ]
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -668,30 +669,32 @@ jobs:
 #         vars/((foundation))/vars/mysql-vars.yml
 #       ENV_FILE: ((foundation))/env/env.yml
 
-# - name: apply-changes
-#   serial: true
-#   plan:
-#     - get: config
-#       trigger: true
-#       passed: [ nsx ] #, mysql ] #, healthwatch ] #, mysql, pas-windows]
-#     - get: platform-automation-vsphere-image
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#
-#   - task: apply-product-changes
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/apply-changes.yml
-#     input_mapping:
-#       config: config
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
+- name: apply-changes
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config #*credhub-interpolate
+    trigger: true
+    passed: [ healthwatch ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: config #*credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
 
 
 # Use this for creating a local cf admin
