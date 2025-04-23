@@ -129,7 +129,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: postgres-.*.pivotal
+    regexp: postgres-(.*).pivotal
 
 # - name: mysql-stemcell
 #   type: s3
@@ -608,7 +608,6 @@ jobs:
         vars/((foundation))/vars/hw-pas-exporter-defaults.yml
         vars/((foundation))/vars/hw-pas-exporter-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
-
 
 - name: postgres
   serial: true
