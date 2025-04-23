@@ -947,7 +947,7 @@ Create_NSX_LB_VirtualServer() {
   else
     local ap_path=$(Get_NSX_App_Profile_Path $app_profile)
     local lb_path=$(Get_NSX_LoadBalancer $lb_name)
-    local sp_path=$(Get_NSX_IP_Pool $sp_name)
+    local sp_path=$(Get_NSX_LB_Pool $sp_name)
     echo "Creating LoadBalancer Virtual Service $vs_name"
     local config=$(jq -n \
         --arg display_name "$vs_name" \
@@ -963,9 +963,10 @@ Create_NSX_LB_VirtualServer() {
         "application_profile_path": $ap_path,
         "lb_service_path": $lb_path,
         "pool_path": $sp_path,
+        "sorry_pool_path": $sp_path,
         "ports": $ports
         }')
-    #echo $config
+    echo $config
     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
       -u $NSXUSERNAME:$NSXPASSWORD \
       $NSXHOSTNAME/policy/api/v1/infra/lb-virtual-servers/$vs_name\
