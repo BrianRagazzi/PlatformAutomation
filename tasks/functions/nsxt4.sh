@@ -133,11 +133,11 @@ Get_TKGI_SuperUser_ID(){
 Get_NSX_LB_Pool() {
   # $1 Monitor Name
   local pool_name=$1
-  local poolid=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
+  local poolpath=$(curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
     -u $NSXUSERNAME:$NSXPASSWORD \
     $NSXHOSTNAME/policy/api/v1/infra/lb-pools| \
-    jq -r --arg name "$pool_name" '.results[] | select(.display_name == $name) | .id')
-  echo $poolid
+    jq -r --arg name "$pool_name" '.results[] | select(.display_name == $name) | .path')
+  echo $poolpath
 }
 
 Get_NSX_LB_Monitor() {
