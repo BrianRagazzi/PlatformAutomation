@@ -966,7 +966,7 @@ Create_NSX_LB_VirtualServer() {
         "sorry_pool_path": $sp_path,
         "ports": $ports
         }')
-    echo $config
+    #echo $config
     curl -s -k -H "Content-Type: Application/json" -H "X-Allow-Overwrite: true" \
       -u $NSXUSERNAME:$NSXPASSWORD \
       $NSXHOSTNAME/policy/api/v1/infra/lb-virtual-servers/$vs_name\
