@@ -59,7 +59,7 @@ credhub set --name /concourse/$TEAMNAME/vcenter_admin_password --type value --va
 # credhub set --name /concourse/$TEAMNAME/opsman_host --type value --value 'https://om-tkgi.lab.brianragazzi.com'
 credhub set --name /concourse/$TEAMNAME/opsman_host --type value --value 'https://om-tpcf.lab.brianragazzi.com'
 credhub set --name /concourse/$TEAMNAME/opsman_ssh_public_key --type value --value "$(cat /home/ubuntu/.ssh/authorized_keys)"
-credhub set --name /concourse/$TEAMNAME/opsman_password --type value --value opsmanpass
+credhub set --name /concourse/$TEAMNAME/opsman_password --type value --value  opsmanpass
 credhub set --name /concourse/$TEAMNAME/opsman_decryption_passphrase --type value --value opsmandecrypt
 
 # AD
