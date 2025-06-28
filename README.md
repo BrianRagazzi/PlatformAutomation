@@ -33,18 +33,36 @@ credhub set \
    -w "${ADMIN_PASSWORD}"
 ```
 
+# Concourse-embedded credhub
+
 ## Obtain concourse credhub credentials from BOSH credhub:
 ```
 export CONCOURSE_CREDHUB_SECRET="$(credhub get -n /p-bosh/concourse/credhub_admin_secret -q)"
 export CONCOURSE_CA_CERT="$(credhub get -n /p-bosh/concourse/atc_tls -k ca)"
 ```
-### login to concourse credhub:
+
+## get vars from Director credhub:
+```
+credhub api  https://192.168.102.11:8844 --ca-cert=/var/tempest/workspaces/default/root_ca_certificate
+credhub login --client-name=$BOSH_CLIENT --client-secret=$BOSH_CLIENT_SECRET
+export CONCOURSE_CREDHUB_SECRET="$(credhub get -n /p-bosh/concourse/credhub_admin_secret -q)"
+export CONCOURSE_CA_CERT="$(credhub get -n /p-bosh/concourse/atc_tls -k ca)"
+```
+## Login to concourse credhub
 ```
 credhub login \
-  --server "https://192.168.102.12:8844" \
+  --server "https://concourse.lab.brianragazzi.com:8000" \
   --client-name=credhub_admin \
-  --client-secret="${CONCOURSE_CREDHUB_SECRET}" \
+  --client-secret="vRE6FIBBcbhrAm88iRTjPoprD1xTjQ" \
   --ca-cert "${CONCOURSE_CA_CERT}"
+```
+## Login with fly:
+```
+fly -t ci login -c https://concourse.lab.brianragazzi.com -u admin -p VMware1! --ca-cert <(echo "${CONCOURSE_CA_CERT}")
+```
+## dump cert to file
+```
+echo "${CONCOURSE_CA_CERT}" > concourse.crt
 ```
 
 
