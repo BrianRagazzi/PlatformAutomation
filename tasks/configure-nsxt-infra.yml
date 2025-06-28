@@ -21,12 +21,13 @@ run:
   - |
     set -eu
     yq --version
+    jq --version
 
     export NSXUSERNAME=$(yq eval '.nsxt_admin_username' $NSXT_INFRA_CONFIG_FILE )
     export NSXPASSWORD=$(yq eval '.nsxt_admin_password' $NSXT_INFRA_CONFIG_FILE )
     export NSXHOSTNAME=$(yq eval '.nsxt_manager' $NSXT_INFRA_CONFIG_FILE )
 
-    set -eux
+    #set -eux
 
     source custom-tasks/tasks/functions/nsxt4.sh
     source custom-tasks/tasks/functions/nsxt-yml.sh
@@ -34,10 +35,10 @@ run:
     echo "Creating objects on NSX Manager: $NSXHOSTNAME"
 
     Create_T1_Gateways $NSXT_INFRA_CONFIG_FILE
-    #Create_Segments $NSXT_INFRA_CONFIG_FILE
-    #Create_IP_Pools $NSXT_INFRA_CONFIG_FILE
-    #Create_IP_Blocks $NSXT_INFRA_CONFIG_FILE
-    #Create_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE
-    #Create_LB_Monitors $NSXT_INFRA_CONFIG_FILE
-    #Create_LB_Pools  $NSXT_INFRA_CONFIG_FILE
-    #Create_Load_Balancers $NSXT_INFRA_CONFIG_FILE
+    Create_Segments $NSXT_INFRA_CONFIG_FILE
+    Create_IP_Pools $NSXT_INFRA_CONFIG_FILE
+    Create_IP_Blocks $NSXT_INFRA_CONFIG_FILE
+    Create_T0_NAT_Rules $NSXT_INFRA_CONFIG_FILE
+    Create_LB_Monitors $NSXT_INFRA_CONFIG_FILE
+    Create_LB_Pools  $NSXT_INFRA_CONFIG_FILE
+    Create_Load_Balancers $NSXT_INFRA_CONFIG_FILE
