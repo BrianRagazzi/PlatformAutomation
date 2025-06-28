@@ -963,7 +963,6 @@ Create_NSX_LB_VirtualServer() {
         "application_profile_path": $ap_path,
         "lb_service_path": $lb_path,
         "pool_path": $sp_path,
-        "sorry_pool_path": $sp_path,
         "ports": $ports
         }')
     #echo $config
