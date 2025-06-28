@@ -12,6 +12,17 @@ ssh ubuntu@om-pa.lab.brianragazzi.com -i ~/.ssh/ops-mgr-ssh-key
 credhub api  https://192.168.102.11:8844 --ca-cert=/var/tempest/workspaces/default/root_ca_certificate
 credhub login --client-name=$BOSH_CLIENT --client-secret=$BOSH_CLIENT_SECRET
 ```
+### login to credhub on concourse:
+```
+credhub login \
+  --server "https://concourse.lab.brianragazzi.com:8000" \
+  --client-name=credhub_admin \
+  --client-secret="${CONCOURSE_CREDHUB_SECRET}" \
+  --ca-cert "${CONCOURSE_CA_CERT}"
+
+```
+
+
 #### Add/Set Credentials
 ```
 export TEAMNAME=homelab
