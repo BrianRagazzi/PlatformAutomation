@@ -218,6 +218,8 @@ groups:
   - postgres
   # - mysql
   - apply-changes
+  - genai
+  - apply-changes-genai
 # - name: post-deploy
 #   jobs:
 #   #- create-org-admin
