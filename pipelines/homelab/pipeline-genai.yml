@@ -178,7 +178,7 @@ jobs:
     builds: 2
   plan:
   - get: config #*credhub-interpolate
-    trigger: false #true
+    trigger: true
     passed: [ genai ]
   - get: platform-automation-vsphere-image
     params:
