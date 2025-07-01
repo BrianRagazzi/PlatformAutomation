@@ -162,15 +162,16 @@ resources:
 #     regexp: pas-windows-stemcell/\[stemcells-windows-server,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
 
 
-# - name: installation
-#   type: s3
-#   source:
-#     access_key_id: ((s3.access_key_id))
-#     secret_access_key: ((s3.secret_access_key))
-#     endpoint: ((s3.endpoint))
-#     bucket: ((s3.buckets_backup_bucket)) #Different Bucket
-#     skip_ssl_verification: true
-#     regexp: ((foundation))/installation-(.*).zip
+- name: installation
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    endpoint: ((s3_endpoint))
+    region_name: ((s3_region_name))
+    skip_ssl_verification: true
+    bucket: ((s3_buckets_backup_bucket)) #Different Bucket
+    regexp: ((foundation))/installation-(.*).zip
 
 # - name: config-backup
 #   type: s3
@@ -199,10 +200,10 @@ resources:
 #   source:
 #     interval: 999999h
 #
-# - name: daily-trigger
-#   type: time
-#   source:
-#     interval: 24h
+- name: daily-trigger
+  type: time
+  source:
+    interval: 24h
 
 
 
@@ -224,10 +225,10 @@ groups:
 #   jobs:
 #   #- create-org-admin
 #   - add-pas-admin-group
-#   - update-errands-apply
-# - name: save-state
-#   jobs:
-#   - export-installation
+  - update-errands
+- name: save-state
+  jobs:
+  - export-installation
 #   - staged-director-config-backup
 #   - staged-config-pas-backup
 # #  - staged-config-pasw-backup
@@ -828,7 +829,7 @@ jobs:
   plan:
   - get: config #*credhub-interpolate
     trigger: true
-    passed: [ genai ]
+    passed: [ genai, update-errands ]
   - get: platform-automation-vsphere-image
     params:
       unpack: true
@@ -913,105 +914,65 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #
-# - name: update-errands-apply
-#   serial: false  # try  false 052219
-#   plan:
-#   - aggregate:
-#     - get: config
-#     - get: platform-automation-vsphere-image
-#       trigger: true
-#       passed: [add-pas-admin-group]
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#
-#   - task: configure-pas
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/configure-product.yml
-#     input_mapping:
-#       config: config
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       CONFIG_FILE: ((foundation))/config/cf.yml
-#       VARS_FILES: |
-#         vars/((foundation))/vars/cf-defaults.yml
-#         vars/((foundation))/vars/cf-vars.yml
-#         vars/((foundation))/vars/cf-errands.yml
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   # - task: configure-healthwatch
-#   #   image: platform-automation-vsphere-image
-#   #   file: platform-automation-tasks/tasks/configure-product.yml
-#   #   input_mapping:
-#   #     config: config
-#   #     env: interpolated-creds
-#   #     vars: interpolated-creds
-#   #   params:
-#   #     CONFIG_FILE: ((foundation))/config/p-healthwatch.yml
-#   #     VARS_FILES: |
-#   #       vars/((foundation))/vars/p-healthwatch-defaults.yml
-#   #       vars/((foundation))/vars/p-healthwatch-vars.yml
-#   #       vars/((foundation))/vars/p-healthwatch-errands.yml
-#   #     ENV_FILE: ((foundation))/env/env.yml
-#
-#   # - task: configure-mysql
-#   #   image: platform-automation-vsphere-image
-#   #   file: platform-automation-tasks/tasks/configure-product.yml
-#   #   input_mapping:
-#   #     config: config
-#   #     env: interpolated-creds
-#   #     vars: interpolated-creds
-#   #   params:
-#   #     CONFIG_FILE: ((foundation))/config/mysql.yml
-#   #     VARS_FILES: |
-#   #       vars/((foundation))/vars/mysql-defaults.yml
-#   #       vars/((foundation))/vars/mysql-vars.yml
-#   #       vars/((foundation))/vars/mysql-errands.yml
-#   #     ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: apply-product-changes
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/apply-changes.yml
-#     input_mapping:
-#       config: config
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#
-# - name: export-installation
-#   serial: true
-#   plan:
-#     - aggregate:
-#         - get: one-time-trigger
-#         - get: daily-trigger
-#           trigger: true
-#         - get: platform-automation-vsphere-image
-#           params:
-#             unpack: true
-#         - get: platform-automation-tasks
-#           params:
-#             unpack: true
-#         - get: config
-#     - task: credhub-interpolate
-#       <<: *credhub-interpolate
-#     - task: export-installation
-#       image: platform-automation-vsphere-image
-#       file: platform-automation-tasks/tasks/export-installation.yml
-#       input_mapping:
-#         env: interpolated-creds
-#       params:
-#         ENV_FILE: ((foundation))/env/env.yml
-#         INSTALLATION_FILE: installation-$timestamp.zip
-#     - put: installation
-#       params:
-#         file: installation/installation*.zip
+- name: update-errands
+  serial: false  # try  false 052219
+  plan:
+  - get: config
+    trigger: true
+    passed: [ apply-changes ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: configure-tpcf-again
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/cf.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/cf-defaults.yml
+        vars/((foundation))/vars/cf-vars.yml
+        vars/((foundation))/vars/cf-errands.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+
+
+- name: export-installation
+  serial: true
+  plan:
+  - get: one-time-trigger
+  - get: daily-trigger
+    trigger: true
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: export-installation
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/export-installation.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      INSTALLATION_FILE: installation-$timestamp.zip
+  - put: installation
+    params:
+      file: installation/installation*.zip
 #
 # - name: staged-director-config-backup
 #   plan:

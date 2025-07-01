@@ -41,6 +41,7 @@ credhub set --name /concourse/$TEAMNAME/credhub_ca_cert --type value --value "$(
 # S3
 credhub set --name /concourse/$TEAMNAME/s3_endpoint --type value --value https://minio.lab.brianragazzi.com
 credhub set --name /concourse/$TEAMNAME/s3_buckets_pivnet_products --type value --value binaries
+credhub set --name /concourse/$TEAMNAME/s3_buckets_backup_bucket  --type value --value platform-backup
 credhub set --name /concourse/$TEAMNAME/s3_region_name --type value --value us-east-1
 credhub set --name /concourse/$TEAMNAME/s3_access_key_id --type value --value ACCESSKEYHERE
 credhub set --name /concourse/$TEAMNAME/s3_secret_access_key --type value --value SECRETKEYHERE
