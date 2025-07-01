@@ -1,0 +1,200 @@
+---
+# code_snippet multiple-product-credhub-interpolate start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*credhub-interpolate" is used in its place
+credhub-interpolate: &credhub-interpolate
+  image: platform-automation-vsphere-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/concourse/((foundation))'
+    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
+    SKIP_MISSING: true
+  input_mapping:
+    files: config
+  # output_mapping:
+  #   interpolated-files: config
+  output_mapping:
+    interpolated-files: interpolated-creds
+
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((s3_access_key_id))
+  secret_access_key: ((s3_secret_access_key))
+  endpoint: ((s3_endpoint))
+  bucket: ((s3_buckets_pivnet_products))
+  region_name: ((s3_region_name))
+  skip_ssl_verification: true
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tags: latest-final
+
+resources:
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-vsphere-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: vsphere-platform-automation-image-(.*).tar.gz
+
+
+
+- name: config
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["((foundation))"]
+
+
+
+- name: genai-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: genai-(.*).pivotal
+
+
+
+- name: state
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+
+
+# triggers used to have jobs do something in a timely manner
+# - name: one-time-trigger
+#   type: time
+#   source:
+#     interval: 999999h
+#
+# - name: daily-trigger
+#   type: time
+#   source:
+#     interval: 24h
+
+
+
+groups:
+- name: deploy
+  jobs:
+  - genai
+  # - mysql
+  - apply-changes
+# - name: post-deploy
+#   jobs:
+#   #- create-org-admin
+#   - add-pas-admin-group
+#   - update-errands-apply
+# - name: save-state
+#   jobs:
+#   - export-installation
+#   - staged-director-config-backup
+#   - staged-config-pas-backup
+# #  - staged-config-pasw-backup
+#   # - staged-config-healthwatch-backup
+#   # - staged-config-mysql-backup
+#   - staged-config-nsxt-backup
+
+
+jobs:
+
+- name: genai
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: genai-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    #passed: [ pas, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product-genai
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: genai-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-genai
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: genai-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-genai
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/genai.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/genai-defaults.yml
+        vars/((foundation))/vars/genai-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+
+- name: apply-changes
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config #*credhub-interpolate
+    trigger: false #true
+    passed: [ genai ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: config #*credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
