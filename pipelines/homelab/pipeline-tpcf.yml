@@ -131,6 +131,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: postgres-(.*).pivotal
 
+- name: genai-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: genai-(.*).pivotal
+
 # - name: mysql-stemcell
 #   type: s3
 #   source:
@@ -756,6 +762,90 @@ jobs:
       env: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
+
+
+- name: genai
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: genai-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ apply-changes ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product-genai
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: genai-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-genai
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: genai-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-genai
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/genai.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/genai-defaults.yml
+        vars/((foundation))/vars/genai-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+- name: apply-changes-genai
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config #*credhub-interpolate
+    trigger: true
+    passed: [ genai ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: config #*credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
 
 
 # Use this for creating a local cf admin
