@@ -173,16 +173,17 @@ resources:
     bucket: ((s3_buckets_backup_bucket)) #Different Bucket
     regexp: ((foundation))/installation-(.*).zip
 
-# - name: config-backup
-#   type: s3
-#   source:
-#     access_key_id: ((s3.access_key_id))
-#     secret_access_key: ((s3.secret_access_key))
-#     endpoint: ((s3.endpoint))
-#     bucket: ((s3.buckets_backup_bucket)) #Different Bucket
-#     skip_ssl_verification: true
-#     regexp: ((foundation))/(.*).yml
-#
+- name: config-backup
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    endpoint: ((s3_endpoint))
+    region_name: ((s3_region_name))
+    skip_ssl_verification: true
+    bucket: ((s3_buckets_backup_bucket)) #Backup Bucket
+    regexp: ((foundation))/(.*).yml
+
 
 - name: state
   type: git
@@ -229,7 +230,7 @@ groups:
 - name: save-state
   jobs:
   - export-installation
-#   - staged-director-config-backup
+  - staged-director-config-backup
 #   - staged-config-pas-backup
 # #  - staged-config-pasw-backup
 #   # - staged-config-healthwatch-backup
@@ -973,29 +974,29 @@ jobs:
   - put: installation
     params:
       file: installation/installation*.zip
-#
-# - name: staged-director-config-backup
-#   plan:
-#   - get: platform-automation-tasks
-#     params: {unpack: true}
-#     trigger: true
-#     passed:
-#       - export-installation
-#   - get: platform-automation-vsphere-image
-#     params: {unpack: true}
-#   - get: config
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#   - task: staged-director-config
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/staged-director-config.yml
-#     input_mapping:
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#   - put: config-backup
-#     params:
-#       file: generated-config/*.yml
+
+- name: staged-director-config-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-vsphere-image
+    params: {unpack: true}
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: staged-director-config
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/staged-director-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
 #
 # - name: staged-config-pas-backup
 #   plan:
