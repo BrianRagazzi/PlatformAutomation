@@ -123,7 +123,7 @@ jobs:
   plan:
   - get: genai-product
   - get: config
-    trigger: true
+    trigger: false #true
   - get: platform-automation-vsphere-image
     #passed: [ pas, nsx ]
     params:
