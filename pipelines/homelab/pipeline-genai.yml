@@ -69,13 +69,13 @@ resources:
 
 
 
-- name: state
-  type: git
-  source:
-    uri: ((config_github_repo))
-    branch: ((config_github_branch))
-    username: ((github_username))
-    password: ((github_token))
+# - name: state
+#   type: git
+#   source:
+#     uri: ((config_github_repo))
+#     branch: ((config_github_branch))
+#     username: ((github_username))
+#     password: ((github_token))
 
 
 

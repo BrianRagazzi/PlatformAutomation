@@ -83,7 +83,7 @@ credhub export
 
 ### Login
 ```
-fly -t ci login   -c "https://concourse.lab.brianragazzi.com/"  -n homelab -u "admin" -p PASSWORD
+fly -t ci login -k  -c "https://concourse.lab.brianragazzi.com/"  -n homelab -u "admin" -p PASSWORD
 ```
 
 ## Pipelines
@@ -106,4 +106,8 @@ fly -t ci up -p test-opsman
 ```
 fly -t ci set-pipeline -p tpcf-configure -c pipeline-tpcf.yml -l ../../params/homelab/params-homelab-tas.yml --check-creds -n
 fly -t ci up -p tpcf-configure
+```
+```
+fly -t ci set-pipeline -p genai-configure -c pipeline-genai.yml -l ../../params/homelab/params-homelab-tas.yml --check-creds -n
+fly -t ci up -p genai-configure
 ```
