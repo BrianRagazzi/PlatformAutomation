@@ -195,11 +195,11 @@ resources:
 
 
 # triggers used to have jobs do something in a timely manner
-# - name: one-time-trigger
-#   type: time
-#   source:
-#     interval: 999999h
-#
+- name: one-time-trigger
+  type: time
+  source:
+    interval: 999999h
+
 - name: daily-trigger
   type: time
   source:

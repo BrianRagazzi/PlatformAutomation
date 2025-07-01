@@ -11,6 +11,8 @@ ssh ubuntu@om-pa.lab.brianragazzi.com -i ~/.ssh/ops-mgr-ssh-key
 ```
 credhub api  https://192.168.102.11:8844 --ca-cert=/var/tempest/workspaces/default/root_ca_certificate
 credhub login --client-name=$BOSH_CLIENT --client-secret=$BOSH_CLIENT_SECRET
+export CONCOURSE_CREDHUB_SECRET=$(credhub get -n /p-bosh/concourse/credhub_admin_secret -q)
+export CONCOURSE_CA_CERT=$(credhub get -n /p-bosh/concourse/atc_tls -k ca -q)
 ```
 ### login to credhub on concourse:
 ```
