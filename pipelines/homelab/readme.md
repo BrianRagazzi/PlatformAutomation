@@ -73,7 +73,7 @@ credhub set --name /concourse/$TEAMNAME/properties_uaa_ldap_credentials_password
 TLS Cert
 credhub set --name /concourse/$TEAMNAME/ldap_server_ssl_cert --type value --value "$(cat ./test/rootca.crt)"
 
-# TKGI Cert
+# TKGI Cert - Also used by TAS/TPCF!
 credhub set --name /concourse/$TEAMNAME/pivotal-container-service_pks_tls_cert_pem --type value --value "$(cat ./test/wildcard.crt)"
 credhub set --name /concourse/$TEAMNAME/pivotal-container-service_pks_tls_private_key_pem --type value --value "$(cat ./test/wildcard.key)"
 
