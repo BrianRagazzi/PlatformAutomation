@@ -158,6 +158,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: healthwatch-(\d.*).pivotal
 
+- name: tanzu-hub-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: tanzu-hub-(\d.*).pivotal
+
 # - name: healthwatch-pas-exporter
 #   type: s3
 #   source:
@@ -535,6 +541,35 @@ jobs:
     params:
       CONFIG_FILE: download-product-configs/healthwatch-pas-exporter.yml
   - put: healthwatch-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+
+- name: fetch-tanzu-hub
+  serial: true
+  serial_groups: [ fetch-cf ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+      - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product-and-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/tanzu-hub.yml
+  - put: tanzu-hub-product
     no_get: true
     params:
       file: downloaded-product/*.pivotal
