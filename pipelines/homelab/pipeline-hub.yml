@@ -1,0 +1,485 @@
+---
+# code_snippet multiple-product-credhub-interpolate start yaml
+# This task is used in multiple jobs
+# The yaml anchor "*credhub-interpolate" is used in its place
+credhub-interpolate: &credhub-interpolate
+  image: platform-automation-vsphere-image
+  file: platform-automation-tasks/tasks/credhub-interpolate.yml
+  params:
+    CREDHUB_CLIENT: ((credhub_client))
+    CREDHUB_SECRET: ((credhub_secret))
+    CREDHUB_SERVER: ((credhub_server))
+    CREDHUB_CA_CERT: ((credhub_ca_cert))
+    PREFIX: '/concourse/((foundation))'
+    INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
+    SKIP_MISSING: true
+  input_mapping:
+    files: config
+  # output_mapping:
+  #   interpolated-files: config
+  output_mapping:
+    interpolated-files: interpolated-creds
+
+s3_credentials_binaries: &s3_credentials_binaries
+  access_key_id: ((s3_access_key_id))
+  secret_access_key: ((s3_secret_access_key))
+  endpoint: ((s3_endpoint))
+  bucket: ((s3_buckets_pivnet_products))
+  region_name: ((s3_region_name))
+  skip_ssl_verification: true
+
+resource_types:
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tags: latest-final
+
+resources:
+- name: platform-automation-tasks
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: platform-automation-tasks-(.*).zip
+
+- name: platform-automation-vsphere-image
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: vsphere-platform-automation-image-(.*).tar.gz
+
+
+- name: custom-task-image
+  type: registry-image
+  source:
+    repository: ((registry_endpoint))/((registry_repo_customtask))
+    #username: ((registry_username))
+    #password: ((registry_password))
+    tag: 'latest'
+    insecure: true
+    # ca_certs:
+    # - ((registry_ca_cert))
+
+- name: config
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["((foundation))"]
+
+- name: custom-tasks
+  type: git
+  source:
+    uri: ((PlatformAutomation_github_repo))
+    branch: ((PlatformAutomation_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+    paths: ["tasks"]
+
+- name: opsman-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    #regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
+    regexp: ops-manager-vsphere-(.*).ova
+
+
+- name: tanzu-hub-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: tanzu-hub-(\d.*).pivotal
+
+
+- name: installation
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    endpoint: ((s3_endpoint))
+    region_name: ((s3_region_name))
+    skip_ssl_verification: true
+    bucket: ((s3_buckets_backup_bucket)) #Different Bucket
+    regexp: ((foundation))/installation-(.*).zip
+
+- name: config-backup
+  type: s3
+  source:
+    access_key_id: ((s3_access_key_id))
+    secret_access_key: ((s3_secret_access_key))
+    endpoint: ((s3_endpoint))
+    region_name: ((s3_region_name))
+    skip_ssl_verification: true
+    bucket: ((s3_buckets_backup_bucket)) #Backup Bucket
+    regexp: ((foundation))/(.*).yml
+
+
+- name: state
+  type: git
+  source:
+    uri: ((config_github_repo))
+    branch: ((config_github_branch))
+    username: ((github_username))
+    password: ((github_token))
+
+
+
+# triggers used to have jobs do something in a timely manner
+- name: one-time-trigger
+  type: time
+  source:
+    interval: 999999h
+
+- name: daily-trigger
+  type: time
+  source:
+    interval: 24h
+
+
+
+groups:
+- name: deploy
+  jobs:
+  - install-opsman
+  - tanzu-hub
+  - apply-changes
+- name: save-state
+  jobs:
+  - export-installation
+  - staged-director-config-backup
+- name: teardown
+  jobs:
+  - destroy-installation
+
+
+jobs:
+
+- name: install-opsman
+  serial: true
+  serial_groups: [ install ]
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: opsman-product
+  - get: config
+  - get: state
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    passed: [create-nsx-objects]
+    trigger: true
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: create-vm
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/create-vm.yml
+    input_mapping:
+      state: state
+      config: config
+      vars: interpolated-creds
+      image: opsman-product
+    params:
+      STATE_FILE: ((foundation))/state/state.yml
+      OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml #prepends config/
+      VARS_FILES: |
+        vars/((foundation))/vars/opsman-defaults.yml vars/((foundation))/vars/opsman-vars.yml
+
+    ensure: #&make-state-commit
+      do:
+        - task: make-commit
+          image: platform-automation-vsphere-image
+          file: platform-automation-tasks/tasks/make-git-commit.yml
+          input_mapping:
+            repository: state
+            file-source: generated-state
+          output_mapping:
+            repository-commit: state-commit
+          params:
+            FILE_SOURCE_PATH: state.yml
+            FILE_DESTINATION_PATH: ((foundation))/state/state.yml
+            GIT_AUTHOR_EMAIL: ((github_author_email))
+            GIT_AUTHOR_NAME: "Platform Automation"
+            COMMIT_MESSAGE: 'Update state file'
+        - put: state
+          params:
+            repository: state-commit
+            merge: true
+
+  - task: configure-authentication
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-authentication.yml
+    attempts: 10
+    input_mapping:
+      env: interpolated-creds
+      config: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      AUTH_CONFIG_FILE: ((foundation))/vars/auth.yml
+  - task: configure-director
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-director.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      DIRECTOR_CONFIG_FILE: ((foundation))/config/director.yml
+      VARS_FILES: vars/((foundation))/vars/director-defaults.yml vars/((foundation))/vars/director-vars.yml
+
+  - task: apply-director-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-director-changes.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+- name: tanzu-hub
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: tanzu-hub-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ install-opsman ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product-tanzu-hub
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: tanzu-hub-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-postgres
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: tanzu-hub-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-tanzu-hub
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/tanzu-hub.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/tanzu-hub-defaults.yml
+        vars/((foundation))/vars/tanzu-hub-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+# - name: mysql
+#   serial: true
+#   build_log_retention:
+#     builds: 4
+#   plan:
+#   - aggregate:
+#     - get: mysql-product
+#     - get: mysql-stemcell
+#     - get: config
+#       trigger: true
+#     - get: platform-automation-vsphere-image
+#       passed: [ pas ]
+#       params:
+#         unpack: true
+#     - get: platform-automation-tasks
+#       params:
+#         unpack: true
+#
+#   - task: credhub-interpolate
+#     <<: *credhub-interpolate
+#
+#   - task: upload-product-mysql
+#     image: platform-automation-vsphere-image
+#     file: platform-automation-tasks/tasks/upload-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       config: config
+#       download-config: config
+#       env: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: stage-product-mysql
+#     image: platform-automation-vsphere-image
+#     file: platform-automation-tasks/tasks/stage-product.yml
+#     input_mapping:
+#       product: mysql-product
+#       config: config
+#       download-config: config
+#       env: interpolated-creds
+#       secrets: interpolated-creds
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: upload-mysql-stemcell
+#     image: platform-automation-vsphere-image
+#     file: platform-automation-tasks/tasks/upload-stemcell.yml
+#     input_mapping:
+#       env: interpolated-creds
+#       stemcell: mysql-stemcell
+#     params:
+#       ENV_FILE: ((foundation))/env/env.yml
+#
+#   - task: configure-mysql
+#     image: platform-automation-vsphere-image
+#     file: platform-automation-tasks/tasks/configure-product.yml
+#     input_mapping:
+#       config: config
+#       env: interpolated-creds
+#       vars: interpolated-creds
+#     params:
+#       CONFIG_FILE: ((foundation))/config/mysql.yml
+#       VARS_FILES: |
+#         vars/((foundation))/vars/mysql-defaults.yml
+#         vars/((foundation))/vars/mysql-vars.yml
+#       ENV_FILE: ((foundation))/env/env.yml
+
+- name: apply-changes
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config #*credhub-interpolate
+    trigger: true
+    passed: [ healthwatch, postgres ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: config #*credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+
+
+- name: export-installation
+  serial: true
+  plan:
+  - get: one-time-trigger
+  - get: daily-trigger
+    trigger: true
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: export-installation
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/export-installation.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      INSTALLATION_FILE: installation-$timestamp.zip
+  - put: installation
+    params:
+      file: installation/installation*.zip
+
+- name: staged-director-config-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-vsphere-image
+    params: {unpack: true}
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: staged-director-config
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/staged-director-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: destroy-installation
+  serial: true
+  serial_groups: [ teardown ]
+  plan:
+  - get: config
+  - get: state
+  - get: platform-automation-vsphere-image
+    trigger: false
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: delete-installation
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/delete-installation.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: delete-opsman-vm
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/delete-vm.yml
+    input_mapping:
+      state: state
+      config: config
+      vars: interpolated-creds
+      env: interpolated-creds
+    params:
+      STATE_FILE: ((foundation))/state/state.yml
+      OPSMAN_CONFIG_FILE: ((foundation))/config/opsman.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/opsman-defaults.yml
+        vars/((foundation))/vars/opsman-vars.yml
