@@ -10,7 +10,8 @@ credhub-interpolate: &credhub-interpolate
     CREDHUB_SECRET: ((credhub_secret))
     CREDHUB_SERVER: ((credhub_server))
     CREDHUB_CA_CERT: ((credhub_ca_cert))
-    PREFIX: '/concourse/((foundation))'
+    #PREFIX: '/concourse/((foundation))'
+    PREFIX: '/concourse/homelab' #preserve credentials from main foundation
     INTERPOLATION_PATHS: "((foundation))/env ((foundation))/vars"
     SKIP_MISSING: true
   input_mapping:
@@ -49,16 +50,16 @@ resources:
     regexp: vsphere-platform-automation-image-(.*).tar.gz
 
 
-- name: custom-task-image
-  type: registry-image
-  source:
-    repository: ((registry_endpoint))/((registry_repo_customtask))
-    #username: ((registry_username))
-    #password: ((registry_password))
-    tag: 'latest'
-    insecure: true
-    # ca_certs:
-    # - ((registry_ca_cert))
+# - name: custom-task-image
+#   type: registry-image
+#   source:
+#     repository: ((registry_endpoint))/((registry_repo_customtask))
+#     #username: ((registry_username))
+#     #password: ((registry_password))
+#     tag: 'latest'
+#     insecure: true
+#     # ca_certs:
+#     # - ((registry_ca_cert))
 
 - name: config
   type: git
@@ -169,7 +170,7 @@ jobs:
     params:
       unpack: true
   - get: platform-automation-tasks
-    passed: [create-nsx-objects]
+    #passed: [create-nsx-objects]
     trigger: true
     params:
       unpack: true
