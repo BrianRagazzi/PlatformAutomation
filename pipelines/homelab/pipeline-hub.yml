@@ -69,14 +69,14 @@ resources:
     password: ((github_token))
     paths: [ "((foundation))" ]
 
-- name: custom-tasks
-  type: git
-  source:
-    uri: ((PlatformAutomation_github_repo))
-    branch: ((PlatformAutomation_github_branch))
-    username: ((github_username))
-    password: ((github_token))
-    paths: [ "tasks" ]
+# - name: custom-tasks
+#   type: git
+#   source:
+#     uri: ((PlatformAutomation_github_repo))
+#     branch: ((PlatformAutomation_github_branch))
+#     username: ((github_username))
+#     password: ((github_token))
+#     paths: [ "tasks" ]
 
 - name: opsman-product
   type: s3
