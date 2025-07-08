@@ -62,14 +62,13 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[ops-manager,(.*)\].*.ova
+    regexp: ops-manager-(.*).ova #\[ops-manager,(.*)\].*.ova
 
 - name: mysql-product
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
-     # harbor-container-registry-1.7.5-build.11.pivotal
+    regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal # harbor-container-registry-1.7.5-build.11.pivotal
 
 - name: mysql-stemcell
   type: s3
@@ -81,8 +80,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[postgres,(.*)\]postgres-.*.pivotal
-     # harbor-container-registry-1.7.5-build.11.pivotal
+    regexp: \[postgres,(.*)\]postgres-.*.pivotal # harbor-container-registry-1.7.5-build.11.pivotal
 
 - name: postgres-stemcell
   type: s3
@@ -113,7 +111,6 @@ resources:
   source:
     <<: *s3_credentials_binaries
     regexp: rabbitmq-stemcell/\[stemcells-ubuntu-jammy,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-
 
 - name: nsx-product
   type: s3
@@ -170,7 +167,6 @@ resources:
     <<: *s3_credentials_binaries
     regexp: hub-tas-collector-(\d.*).pivotal
 
-
 # - name: healthwatch-pas-exporter
 #   type: s3
 #   source:
@@ -191,7 +187,7 @@ resources:
     branch: ((config_github_branch))
     username: ((github_username))
     password: ((github_token))
-    paths: ["download-product-configs"]
+    paths: [ "download-product-configs" ]
 
 jobs:
 - name: fetch-platform-automation
@@ -223,12 +219,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -252,12 +248,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -266,7 +262,7 @@ jobs:
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/srt.yml
-    output_mapping: {downloaded-stemcell: pas-stemcell}
+    output_mapping: { downloaded-stemcell: pas-stemcell }
   - put: srt-product
     no_get: true
     params:
@@ -286,12 +282,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -300,7 +296,7 @@ jobs:
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/pks.yml
-    output_mapping: {downloaded-stemcell: pks-stemcell}
+    output_mapping: { downloaded-stemcell: pks-stemcell }
   - put: pks-product
     no_get: true
     params:
@@ -320,12 +316,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -349,12 +345,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -378,12 +374,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -392,7 +388,7 @@ jobs:
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/mysql.yml
-    output_mapping: {downloaded-stemcell: mysql-stemcell}
+    output_mapping: { downloaded-stemcell: mysql-stemcell }
   - put: mysql-product
     no_get: true
     params:
@@ -401,7 +397,6 @@ jobs:
     no_get: true
     params:
       file: mysql-stemcell/*.tgz
-
 
 - name: fetch-postgres
   serial: true
@@ -413,12 +408,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -427,7 +422,7 @@ jobs:
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/postgres.yml
-    output_mapping: {downloaded-stemcell: postgres-stemcell}
+    output_mapping: { downloaded-stemcell: postgres-stemcell }
   - put: postgres-product
     no_get: true
     params:
@@ -447,12 +442,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -461,7 +456,7 @@ jobs:
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/genai.yml
-    output_mapping: {downloaded-stemcell: genai-stemcell}
+    output_mapping: { downloaded-stemcell: genai-stemcell }
   - put: genai-product
     no_get: true
     params:
@@ -481,12 +476,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -495,7 +490,7 @@ jobs:
     file: platform-automation-tasks/tasks/download-product.yml
     params:
       CONFIG_FILE: download-product-configs/rabbitmq.yml
-    output_mapping: {downloaded-stemcell: rabbitmq-stemcell}
+    output_mapping: { downloaded-stemcell: rabbitmq-stemcell }
   - put: rabbitmq-product
     no_get: true
     params:
@@ -515,12 +510,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -562,12 +557,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -591,12 +586,12 @@ jobs:
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: platform-automation-tasks
     params:
       unpack: true
     passed:
-      - fetch-platform-automation
+    - fetch-platform-automation
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
