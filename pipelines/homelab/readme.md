@@ -114,3 +114,7 @@ fly -t ci up -p tpcf-configure
 fly -t ci set-pipeline -p genai-configure -c pipeline-genai.yml -l ../../params/homelab/params-homelab-tas.yml --check-creds -n
 fly -t ci up -p genai-configure
 ```
+```
+fly -t ci set-pipeline -p hub-configure -c pipeline-hub.yml -l ../../params/homelab/params-homelab-hub.yml --check-creds -n
+fly -t ci up -p genai-configure
+```
