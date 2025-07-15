@@ -48,7 +48,6 @@ resources:
     <<: *s3_credentials_binaries
     regexp: vsphere-platform-automation-image-(.*).tar.gz
 
-
 - name: custom-task-image
   type: registry-image
   source:
@@ -67,7 +66,7 @@ resources:
     branch: ((config_github_branch))
     username: ((github_username))
     password: ((github_token))
-    paths: ["((foundation))"]
+    paths: [ "((foundation))" ]
 
 - name: custom-tasks
   type: git
@@ -76,7 +75,7 @@ resources:
     branch: ((PlatformAutomation_github_branch))
     username: ((github_username))
     password: ((github_token))
-    paths: ["tasks"]
+    paths: [ "tasks" ]
 
 - name: opsman-product
   type: s3
@@ -117,7 +116,6 @@ resources:
   source:
     <<: *s3_credentials_binaries
     regexp: healthwatch-pas-exporter-(.*).pivotal
-
 
 - name: nsx-product
   type: s3
@@ -184,7 +182,6 @@ resources:
     bucket: ((s3_buckets_backup_bucket)) #Backup Bucket
     regexp: ((foundation))/(.*).yml
 
-
 - name: state
   type: git
   source:
@@ -192,8 +189,6 @@ resources:
     branch: ((config_github_branch))
     username: ((github_username))
     password: ((github_token))
-
-
 
 # triggers used to have jobs do something in a timely manner
 - name: one-time-trigger
@@ -206,26 +201,23 @@ resources:
   source:
     interval: 24h
 
-
-
 groups:
 - name: deploy
   jobs:
   - create-nsx-objects
   - install-opsman
-  - pas
+  - cf
   # - pas-windows
   - nsx
-  - healthwatch
   - postgres
   # - mysql
   - apply-changes
   - genai
   - apply-changes-genai
-# - name: post-deploy
-#   jobs:
-#   #- create-org-admin
-#   - add-pas-admin-group
+  # - name: post-deploy
+  #   jobs:
+  #   #- create-org-admin
+  #   - add-pas-admin-group
   - update-errands
 - name: save-state
   jobs:
@@ -240,7 +232,9 @@ groups:
   jobs:
   - destroy-installation
   - delete-nsx-objects
-
+- name: healthwatch
+  jobs:
+  - healthwatch
 
 jobs:
 - name: create-nsx-objects
@@ -285,7 +279,7 @@ jobs:
     params:
       unpack: true
   - get: platform-automation-tasks
-    passed: [create-nsx-objects]
+    passed: [ create-nsx-objects ]
     trigger: true
     params:
       unpack: true
@@ -307,26 +301,27 @@ jobs:
       VARS_FILES: |
         vars/((foundation))/vars/opsman-defaults.yml vars/((foundation))/vars/opsman-vars.yml
 
-    ensure: #&make-state-commit
+    ensure:
+      #&make-state-commit
       do:
-        - task: make-commit
-          image: platform-automation-vsphere-image
-          file: platform-automation-tasks/tasks/make-git-commit.yml
-          input_mapping:
-            repository: state
-            file-source: generated-state
-          output_mapping:
-            repository-commit: state-commit
-          params:
-            FILE_SOURCE_PATH: state.yml
-            FILE_DESTINATION_PATH: ((foundation))/state/state.yml
-            GIT_AUTHOR_EMAIL: ((github_author_email))
-            GIT_AUTHOR_NAME: "Platform Automation"
-            COMMIT_MESSAGE: 'Update state file'
-        - put: state
-          params:
-            repository: state-commit
-            merge: true
+      - task: make-commit
+        image: platform-automation-vsphere-image
+        file: platform-automation-tasks/tasks/make-git-commit.yml
+        input_mapping:
+          repository: state
+          file-source: generated-state
+        output_mapping:
+          repository-commit: state-commit
+        params:
+          FILE_SOURCE_PATH: state.yml
+          FILE_DESTINATION_PATH: ((foundation))/state/state.yml
+          GIT_AUTHOR_EMAIL: ((github_author_email))
+          GIT_AUTHOR_NAME: "Platform Automation"
+          COMMIT_MESSAGE: 'Update state file'
+      - put: state
+        params:
+          repository: state-commit
+          merge: true
 
   - task: configure-authentication
     image: platform-automation-vsphere-image
@@ -358,8 +353,8 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-- name: pas
-  serial: false  # try  false 052219
+- name: cf
+  serial: false # try  false 052219
   build_log_retention:
     builds: 2
   plan:
@@ -539,9 +534,9 @@ jobs:
   - get: healthwatch-product
   - get: healthwatch-pas-exporter
   - get: config
-    trigger: true
+    trigger: false #true
   - get: platform-automation-vsphere-image
-    passed: [ pas, nsx ]
+    passed: [ cf, nsx ]
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -628,7 +623,7 @@ jobs:
   - get: config
     trigger: true
   - get: platform-automation-vsphere-image
-    passed: [ pas, nsx ]
+    passed: [ cf, nsx ]
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -767,7 +762,6 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-
 - name: genai
   serial: true
   build_log_retention:
@@ -822,7 +816,6 @@ jobs:
         vars/((foundation))/vars/genai-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-
 - name: apply-changes-genai
   serial: true
   build_log_retention:
@@ -849,8 +842,6 @@ jobs:
       env: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
-
-
 
 # Use this for creating a local cf admin
 # - name: create-org-admin
@@ -916,7 +907,7 @@ jobs:
 #
 #
 - name: update-errands
-  serial: false  # try  false 052219
+  serial: false # try  false 052219
   plan:
   - get: config
     trigger: true
@@ -944,9 +935,6 @@ jobs:
         vars/((foundation))/vars/cf-vars.yml
         vars/((foundation))/vars/cf-errands.yml
       ENV_FILE: ((foundation))/env/env.yml
-
-
-
 
 - name: export-installation
   serial: true
@@ -978,12 +966,12 @@ jobs:
 - name: staged-director-config-backup
   plan:
   - get: platform-automation-tasks
-    params: {unpack: true}
+    params: { unpack: true }
     trigger: true
     passed:
-      - export-installation
+    - export-installation
   - get: platform-automation-vsphere-image
-    params: {unpack: true}
+    params: { unpack: true }
   - get: config
   - task: credhub-interpolate
     <<: *credhub-interpolate
@@ -1165,13 +1153,12 @@ jobs:
   - get: custom-tasks
   - get: custom-task-image
   - get: platform-automation-vsphere-image
-    passed: [destroy-installation]
+    passed: [ destroy-installation ]
     params:
       unpack: true
   - get: platform-automation-tasks
     params:
       unpack: true
-
 
   - task: credhub-interpolate
     <<: *credhub-interpolate
