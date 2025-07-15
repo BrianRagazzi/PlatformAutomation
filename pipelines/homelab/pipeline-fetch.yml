@@ -116,7 +116,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: \[p-redis,(.*)\]p-redis-.*.pivotal
+    regexp: \[p-valkey,(.*)\]p-valkey-.*.pivotal
 
 - name: redis-stemcell
   type: s3
