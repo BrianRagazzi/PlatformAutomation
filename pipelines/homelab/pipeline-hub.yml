@@ -295,7 +295,7 @@ jobs:
     builds: 2
   plan:
   - get: config #*credhub-interpolate
-    trigger: true
+    trigger: false #true
     passed: [ tanzu-hub ]
   - get: platform-automation-vsphere-image
     params:
