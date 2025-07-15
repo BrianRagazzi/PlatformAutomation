@@ -135,6 +135,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: genai-(.*).pivotal
 
+- name: valkey-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p-valkey-(.*).pivotal
+
 # - name: mysql-stemcell
 #   type: s3
 #   source:
@@ -213,7 +219,8 @@ groups:
   # - mysql
   - apply-changes
   - genai
-  - apply-changes-genai
+  - valkey
+  - apply-changes-again
   # - name: post-deploy
   #   jobs:
   #   #- create-org-admin
@@ -769,9 +776,9 @@ jobs:
   plan:
   - get: genai-product
   - get: config
-    trigger: true
+    trigger: true 
   - get: platform-automation-vsphere-image
-    passed: [ apply-changes ]
+    passed: [ apply-changes ]     
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -816,15 +823,70 @@ jobs:
         vars/((foundation))/vars/genai-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-- name: apply-changes-genai
+- name: valkey
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: valkey-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ apply-changes ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product-genai
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: valkey-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product-valkey
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: valkey-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-valkey
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/redis.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/redis-defaults.yml
+        vars/((foundation))/vars/redis-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+
+- name: apply-changes-again
   serial: true
   build_log_retention:
     builds: 2
   plan:
   - get: config #*credhub-interpolate
-    trigger: true
-    passed: [ genai, update-errands ]
+    trigger: false #true
   - get: platform-automation-vsphere-image
+    passed: [ genai, update-errands, valkey ]  
     params:
       unpack: true
   - get: platform-automation-tasks
