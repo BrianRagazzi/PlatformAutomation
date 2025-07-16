@@ -141,6 +141,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: p-valkey-(.*).pivotal
 
+- name: pivotal-sso-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: Pivotal_Single_Sign-On_Service_(\d.*).pivotal
+
 # - name: mysql-stemcell
 #   type: s3
 #   source:
@@ -220,6 +226,7 @@ groups:
   - apply-changes
   - genai
   - valkey
+  - sso
   - apply-changes-again
   # - name: post-deploy
   #   jobs:
@@ -675,6 +682,61 @@ jobs:
         vars/((foundation))/vars/postgres-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
+- name: sso
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: pivotal-sso-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ cf, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: pivotal-sso-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: pivotal-sso-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/pivotal-sso.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/pivotal-sso-defaults.yml
+        vars/((foundation))/vars/pivotal-sso-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+
 # - name: mysql
 #   serial: true
 #   build_log_retention:
@@ -748,8 +810,8 @@ jobs:
     builds: 2
   plan:
   - get: config #*credhub-interpolate
-    trigger: true
-    passed: [ healthwatch, postgres ]
+    trigger: false
+    passed: [ postgres, sso ]
   - get: platform-automation-vsphere-image
     params:
       unpack: true
@@ -877,6 +939,50 @@ jobs:
         vars/((foundation))/vars/redis-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
+- name: update-errands
+  serial: false # try  false 052219
+  plan:
+  - get: config
+    trigger: true
+    passed: [ apply-changes ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: configure-tpcf-errands
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/cf.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/cf-defaults.yml
+        vars/((foundation))/vars/cf-vars.yml
+        vars/((foundation))/vars/cf-errands.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-valkey-errands
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/redis.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/redis-defaults.yml
+        vars/((foundation))/vars/redis-vars.yml
+        vars/((foundation))/vars/redis-errands.yml
+      ENV_FILE: ((foundation))/env/env.yml
 
 - name: apply-changes-again
   serial: true
@@ -884,7 +990,7 @@ jobs:
     builds: 2
   plan:
   - get: config #*credhub-interpolate
-    trigger: false #true
+    trigger: true
   - get: platform-automation-vsphere-image
     passed: [ genai, update-errands, valkey ]  
     params:
@@ -968,35 +1074,7 @@ jobs:
 #       ENV_FILE: ((foundation))/env/env.yml
 #
 #
-- name: update-errands
-  serial: false # try  false 052219
-  plan:
-  - get: config
-    trigger: true
-    passed: [ apply-changes ]
-  - get: platform-automation-vsphere-image
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-  - task: credhub-interpolate
-    <<: *credhub-interpolate
 
-  - task: configure-tpcf-again
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: config
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      CONFIG_FILE: ((foundation))/config/cf.yml
-      VARS_FILES: |
-        vars/((foundation))/vars/cf-defaults.yml
-        vars/((foundation))/vars/cf-vars.yml
-        vars/((foundation))/vars/cf-errands.yml
-      ENV_FILE: ((foundation))/env/env.yml
 
 - name: export-installation
   serial: true
