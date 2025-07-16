@@ -189,7 +189,7 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: Pivotal_Single_Sign-On-Service_(\d.*).pivotal    
+    regexp: Pivotal_Single_Sign-On_Service_(\d.*).pivotal    
 
 # - name: healthwatch-pas-exporter
 #   type: s3
