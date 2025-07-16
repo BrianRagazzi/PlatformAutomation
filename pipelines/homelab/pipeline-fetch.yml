@@ -179,6 +179,18 @@ resources:
     <<: *s3_credentials_binaries
     regexp: hub-tas-collector-(\d.*).pivotal
 
+- name: spring-cloud-gateway-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p_spring-cloud-gateway-service-(\d.*).pivotal    
+
+- name: single-sign-on-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: Pivotal_Single_Sign-On-Service_(\d.*).pivotal    
+
 # - name: healthwatch-pas-exporter
 #   type: s3
 #   source:
@@ -647,6 +659,64 @@ jobs:
     params:
       CONFIG_FILE: download-product-configs/tanzu-hub-connector.yml
   - put: hub-connector-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+
+- name: fetch-spring-cloud-gateway
+  serial: true
+  serial_groups: [ fetch-extras ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+    - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+    - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/spring-cloud-gateway.yml
+  - put: spring-cloud-gateway-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+
+- name: fetch-sso
+  serial: true
+  serial_groups: [ fetch-extras ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+    - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+    - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/pivotal-sso.yml
+  - put: single-sign-on-product
     no_get: true
     params:
       file: downloaded-product/*.pivotal
