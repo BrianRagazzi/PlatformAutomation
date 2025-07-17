@@ -147,6 +147,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: Pivotal_Single_Sign-On_Service_(\d.*).pivotal
 
+- name: spring-cloud-gateway-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p_spring-cloud-gateway-service-(\d.*).pivotal    
+
 # - name: mysql-stemcell
 #   type: s3
 #   source:
@@ -224,24 +230,34 @@ groups:
   - postgres
   # - mysql
   - apply-changes
-  - genai
+  # - genai
   - valkey
   - sso
-  - apply-changes-again
+  - spring-cloud-gateway
+  #- apply-changes-again
   # - name: post-deploy
   #   jobs:
   #   #- create-org-admin
   #   - add-pas-admin-group
-  - update-errands
+  - update-errands-cf
+  - update-errands-valkey
+  #- update-errands-genai
+  - apply-changes-errands
+  - genai
+  - apply-changes-genai
 - name: save-state
   jobs:
   - export-installation
   - staged-director-config-backup
-#   - staged-config-pas-backup
+  - staged-config-pas-backup
+  - staged-config-nsxt-backup
+  - staged-config-postgres-backup
+  - staged-config-genai-backup
+  - staged-config-redis-backup
 # #  - staged-config-pasw-backup
 #   # - staged-config-healthwatch-backup
 #   # - staged-config-mysql-backup
-#   - staged-config-nsxt-backup
+  - staged-config-nsxt-backup
 - name: teardown
   jobs:
   - destroy-installation
@@ -249,6 +265,8 @@ groups:
 - name: healthwatch
   jobs:
   - healthwatch
+  - apply-changes-healthwatch
+  
 
 jobs:
 - name: create-nsx-objects
@@ -407,7 +425,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: upload-pas-stemcell
+  - task: upload-stemcell
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-stemcell.yml
     input_mapping:
@@ -416,7 +434,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-pas
+  - task: configure-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -505,7 +523,7 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
-  - task: upload-product-nsx
+  - task: upload-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
@@ -516,7 +534,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: stage-product-nsx
+  - task: stage-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
@@ -526,7 +544,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-nsx
+  - task: configure-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -560,7 +578,7 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
-  - task: upload-product-healthwatch
+  - task: upload-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
@@ -571,7 +589,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: stage-product-healthwatch
+  - task: stage-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
@@ -580,7 +598,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-healthwatch
+  - task: configure-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -647,7 +665,7 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
-  - task: upload-product-postgres
+  - task: upload-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
@@ -658,7 +676,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: stage-product-postgres
+  - task: stage-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
@@ -668,7 +686,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-postgres
+  - task: configure-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -838,9 +856,9 @@ jobs:
   plan:
   - get: genai-product
   - get: config
-    trigger: true 
+    trigger: false
   - get: platform-automation-vsphere-image
-    passed: [ apply-changes ]     
+    passed: [ apply-changes-errands ]     
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -850,7 +868,7 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
-  - task: upload-product-genai
+  - task: upload-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
@@ -861,7 +879,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: stage-product-genai
+  - task: stage-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
@@ -871,7 +889,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-genai
+  - task: configure-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -894,7 +912,7 @@ jobs:
   - get: config
     trigger: true
   - get: platform-automation-vsphere-image
-    passed: [ apply-changes ]
+    passed: [ cf, nsx ]
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -904,7 +922,7 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
-  - task: upload-product-genai
+  - task: upload-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
@@ -915,7 +933,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: stage-product-valkey
+  - task: stage-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
@@ -925,7 +943,7 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-valkey
+  - task: configure-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -939,7 +957,61 @@ jobs:
         vars/((foundation))/vars/redis-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-- name: update-errands
+- name: spring-cloud-gateway
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: spring-cloud-gateway-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ cf, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: spring-cloud-gateway-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: spring-cloud-gateway-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/scg.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/scg-defaults.yml
+        vars/((foundation))/vars/scg-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: update-errands-cf
   serial: false # try  false 052219
   plan:
   - get: config
@@ -983,16 +1055,77 @@ jobs:
         vars/((foundation))/vars/redis-vars.yml
         vars/((foundation))/vars/redis-errands.yml
       ENV_FILE: ((foundation))/env/env.yml
+      
+- name: update-errands-valkey
+  serial: false # try  false 052219
+  plan:
+  - get: config
+    trigger: true
+    passed: [ apply-changes ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
 
-- name: apply-changes-again
+  - task: configure-valkey-errands
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/redis.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/redis-defaults.yml
+        vars/((foundation))/vars/redis-vars.yml
+        vars/((foundation))/vars/redis-errands.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+# - name: update-errands-genai
+#   serial: false # try  false 052219
+#   plan:
+#   - get: config
+#     trigger: true
+#     passed: [ apply-changes ]
+#   - get: platform-automation-vsphere-image
+#     params:
+#       unpack: true
+#   - get: platform-automation-tasks
+#     params:
+#       unpack: true
+#   - task: credhub-interpolate
+#     <<: *credhub-interpolate
+
+#   - task: configure-errands
+#     image: platform-automation-vsphere-image
+#     file: platform-automation-tasks/tasks/configure-product.yml
+#     input_mapping:
+#       config: config
+#       env: interpolated-creds
+#       vars: interpolated-creds
+#     params:
+#       CONFIG_FILE: ((foundation))/config/genai.yml
+#       VARS_FILES: |
+#         vars/((foundation))/vars/genai-defaults.yml
+#         vars/((foundation))/vars/genai-vars.yml
+#         vars/((foundation))/vars/genai-errands.yml
+#       ENV_FILE: ((foundation))/env/env.yml
+
+
+- name: apply-changes-errands
   serial: true
   build_log_retention:
     builds: 2
   plan:
   - get: config #*credhub-interpolate
-    trigger: true
+    trigger: false
   - get: platform-automation-vsphere-image
-    passed: [ genai, update-errands, valkey ]  
+    passed: [ update-errands-cf, update-errands-valkey ]  
     params:
       unpack: true
   - get: platform-automation-tasks
@@ -1010,6 +1143,64 @@ jobs:
       env: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
+      SELECTIVE_DEPLOY_PRODUCTS: "cf, p-redis"
+
+- name: apply-changes-genai
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config #*credhub-interpolate
+    trigger: false
+  - get: platform-automation-vsphere-image
+    passed: [ genai ]  
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: config #*credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      SELECTIVE_DEPLOY_PRODUCTS: "genai"
+
+- name: apply-changes-healthwatch
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config #*credhub-interpolate
+    trigger: false
+  - get: platform-automation-vsphere-image
+    passed: [ healthwatch ]  
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: config #*credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+      SELECTIVE_DEPLOY_PRODUCTS: "p-healthwatch2, p-healthwatch2-pas-exporter"
+
 
 # Use this for creating a local cf admin
 # - name: create-org-admin
@@ -1125,30 +1316,30 @@ jobs:
   - put: config-backup
     params:
       file: generated-config/*.yml
-#
-# - name: staged-config-pas-backup
-#   plan:
-#   - get: platform-automation-tasks
-#     params: {unpack: true}
-#     trigger: true
-#     passed:
-#       - export-installation
-#   - get: platform-automation-vsphere-image
-#     params: {unpack: true}
-#   - get: config
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#   - task: staged-pas-config
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/staged-config.yml
-#     input_mapping:
-#       env: interpolated-creds
-#     params:
-#       PRODUCT_NAME: cf
-#       ENV_FILE: ((foundation))/env/env.yml
-#   - put: config-backup
-#     params:
-#       file: generated-config/*.yml
+
+- name: staged-config-pas-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-vsphere-image
+    params: {unpack: true}
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: staged-config
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: cf
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
 
 # - name: staged-config-pasw-backup
 #   plan:
@@ -1222,29 +1413,101 @@ jobs:
 #     params:
 #       file: generated-config/*.yml
 
-# - name: staged-config-nsxt-backup
-#   plan:
-#   - get: platform-automation-tasks
-#     params: {unpack: true}
-#     trigger: true
-#     passed:
-#       - export-installation
-#   - get: platform-automation-vsphere-image
-#     params: {unpack: true}
-#   - get: config
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#   - task: staged-pas-config
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/staged-config.yml
-#     input_mapping:
-#       env: interpolated-creds
-#     params:
-#       PRODUCT_NAME: VMware-NSX-T
-#       ENV_FILE: ((foundation))/env/env.yml
-#   - put: config-backup
-#     params:
-#       file: generated-config/*.yml
+- name: staged-config-nsxt-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-vsphere-image
+    params: {unpack: true}
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: staged-config
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: VMware-NSX-T
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-postgres-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-vsphere-image
+    params: {unpack: true}
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: staged-config
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: postgres
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-redis-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-vsphere-image
+    params: {unpack: true}
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: staged-config
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: p-redis
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
+
+- name: staged-config-genai-backup
+  plan:
+  - get: platform-automation-tasks
+    params: {unpack: true}
+    trigger: true
+    passed:
+      - export-installation
+  - get: platform-automation-vsphere-image
+    params: {unpack: true}
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: staged-config
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/staged-config.yml
+    input_mapping:
+      env: interpolated-creds
+    params:
+      PRODUCT_NAME: genai
+      ENV_FILE: ((foundation))/env/env.yml
+  - put: config-backup
+    params:
+      file: generated-config/*.yml
 
 - name: destroy-installation
   serial: true
