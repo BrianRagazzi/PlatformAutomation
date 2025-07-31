@@ -185,6 +185,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: p_spring-cloud-gateway-service-(\d.*).pivotal    
 
+- name: spring-cloud-services-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p_spring-cloud-services-(\d.*).pivotal   
+
 - name: single-sign-on-product
   type: s3
   source:
@@ -233,6 +239,7 @@ jobs:
     params:
       file: platform-automation-pivnet/vsphere-platform-automation-image-*.tar.gz
 
+
 - name: fetch-opsman
   serial: true
   serial_groups: [ fetch-common ]
@@ -258,9 +265,22 @@ jobs:
     params:
       CONFIG_FILE: download-product-configs/opsman.yml
   - put: opsman-product
-    #no_get: true
+    no_get: true
     params:
       file: downloaded-product/*
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+
 
 - name: fetch-srt
   serial: true
@@ -295,6 +315,20 @@ jobs:
     no_get: true
     params:
       file: pas-stemcell/*.tgz
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+        - name: pas-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+            rm -rf pas-stemcell/*
 
 - name: fetch-tkgi
   serial: true
@@ -329,6 +363,20 @@ jobs:
     no_get: true
     params:
       file: pks-stemcell/*.tgz
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+        - name: pas-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+            rm -rf pas-stemcell/*
 
 - name: fetch-nsx
   serial: true
@@ -358,6 +406,18 @@ jobs:
     no_get: true
     params:
       file: downloaded-product/*.pivotal
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
 
 - name: fetch-bbr
   serial: true
@@ -387,6 +447,19 @@ jobs:
     no_get: true
     params:
       file: downloaded-product/*
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+
 
 - name: fetch-mysql
   serial: true
@@ -421,6 +494,20 @@ jobs:
     no_get: true
     params:
       file: mysql-stemcell/*.tgz
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+        - name: mysql-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+            rm -rf mysql-stemcell/*      
 
 - name: fetch-postgres
   serial: true
@@ -455,6 +542,20 @@ jobs:
     no_get: true
     params:
       file: postgres-stemcell/*.tgz
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+        - name: postgres-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+            rm -rf postgres-stemcell/*
 
 - name: fetch-genai
   serial: true
@@ -489,6 +590,20 @@ jobs:
     no_get: true
     params:
       file: genai-stemcell/*.tgz
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+        - name: genai-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+            rm -rf genai-stemcell/*      
 
 - name: fetch-valkey #redis
   serial: true
@@ -523,6 +638,20 @@ jobs:
     no_get: true
     params:
       file: redis-stemcell/*.tgz
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+        - name: redis-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+            rm -rf redis-stemcell/*      
 
 - name: fetch-rabbitmq
   serial: true
@@ -557,6 +686,20 @@ jobs:
     no_get: true
     params:
       file: rabbitmq-stemcell/*.tgz
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+        - name: rabbitmq-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+            rm -rf rabbitmq-stemcell/*
 
 - name: fetch-healthwatch
   serial: true
@@ -604,6 +747,19 @@ jobs:
     no_get: true
     params:
       file: downloaded-product/*.pivotal
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+   
 
 - name: fetch-tanzu-hub
   serial: true
@@ -633,6 +789,19 @@ jobs:
     no_get: true
     params:
       file: downloaded-product/*.pivotal
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+    
 
 - name: fetch-hub-connector
   serial: true
@@ -662,6 +831,19 @@ jobs:
     no_get: true
     params:
       file: downloaded-product/*.pivotal
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+   
 
 - name: fetch-spring-cloud-gateway
   serial: true
@@ -691,6 +873,60 @@ jobs:
     no_get: true
     params:
       file: downloaded-product/*.pivotal
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
+ 
+
+- name: fetch-spring-cloud-services
+  serial: true
+  serial_groups: [ fetch-extras ]
+  build_log_retention:
+    builds: 1
+  plan:
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+    passed:
+    - fetch-platform-automation
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+    passed:
+    - fetch-platform-automation
+  - get: config
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+  - task: download-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/download-product.yml
+    params:
+      CONFIG_FILE: download-product-configs/spring-cloud-services.yml
+  - put: spring-cloud-services-product
+    no_get: true
+    params:
+      file: downloaded-product/*.pivotal
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*
 
 - name: fetch-sso
   serial: true
@@ -720,3 +956,15 @@ jobs:
     no_get: true
     params:
       file: downloaded-product/*.pivotal
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: downloaded-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf downloaded-product/*

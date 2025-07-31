@@ -151,7 +151,13 @@ resources:
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: p_spring-cloud-gateway-service-(\d.*).pivotal    
+    regexp: p_spring-cloud-gateway-service-(\d.*).pivotal   
+
+- name: spring-cloud-services-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p_spring-cloud-services-(\d.*).pivotal   
 
 # - name: mysql-stemcell
 #   type: s3
@@ -234,6 +240,7 @@ groups:
   - valkey
   - sso
   - spring-cloud-gateway
+  - spring-cloud-services
   #- apply-changes-again
   # - name: post-deploy
   #   jobs:
@@ -1009,6 +1016,60 @@ jobs:
       VARS_FILES: |
         vars/((foundation))/vars/scg-defaults.yml
         vars/((foundation))/vars/scg-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: spring-cloud-services
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: spring-cloud-services-product
+  - get: config
+    trigger: true
+  - get: platform-automation-vsphere-image
+    passed: [ cf, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: spring-cloud-services-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: spring-cloud-services-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/scs.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/scs-defaults.yml
+        vars/((foundation))/vars/scs-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
 - name: update-errands-cf
