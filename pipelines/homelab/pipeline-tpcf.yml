@@ -160,17 +160,29 @@ resources:
     <<: *s3_credentials_binaries
     regexp: p_spring-cloud-services-(\d.*).pivotal   
 
+- name: rabbitmq-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p-rabbitmq-(.*).pivotal
+
 # - name: mysql-stemcell
 #   type: s3
 #   source:
 #     <<: *s3_credentials_binaries
-#     regexp: mysql-stemcell/\[stemcells-ubuntu-xenial,(.*)\]bosh-stemcell-.*-vsphere.*\.tgz
-#
-# - name: mysql-product
-#   type: s3
-#   source:
-#     <<: *s3_credentials_binaries
-#     regexp: \[pivotal-mysql,(.*)\]pivotal-mysql-.*.pivotal
+#     regexp: mysql-stemcell/bosh-stemcell-(.*)-vsphere.esxi-ubuntu-jammy-go_agent.tgz
+
+- name: mysql-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pivotal-mysql-(.*).pivotal
+
+- name: gemfire-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: p-cloudcache-(\d.*).pivotal  
 
 # - name: pas-windows-product
 #   type: s3
@@ -235,21 +247,16 @@ groups:
   # - pas-windows
   - nsx
   - postgres
-  # - mysql
+  - mysql
   - apply-changes
-  # - genai
   - valkey
   - sso
+  - gemfire
   - spring-cloud-gateway
   - spring-cloud-services
-  #- apply-changes-again
-  # - name: post-deploy
-  #   jobs:
-  #   #- create-org-admin
-  #   - add-pas-admin-group
+  - rabbitmq
   - update-errands-cf
   - update-errands-valkey
-  #- update-errands-genai
   - apply-changes-errands
   - genai
   - apply-changes-genai
@@ -400,8 +407,8 @@ jobs:
     builds: 2
   plan:
   - get: config
-    trigger: true
   - get: pas-product
+    trigger: true
   - get: pas-stemcell
   - get: platform-automation-vsphere-image
     passed: [ install-opsman ]
@@ -520,8 +527,8 @@ jobs:
     builds: 2
   plan:
   - get: nsx-product
-  - get: config
     trigger: true
+  - get: config
   - get: platform-automation-vsphere-image
     passed: [ install-opsman ]
     params:
@@ -663,8 +670,8 @@ jobs:
     builds: 2
   plan:
   - get: postgres-product
-  - get: config
     trigger: true
+  - get: config
   - get: platform-automation-vsphere-image
     passed: [ cf, nsx ]
     params:
@@ -718,8 +725,8 @@ jobs:
     builds: 2
   plan:
   - get: pivotal-sso-product
+    trigger: true  
   - get: config
-    trigger: true
   - get: platform-automation-vsphere-image
     passed: [ cf, nsx ]
     params:
@@ -766,164 +773,15 @@ jobs:
         vars/((foundation))/vars/pivotal-sso-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-
-# - name: mysql
-#   serial: true
-#   build_log_retention:
-#     builds: 4
-#   plan:
-#   - aggregate:
-#     - get: mysql-product
-#     - get: mysql-stemcell
-#     - get: config
-#       trigger: true
-#     - get: platform-automation-vsphere-image
-#       passed: [ pas ]
-#       params:
-#         unpack: true
-#     - get: platform-automation-tasks
-#       params:
-#         unpack: true
-#
-#   - task: credhub-interpolate
-#     <<: *credhub-interpolate
-#
-#   - task: upload-product-mysql
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/upload-product.yml
-#     input_mapping:
-#       product: mysql-product
-#       config: config
-#       download-config: config
-#       env: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: stage-product-mysql
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/stage-product.yml
-#     input_mapping:
-#       product: mysql-product
-#       config: config
-#       download-config: config
-#       env: interpolated-creds
-#       secrets: interpolated-creds
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: upload-mysql-stemcell
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/upload-stemcell.yml
-#     input_mapping:
-#       env: interpolated-creds
-#       stemcell: mysql-stemcell
-#     params:
-#       ENV_FILE: ((foundation))/env/env.yml
-#
-#   - task: configure-mysql
-#     image: platform-automation-vsphere-image
-#     file: platform-automation-tasks/tasks/configure-product.yml
-#     input_mapping:
-#       config: config
-#       env: interpolated-creds
-#       vars: interpolated-creds
-#     params:
-#       CONFIG_FILE: ((foundation))/config/mysql.yml
-#       VARS_FILES: |
-#         vars/((foundation))/vars/mysql-defaults.yml
-#         vars/((foundation))/vars/mysql-vars.yml
-#       ENV_FILE: ((foundation))/env/env.yml
-
-- name: apply-changes
+- name: rabbitmq
   serial: true
-  build_log_retention:
-    builds: 2
-  plan:
-  - get: config #*credhub-interpolate
-    trigger: false
-    passed: [ postgres, sso ]
-  - get: platform-automation-vsphere-image
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-
-  - task: credhub-interpolate
-    <<: *credhub-interpolate
-
-  - task: apply-product-changes
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/apply-changes.yml
-    input_mapping:
-      config: config #*credhub-interpolate
-      env: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-- name: genai
-  serial: true
-  build_log_retention:
-    builds: 2
-  plan:
-  - get: genai-product
-  - get: config
-    trigger: false
-  - get: platform-automation-vsphere-image
-    passed: [ apply-changes-errands ]     
-    params:
-      unpack: true
-  - get: platform-automation-tasks
-    params:
-      unpack: true
-
-  - task: credhub-interpolate
-    <<: *credhub-interpolate
-
-  - task: upload-product
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/upload-product.yml
-    input_mapping:
-      product: genai-product
-      config: config
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: stage-product
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/stage-product.yml
-    input_mapping:
-      product: genai-product
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: configure-product
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: config
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      CONFIG_FILE: ((foundation))/config/genai.yml
-      VARS_FILES: |
-        vars/((foundation))/vars/genai-defaults.yml
-        vars/((foundation))/vars/genai-vars.yml
-      ENV_FILE: ((foundation))/env/env.yml
-
-- name: valkey
-  serial: false
   serial_groups: [phase_two_group_one]
   build_log_retention:
     builds: 2
   plan:
-  - get: valkey-product
+  - get: rabbitmq-product
+    trigger: true  
   - get: config
-    trigger: true
   - get: platform-automation-vsphere-image
     passed: [ cf, nsx ]
     params:
@@ -939,7 +797,7 @@ jobs:
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
-      product: valkey-product
+      product: rabbitmq-product
       config: config
       env: interpolated-creds
       vars: interpolated-creds
@@ -950,13 +808,13 @@ jobs:
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
-      product: valkey-product
+      product: rabbitmq-product
       env: interpolated-creds
       vars: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-product
+  - task: configure
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -964,10 +822,76 @@ jobs:
       env: interpolated-creds
       vars: interpolated-creds
     params:
-      CONFIG_FILE: ((foundation))/config/redis.yml
+      CONFIG_FILE: ((foundation))/config/rabbitmq.yml
       VARS_FILES: |
-        vars/((foundation))/vars/redis-defaults.yml
-        vars/((foundation))/vars/redis-vars.yml
+        vars/((foundation))/vars/rabbitmq-defaults.yml
+        vars/((foundation))/vars/rabbitmq-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: mysql
+  serial: true
+  serial_groups: [phase_two_group_one]
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: mysql-product
+    trigger: true  
+  - get: config
+  - get: platform-automation-vsphere-image
+    passed: [ cf, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: mysql-product
+      config: config
+      download-config: config
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: mysql-product
+      config: config
+      download-config: config
+      env: interpolated-creds
+      secrets: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  # - task: upload-mysql-stemcell
+  #   image: platform-automation-vsphere-image
+  #   file: platform-automation-tasks/tasks/upload-stemcell.yml
+  #   input_mapping:
+  #     env: interpolated-creds
+  #     stemcell: mysql-stemcell
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-mysql
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/mysql.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/mysql-defaults.yml
+        vars/((foundation))/vars/mysql-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
 - name: spring-cloud-gateway
@@ -977,8 +901,8 @@ jobs:
     builds: 2
   plan:
   - get: spring-cloud-gateway-product
+    trigger: true  
   - get: config
-    trigger: true
   - get: platform-automation-vsphere-image
     passed: [ cf, nsx ]
     params:
@@ -1032,8 +956,8 @@ jobs:
     builds: 2
   plan:
   - get: spring-cloud-services-product
+    trigger: true  
   - get: config
-    trigger: true
   - get: platform-automation-vsphere-image
     passed: [ cf, nsx ]
     params:
@@ -1080,6 +1004,197 @@ jobs:
         vars/((foundation))/vars/scs-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
 
+- name: valkey
+  serial: false
+  serial_groups: [phase_two_group_one]
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: valkey-product
+    trigger: true  
+  - get: config
+  - get: platform-automation-vsphere-image
+    passed: [ cf, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: valkey-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: valkey-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/redis.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/redis-defaults.yml
+        vars/((foundation))/vars/redis-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: gemfire
+  serial: true
+  serial_groups: [phase_two_group_one]
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: gemfire-product
+    trigger: true  
+  - get: config
+  - get: platform-automation-vsphere-image
+    passed: [ cf, nsx ]
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: gemfire-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: gemfire-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/gemfire.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/gemfire-defaults.yml
+        vars/((foundation))/vars/gemfire-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: apply-changes
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config #*credhub-interpolate
+    trigger: true
+    passed: [ postgres, sso, valkey, spring-cloud-gateway, spring-cloud-services, rabbitmq, mysql, gemfire ]
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: apply-product-changes
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/apply-changes.yml
+    input_mapping:
+      config: config #*credhub-interpolate
+      env: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+- name: genai
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: genai-product
+    trigger: false  
+  - get: config
+  - get: platform-automation-vsphere-image
+    passed: [ apply-changes-errands ]     
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  - task: upload-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-product.yml
+    input_mapping:
+      product: genai-product
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: stage-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/stage-product.yml
+    input_mapping:
+      product: genai-product
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: configure-product
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/configure-product.yml
+    input_mapping:
+      config: config
+      env: interpolated-creds
+      vars: interpolated-creds
+    params:
+      CONFIG_FILE: ((foundation))/config/genai.yml
+      VARS_FILES: |
+        vars/((foundation))/vars/genai-defaults.yml
+        vars/((foundation))/vars/genai-vars.yml
+      ENV_FILE: ((foundation))/env/env.yml
+
 - name: update-errands-cf
   serial: false # try  false 052219
   plan:
@@ -1110,7 +1225,6 @@ jobs:
         vars/((foundation))/vars/cf-errands.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-      
 - name: update-errands-valkey
   serial: false # try  false 052219
   plan:

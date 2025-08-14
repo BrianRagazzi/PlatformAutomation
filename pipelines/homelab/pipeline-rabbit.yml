@@ -67,6 +67,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: p-rabbitmq-(.*).pivotal
 
+- name: mysql-product
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: pivotal-mysql-(.*).pivotal
+
 
 
 # - name: state
@@ -135,11 +141,11 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
-  - task: upload-product-genai
+  - task: upload-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-product.yml
     input_mapping:
-      product: genai-product
+      product: rabbitmq-product
       config: config
       env: interpolated-creds
       vars: interpolated-creds
@@ -168,7 +174,6 @@ jobs:
       VARS_FILES: |
         vars/((foundation))/vars/rabbitmq-defaults.yml
         vars/((foundation))/vars/rabbitmq-vars.yml
-        vars/((foundation))/vars/rabbitmq-errands.yml
       ENV_FILE: ((foundation))/env/env.yml
 
 
@@ -178,8 +183,8 @@ jobs:
   build_log_retention:
     builds: 2
   plan:
-  - get: config #*credhub-interpolate
-    trigger: true
+  - get: config 
+    trigger: false #true
     passed: [ rabbitmq ]
   - get: platform-automation-vsphere-image
     params:
@@ -195,8 +200,8 @@ jobs:
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/apply-changes.yml
     input_mapping:
-      config: config #*credhub-interpolate
+      config: config 
       env: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
-      SELECTIVE_DEPLOY_PRODUCTS: "genai"
+      SELECTIVE_DEPLOY_PRODUCTS: "p-rabbitmq"

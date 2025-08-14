@@ -114,10 +114,25 @@ fly -t ci set-pipeline -p tpcf-configure -c pipeline-tpcf.yml -l ../../params/ho
 fly -t ci up -p tpcf-configure
 ```
 ```
-fly -t ci set-pipeline -p genai-configure -c pipeline-genai-configure.yml -l ../../params/homelab/params-homelab-tas.yml --check-creds -n
+fly -t ci set-pipeline -p genai-configure -c pipeline-genai-configure.yml -l ../../params/homelab/```
+fly -t ci set-pipeline -p hub-configure -c pipeline-hub.yml -l ../../params/homelab/params-homelab-hub.yml --check-creds -n
+fly -t ci up -p genai-configure
+```.yml --check-creds -n
 fly -t ci up -p genai-configure
 ```
 ```
 fly -t ci set-pipeline -p hub-configure -c pipeline-hub.yml -l ../../params/homelab/params-homelab-hub.yml --check-creds -n
 fly -t ci up -p genai-configure
+```
+```
+fly -t ci set-pipeline -p rabbitmq-configure -c pipelines/homelab/pipeline-rabbit.yml -l params/params-homelab-tas.yml --check-creds -n
+fly -t ci up -p rabbitmq-configure
+```
+```
+fly -t ci set-pipeline -p tpcf-configure -c pipelines/homelab/pipeline-tpcf.yml -l params/params-homelab-tas.yml --check-creds -n
+fly -t ci up -p rabbitmq-configure
+```
+```
+fly -t ci set-pipeline -p fetch-binaries  -c pipelines/homelab/pipeline-fetch.yml -l params/params-homelab-fetch.yml --check-creds -n
+fly -t ci up -p rabbitmq-configure
 ```
