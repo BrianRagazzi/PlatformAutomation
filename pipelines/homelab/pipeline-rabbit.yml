@@ -61,11 +61,11 @@ resources:
 
 
 
-- name: genai-product
+- name: rabbitmq-product
   type: s3
   source:
     <<: *s3_credentials_binaries
-    regexp: genai-(.*).pivotal
+    regexp: p-rabbitmq-(.*).pivotal
 
 
 
@@ -95,7 +95,7 @@ resources:
 groups:
 - name: deploy
   jobs:
-  - genai
+  - rabbitmq
   # - mysql
   - apply-changes
 # - name: post-deploy
@@ -116,12 +116,12 @@ groups:
 
 jobs:
 
-- name: genai
+- name: rabbitmq
   serial: true
   build_log_retention:
     builds: 2
   plan:
-  - get: genai-product
+  - get: rabbitmq-product
   - get: config
     trigger: false #true
   - get: platform-automation-vsphere-image
@@ -146,17 +146,17 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: stage-product-genai
+  - task: stage-product
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/stage-product.yml
     input_mapping:
-      product: genai-product
+      product: rabbitmq-product
       env: interpolated-creds
       vars: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-genai
+  - task: configure
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/configure-product.yml
     input_mapping:
@@ -164,11 +164,11 @@ jobs:
       env: interpolated-creds
       vars: interpolated-creds
     params:
-      CONFIG_FILE: ((foundation))/config/genai.yml
+      CONFIG_FILE: ((foundation))/config/rabbitmq.yml
       VARS_FILES: |
-        vars/((foundation))/vars/genai-defaults.yml
-        vars/((foundation))/vars/genai-vars.yml
-        vars/((foundation))/vars/genai-errands.yml
+        vars/((foundation))/vars/rabbitmq-defaults.yml
+        vars/((foundation))/vars/rabbitmq-vars.yml
+        vars/((foundation))/vars/rabbitmq-errands.yml
       ENV_FILE: ((foundation))/env/env.yml
 
 
@@ -180,7 +180,7 @@ jobs:
   plan:
   - get: config #*credhub-interpolate
     trigger: true
-    passed: [ genai ]
+    passed: [ rabbitmq ]
   - get: platform-automation-vsphere-image
     params:
       unpack: true

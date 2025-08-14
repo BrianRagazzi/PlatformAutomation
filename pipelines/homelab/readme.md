@@ -69,6 +69,9 @@ credhub set --name /concourse/$TEAMNAME/opsman_decryption_passphrase --type valu
 ## Bind Service Account PW:
 credhub set --name /concourse/$TEAMNAME/properties_uaa_ldap_credentials_password --type value --value mypassword
 
+# Cloud AI API Keys
+credhub set --name /concourse/$TEAMNAME/anthropic_api_key --type value --value my-key
+
 ##
 TLS Cert
 credhub set --name /concourse/$TEAMNAME/ldap_server_ssl_cert --type value --value "$(cat ./test/rootca.crt)"
@@ -111,7 +114,7 @@ fly -t ci set-pipeline -p tpcf-configure -c pipeline-tpcf.yml -l ../../params/ho
 fly -t ci up -p tpcf-configure
 ```
 ```
-fly -t ci set-pipeline -p genai-configure -c pipeline-genai.yml -l ../../params/homelab/params-homelab-tas.yml --check-creds -n
+fly -t ci set-pipeline -p genai-configure -c pipeline-genai-configure.yml -l ../../params/homelab/params-homelab-tas.yml --check-creds -n
 fly -t ci up -p genai-configure
 ```
 ```

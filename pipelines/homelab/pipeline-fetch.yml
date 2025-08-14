@@ -239,7 +239,6 @@ jobs:
     params:
       file: platform-automation-pivnet/vsphere-platform-automation-image-*.tar.gz
 
-
 - name: fetch-opsman
   serial: true
   serial_groups: [ fetch-common ]
@@ -280,7 +279,6 @@ jobs:
           - -exc
           - |
             rm -rf downloaded-product/*
-
 
 - name: fetch-srt
   serial: true
@@ -459,7 +457,6 @@ jobs:
           - -exc
           - |
             rm -rf downloaded-product/*
-
 
 - name: fetch-mysql
   serial: true
@@ -759,7 +756,6 @@ jobs:
           - -exc
           - |
             rm -rf downloaded-product/*
-   
 
 - name: fetch-tanzu-hub
   serial: true
@@ -801,7 +797,6 @@ jobs:
           - -exc
           - |
             rm -rf downloaded-product/*
-    
 
 - name: fetch-hub-connector
   serial: true
@@ -843,7 +838,6 @@ jobs:
           - -exc
           - |
             rm -rf downloaded-product/*
-   
 
 - name: fetch-spring-cloud-gateway
   serial: true
@@ -885,7 +879,6 @@ jobs:
           - -exc
           - |
             rm -rf downloaded-product/*
- 
 
 - name: fetch-spring-cloud-services
   serial: true

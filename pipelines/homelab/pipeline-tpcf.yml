@@ -89,7 +89,8 @@ resources:
   source:
     <<: *s3_credentials_binaries
     #regexp: \[elastic-runtime,(.*)\]srt-.*.pivotal
-    regexp: srt-(.*).pivotal
+    #regexp: srt-(.*).pivotal
+    regexp: srt-10.2.0-build.(.*).pivotal
     # regexp: \[elastic-runtime,(.*)\]cf-.*.pivotal
 
 - name: pas-stemcell
@@ -394,6 +395,7 @@ jobs:
 
 - name: cf
   serial: false # try  false 052219
+  serial_groups: [phase_one]
   build_log_retention:
     builds: 2
   plan:
@@ -512,7 +514,8 @@ jobs:
 #         ENV_FILE: ((foundation))/env/env.yml
 
 - name: nsx
-  serial: true
+  serial: false
+  serial_groups: [phase_one]
   build_log_retention:
     builds: 2
   plan:
@@ -654,7 +657,8 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
 - name: postgres
-  serial: true
+  serial: false
+  serial_groups: [phase_two_group_two]
   build_log_retention:
     builds: 2
   plan:
@@ -708,7 +712,8 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
 - name: sso
-  serial: true
+  serial: false
+  serial_groups: [phase_two_group_one]
   build_log_retention:
     builds: 2
   plan:
@@ -911,7 +916,8 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
 - name: valkey
-  serial: true
+  serial: false
+  serial_groups: [phase_two_group_one]
   build_log_retention:
     builds: 2
   plan:
@@ -965,7 +971,8 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
 - name: spring-cloud-gateway
-  serial: true
+  serial: false
+  serial_groups: [phase_two_group_two]
   build_log_retention:
     builds: 2
   plan:
@@ -1019,7 +1026,8 @@ jobs:
       ENV_FILE: ((foundation))/env/env.yml
 
 - name: spring-cloud-services
-  serial: true
+  serial: false
+  serial_groups: [phase_two_group_one]
   build_log_retention:
     builds: 2
   plan:
@@ -1102,20 +1110,6 @@ jobs:
         vars/((foundation))/vars/cf-errands.yml
       ENV_FILE: ((foundation))/env/env.yml
 
-  - task: configure-valkey-errands
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/configure-product.yml
-    input_mapping:
-      config: config
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      CONFIG_FILE: ((foundation))/config/redis.yml
-      VARS_FILES: |
-        vars/((foundation))/vars/redis-defaults.yml
-        vars/((foundation))/vars/redis-vars.yml
-        vars/((foundation))/vars/redis-errands.yml
-      ENV_FILE: ((foundation))/env/env.yml
       
 - name: update-errands-valkey
   serial: false # try  false 052219
@@ -1232,7 +1226,7 @@ jobs:
       env: interpolated-creds
     params:
       ENV_FILE: ((foundation))/env/env.yml
-      SELECTIVE_DEPLOY_PRODUCTS: "genai"
+      SELECTIVE_DEPLOY_PRODUCTS: "cf, genai"
 
 - name: apply-changes-healthwatch
   serial: true
