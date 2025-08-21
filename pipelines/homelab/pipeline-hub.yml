@@ -91,6 +91,12 @@ resources:
     <<: *s3_credentials_binaries
     regexp: tanzu-hub-(\d.*).pivotal
 
+- name: tanzu-hub-stemcell
+  type: s3
+  source:
+    <<: *s3_credentials_binaries
+    regexp: hub-stemcell/bosh-stemcell-(.*)-vsphere.esxi-ubuntu-jammy-go_agent.tgz    
+
 - name: installation
   type: s3
   source:
@@ -242,6 +248,7 @@ jobs:
   plan:
   - get: tanzu-hub-product
     trigger: false #true   
+  - get: tanzu-hub-stemcell      
   - get: config
     passed: [ install-opsman ]   
   - get: platform-automation-vsphere-image
@@ -272,6 +279,15 @@ jobs:
       product: tanzu-hub-product
       env: interpolated-creds
       vars: interpolated-creds
+    params:
+      ENV_FILE: ((foundation))/env/env.yml
+
+  - task: upload-stemcell
+    image: platform-automation-vsphere-image
+    file: platform-automation-tasks/tasks/upload-stemcell.yml
+    input_mapping:
+      env: interpolated-creds
+      stemcell: tansu-hub-stemcell
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
