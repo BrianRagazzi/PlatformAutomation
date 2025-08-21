@@ -241,10 +241,10 @@ jobs:
     builds: 2
   plan:
   - get: tanzu-hub-product
+    trigger: false #true
+    passed: [ install-opsman ]      
   - get: config
-    trigger: true
   - get: platform-automation-vsphere-image
-    passed: [ install-opsman ]
     params:
       unpack: true
   - get: platform-automation-tasks
