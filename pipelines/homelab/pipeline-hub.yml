@@ -241,9 +241,9 @@ jobs:
     builds: 2
   plan:
   - get: tanzu-hub-product
-    trigger: false #true
-    passed: [ install-opsman ]      
+    trigger: false #true   
   - get: config
+    passed: [ install-opsman ]   
   - get: platform-automation-vsphere-image
     params:
       unpack: true
@@ -288,6 +288,19 @@ jobs:
         vars/((foundation))/vars/tanzu-hub-defaults.yml
         vars/((foundation))/vars/tanzu-hub-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: tanzu-hub-product
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf tanzu-hub-product/*
+
 
 - name: apply-changes
   serial: true
