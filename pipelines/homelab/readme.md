@@ -130,9 +130,13 @@ fly -t ci up -p rabbitmq-configure
 ```
 ```
 fly -t ci set-pipeline -p tpcf-configure -c pipelines/homelab/pipeline-tpcf.yml -l params/params-homelab-tas.yml --check-creds -n
-fly -t ci up -p rabbitmq-configure
+fly -t ci up -p tpcf-configure
 ```
 ```
 fly -t ci set-pipeline -p fetch-binaries  -c pipelines/homelab/pipeline-fetch.yml -l params/params-homelab-fetch.yml --check-creds -n
-fly -t ci up -p rabbitmq-configure
+fly -t ci up -p fetch-binaries
+```
+```
+fly -t ci set-pipeline -p deploy-hub  -c pipelines/homelab/pipeline-hub.yml -l params/params-homelab-hub.yml --check-creds -n
+fly -t ci up -p deploy-hub
 ```
