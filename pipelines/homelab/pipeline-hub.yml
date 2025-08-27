@@ -85,11 +85,11 @@ resources:
     #regexp: \[ops-manager,(.*)\].*.ova #regexp: ((opsman_image_s3_versioned_regexp)) # vsphere ex: pcf-vsphere-(.*).ova
     regexp: ops-manager-vsphere-(.*).ova
 
-- name: tanzu-hub-product
-  type: s3
-  source:
-    <<: *s3_credentials_binaries
-    regexp: tanzu-hub-(\d.*).pivotal
+# - name: tanzu-hub-product
+#   type: s3
+#   source:
+#     <<: *s3_credentials_binaries
+#     regexp: tanzu-hub-(\d.*).pivotal
 
 - name: tanzu-hub-stemcell
   type: s3
@@ -142,7 +142,9 @@ groups:
 - name: deploy
   jobs:
   - install-opsman
-  - tanzu-hub
+  - upload-tanzu-hub
+  - upload-stemcell
+  - configure-tanzu-hub
   - apply-changes
 - name: save-state
   jobs:
@@ -241,13 +243,64 @@ jobs:
     params:
       ENV_FILE: ((foundation))/env/env.yml
 
-- name: tanzu-hub
+- name: upload-tanzu-hub
   serial: true
   build_log_retention:
     builds: 2
   plan:
-  - get: tanzu-hub-product
-    trigger: false #true   
+  # - get: tanzu-hub-product
+  #   trigger: false #true   
+  - get: config
+    passed: [ install-opsman ]   
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
+
+  # - task: upload-product-tanzu-hub
+  #   image: platform-automation-vsphere-image
+  #   file: platform-automation-tasks/tasks/upload-product.yml
+  #   input_mapping:
+  #     product: tanzu-hub-product
+  #     config: config
+  #     env: interpolated-creds
+  #     vars: interpolated-creds
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
+
+  # - task: stage-product
+  #   image: platform-automation-vsphere-image
+  #   file: platform-automation-tasks/tasks/stage-product.yml
+  #   input_mapping:
+  #     product: tanzu-hub-product
+  #     env: interpolated-creds
+  #     vars: interpolated-creds
+  #   params:
+  #     ENV_FILE: ((foundation))/env/env.yml
+
+  # - task: cleanup
+  #   image: platform-automation-vsphere-image
+  #   config:
+  #     platform: linux
+  #     inputs:
+  #       - name: tanzu-hub-product
+  #     run:
+  #       path: sh
+  #       args:
+  #         - -exc
+  #         - |
+  #           rm -rf tanzu-hub-product/*
+
+- name: upload-stemcell
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
   - get: tanzu-hub-stemcell      
   - get: config
     passed: [ install-opsman ]   
@@ -261,35 +314,45 @@ jobs:
   - task: credhub-interpolate
     <<: *credhub-interpolate
 
-  - task: upload-product-tanzu-hub
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/upload-product.yml
-    input_mapping:
-      product: tanzu-hub-product
-      config: config
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
-  - task: stage-product
-    image: platform-automation-vsphere-image
-    file: platform-automation-tasks/tasks/stage-product.yml
-    input_mapping:
-      product: tanzu-hub-product
-      env: interpolated-creds
-      vars: interpolated-creds
-    params:
-      ENV_FILE: ((foundation))/env/env.yml
-
   - task: upload-stemcell
     image: platform-automation-vsphere-image
     file: platform-automation-tasks/tasks/upload-stemcell.yml
     input_mapping:
       env: interpolated-creds
-      stemcell: tansu-hub-stemcell
+      stemcell: tanzu-hub-stemcell
     params:
       ENV_FILE: ((foundation))/env/env.yml
+
+  - task: cleanup
+    image: platform-automation-vsphere-image
+    config:
+      platform: linux
+      inputs:
+        - name: tanzu-hub-stemcell
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            rm -rf tanzu-hub-stemcell/*
+
+- name: configure-tanzu-hub
+  serial: true
+  build_log_retention:
+    builds: 2
+  plan:
+  - get: config
+    passed: [ upload-tanzu-hub, upload-stemcell]   
+    trigger: true
+  - get: platform-automation-vsphere-image
+    params:
+      unpack: true
+  - get: platform-automation-tasks
+    params:
+      unpack: true
+
+  - task: credhub-interpolate
+    <<: *credhub-interpolate
 
   - task: configure-tanzu-hub
     image: platform-automation-vsphere-image
@@ -304,18 +367,7 @@ jobs:
         vars/((foundation))/vars/tanzu-hub-defaults.yml
         vars/((foundation))/vars/tanzu-hub-vars.yml
       ENV_FILE: ((foundation))/env/env.yml
-  - task: cleanup
-    image: platform-automation-vsphere-image
-    config:
-      platform: linux
-      inputs:
-        - name: tanzu-hub-product
-      run:
-        path: sh
-        args:
-          - -exc
-          - |
-            rm -rf tanzu-hub-product/*
+
 
 
 - name: apply-changes
@@ -325,7 +377,7 @@ jobs:
   plan:
   - get: config #*credhub-interpolate
     trigger: false #true
-    passed: [ tanzu-hub ]
+    passed: [ configure-tanzu-hub ]
   - get: platform-automation-vsphere-image
     params:
       unpack: true
